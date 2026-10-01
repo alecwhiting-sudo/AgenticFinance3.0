@@ -1,0 +1,74 @@
+date,amount,reference,counterparty,kind
+2026-09-01,-5529.60,VOI-74318,"Vantage Office Interiors",ap_payment
+2026-09-01,21120.00,BRT-5005,"Boltby Drone Services",ar_receipt
+2026-09-01,2280.00,BRT-5197,"Haverton Insurance Services",ar_receipt
+2026-09-03,-1632.00,HTM-12216,"Harrier Travel Management",ap_payment
+2026-09-03,624.00,BRT-5175,"Ingleby Catering Group",ar_receipt
+2026-09-04,-8577.60,BFG-69394,"Bricknell Facilities Group",ap_payment
+2026-09-04,5760.00,BRT-5086,"Hutton Rudby Robotics",ar_receipt
+2026-09-04,2280.00,BRT-5250,"Hutton Rudby Robotics",ar_receipt
+2026-09-05,-9400.80,EES-73828,"Eastfield Energy Supply",ap_payment
+2026-09-05,-1504.80,QR-39933,"Quayside Recruitment",ap_payment
+2026-09-05,3420.00,BRT-5026,"Ouseburn Breweries",ar_receipt
+2026-09-05,7800.00,BRT-5319,"Fairlight Hotels Group",ar_receipt
+2026-09-05,9360.00,BRT-5362,"Wexcombe Garden Centres",ar_receipt
+2026-09-05,4320.00,BRT-5395,"Grassington Outdoor Wear",ar_receipt
+2026-09-06,-56199.60,FMS-88984,"Foxglove Marketing Studio",ap_payment
+2026-09-06,13500.00,BRT-5313,"Nunthorpe Solar",ar_receipt
+2026-09-06,2280.00,BRT-5350,"Dunmore Estates Ltd",ar_receipt
+2026-09-07,-3056.40,TWD-43025,"Thornbury Web Design",ap_payment
+2026-09-07,11520.00,BRT-5225,"Cotherstone Analytics",ar_receipt
+2026-09-08,-18057.60,FMS-20104,"Foxglove Marketing Studio",ap_payment
+2026-09-08,-864.00,ZPF-85035,"Zetland Print Finishing",ap_payment
+2026-09-08,-2053.20,DAS-63093,"Dunholme Archive Storage",ap_payment
+2026-09-08,-2362.80,NDS-72063,"Nineladies Data Services",ap_payment
+2026-09-08,55800.00,BRT-5274,"Zeals Automotive Ltd",ar_receipt
+2026-09-09,-7510.80,SS-11551,"Silverbeck Stationers",ap_payment
+2026-09-09,15360.00,BRT-5006,"Helmsley Outdoor Events",ar_receipt
+2026-09-09,11520.00,BRT-5338,"Bluebird Logistics Ltd",ar_receipt
+2026-09-10,-2502.00,MTL-42035,"Mercia Telecoms Ltd",ap_payment
+2026-09-10,-3054.00,WMR-91775,"Wrenfield Market Research",ap_payment
+2026-09-10,-3369.60,HTM-70561,"Harrier Travel Management",ap_payment
+2026-09-10,-4675.20,MTL-99758,"Mercia Telecoms Ltd",ap_payment
+2026-09-10,-9716.40,ZPF-39419,"Zetland Print Finishing",ap_payment
+2026-09-11,-297.60,WMR-61846,"Wrenfield Market Research",ap_payment
+2026-09-11,5760.00,BRT-5093,"Dunmore Estates Ltd",ar_receipt
+2026-09-11,1020.00,BRT-5155,"Quarry Bank Textiles",ar_receipt
+2026-09-11,6240.00,BRT-5309,"Bluebird Logistics Ltd",ar_receipt
+2026-09-11,5724.00,BRT-5310,"Fadmoor Renewables",ar_receipt
+2026-09-12,-131271.60,ICL-88009,"Ironbridge Components Ltd",ap_payment
+2026-09-12,-2812.80,EPB-25254,"Elmswell Payroll Bureau",ap_payment
+2026-09-12,5100.00,BRT-5147,"Garsdale Foods Ltd",ar_receipt
+2026-09-12,10200.00,BRT-5221,"Welburn Opticians Group",ar_receipt
+2026-09-13,-46190.40,LTA-46943,"Lambourne Training Associates",ap_payment
+2026-09-13,-1417.20,FSM-83613,"Farrier & Sons Maintenance",ap_payment
+2026-09-13,5640.00,BRT-5247,"Haverton Insurance Services",ar_receipt
+2026-09-13,39180.00,BRT-5270,"Fairlight Hotels Group",ar_receipt
+2026-09-13,5760.00,BRT-5288,"Danby Wiske Architects",ar_receipt
+2026-09-14,-2588.40,MTL-33955,"Mercia Telecoms Ltd",ap_payment
+2026-09-14,-16221.60,NDS-49431,"Nineladies Data Services",ap_payment
+2026-09-14,10020.00,BRT-5128,"Garsdale Foods Ltd",ar_receipt
+2026-09-14,4560.00,BRT-5153,"Dunmore Estates Ltd",ar_receipt
+2026-09-14,2160.00,BRT-5189,"Ebberston Airport Services",ar_receipt
+2026-09-14,31440.00,BRT-5346,"Grassington Outdoor Wear",ar_receipt
+2026-09-15,-36445.20,FMA-36202,"Fenwick & Marsh Accountants LLP",ap_payment
+2026-09-15,1140.00,BRT-5008,"Nunthorpe Solar",ar_receipt
+2026-09-15,11880.00,BRT-5040,"Lealholm Transport",ar_receipt
+2026-09-15,624.00,BRT-5113,"Jarrow Marine Engineering",ar_receipt
+2026-09-15,30060.00,BRT-5223,"Ebberston Airport Services",ar_receipt
+2026-09-15,1440.00,BRT-5257,"Aldwark Shipping Agency",ar_receipt
+2026-09-15,27000.00,BRT-5299,"Grassington Outdoor Wear",ar_receipt
+2026-09-15,3120.00,BRT-5366,"Jarrow Marine Engineering",ar_receipt
+2026-09-16,-4790.40,IOP-78549,"Ingleton Office Plants",ap_payment
+2026-09-16,2496.00,BRT-5218,"Grassington Outdoor Wear",ar_receipt
+2026-09-16,3720.00,BRT-5291,"Eastgate Manufacturing plc",ar_receipt
+2026-09-17,9540.00,BRT-5075,"Nawton Vehicle Hire",ar_receipt
+2026-09-17,1440.00,BRT-5289,"Grassington Outdoor Wear",ar_receipt
+2026-09-18,11220.00,BRT-5079,"Nunthorpe Solar",ar_receipt
+2026-09-18,3876.00,BRT-5211,"Bluebird Logistics Ltd",ar_receipt
+2026-09-20,7740.00,BRT-5042,"Cotherstone Analytics",ar_receipt
+2026-09-22,912.00,BRT-5045,"Helmsley Outdoor Events",ar_receipt
+2026-09-22,20160.00,BRT-5170,"Kirkhammer Steel",ar_receipt
+2026-09-23,13740.00,BRT-5052,"Danby Wiske Architects",ar_receipt
+2026-09-25,-55004.56,PAYROLL-2026-09,"Elmswell Payroll Bureau",salaries
+2026-09-28,-72.97,CHARGES-2026-09,"Bank",bank_fees

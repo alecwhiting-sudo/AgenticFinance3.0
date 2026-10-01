@@ -1,0 +1,128 @@
+date,amount,reference,counterparty,kind
+2026-08-01,-99154.80,IOP-69958,"Ingleton Office Plants",ap_payment
+2026-08-01,2880.00,BRT-5033,"Carden Health Partners",ar_receipt
+2026-08-01,17280.00,BRT-5121,"Crayke Data Centres",ar_receipt
+2026-08-01,28080.00,BRT-5283,"Farndale Publishing",ar_receipt
+2026-08-02,-202.80,ZPF-69911,"Zetland Print Finishing",ap_payment
+2026-08-02,1140.00,BRT-5374,"Welburn Opticians Group",ar_receipt
+2026-08-03,-916.80,AIT-90641,"Ashdown IT Services",ap_payment
+2026-08-03,-4263.60,RCS-92755,"Rowanfield Cleaning Services",ap_payment
+2026-08-03,-415.20,WMR-69556,"Wrenfield Market Research",ap_payment
+2026-08-04,-25695.60,IOP-49242,"Ingleton Office Plants",ap_payment
+2026-08-04,-711.60,CCC-65076,"Calder Courier Co",ap_payment
+2026-08-04,-9541.20,QR-96770,"Quayside Recruitment",ap_payment
+2026-08-04,18000.00,BRT-5130,"Juniper Lane Interiors",ar_receipt
+2026-08-04,4560.00,BRT-5148,"Cotherstone Analytics",ar_receipt
+2026-08-04,10320.00,BRT-5176,"Tarnbrook Utilities",ar_receipt
+2026-08-04,2280.00,BRT-5271,"Underwood Veterinary Group",ar_receipt
+2026-08-05,-29240.40,KIB-28184,"Kestrel Insurance Brokers",ap_payment
+2026-08-06,-30956.40,VOI-75193,"Vantage Office Interiors",ap_payment
+2026-08-06,2280.00,BRT-5019,"Ingleby Catering Group",ar_receipt
+2026-08-06,1248.00,BRT-5020,"Easingwold Law",ar_receipt
+2026-08-06,4680.00,BRT-5054,"Muker Wool Co",ar_receipt
+2026-08-06,1020.00,BRT-5094,"Haverton Insurance Services",ar_receipt
+2026-08-06,7260.00,BRT-5165,"Juniper Lane Interiors",ar_receipt
+2026-08-07,43200.00,BRT-5126,"Wexcombe Garden Centres",ar_receipt
+2026-08-07,23040.00,BRT-5301,"Lealholm Transport",ar_receipt
+2026-08-07,-38612.00,VAT-Q2-2026,"HMRC",vat
+2026-08-08,-907.20,UL-89507,"Ullswater Logistics",ap_payment
+2026-08-08,-1041.60,JCC-24981,"Juniper Catering Co",ap_payment
+2026-08-09,-7972.80,FSM-20867,"Farrier & Sons Maintenance",ap_payment
+2026-08-09,-4809.60,TWD-79318,"Thornbury Web Design",ap_payment
+2026-08-09,27360.00,BRT-5030,"Carden Health Partners",ar_receipt
+2026-08-09,1248.00,BRT-5068,"Juniper Lane Interiors",ar_receipt
+2026-08-09,3000.00,BRT-5097,"Thixendale Farm Foods",ar_receipt
+2026-08-09,24960.00,BRT-5264,"Underwood Veterinary Group",ar_receipt
+2026-08-09,912.00,BRT-5272,"Ebberston Airport Services",ar_receipt
+2026-08-09,21000.00,BRT-5316,"Ouseburn Breweries",ar_receipt
+2026-08-10,-729.60,AIT-25942,"Ashdown IT Services",ap_payment
+2026-08-10,26496.00,BRT-5252,"Quarry Bank Textiles",ar_receipt
+2026-08-11,-4540.80,MWL-30175,"Metro Workspace (Leeds) Ltd",ap_payment
+2026-08-11,-3420.00,CPH-62040,"CloudPeak Hosting Ltd",ap_payment
+2026-08-11,-4707.60,FMA-23036,"Fenwick & Marsh Accountants LLP",ap_payment
+2026-08-11,1440.00,BRT-5116,"Ingleby Catering Group",ar_receipt
+2026-08-11,1140.00,BRT-5233,"Yeavering Tech Campus",ar_receipt
+2026-08-11,7680.00,BRT-5249,"Pickhill Software",ar_receipt
+2026-08-11,912.00,BRT-5383,"Zeals Automotive Ltd",ar_receipt
+2026-08-12,-5533.20,AC-73367,"Alderbrook Consulting",ap_payment
+2026-08-12,13392.00,BRT-5220,"Aldwark Shipping Agency",ar_receipt
+2026-08-13,-8940.00,RCS-58166,"Rowanfield Cleaning Services",ap_payment
+2026-08-13,-3068.40,GAL-55070,"Greywell Analytics Ltd",ap_payment
+2026-08-13,-16158.00,CPH-54316,"CloudPeak Hosting Ltd",ap_payment
+2026-08-13,624.00,BRT-5023,"Nawton Vehicle Hire",ar_receipt
+2026-08-13,5760.00,BRT-5137,"Farndale Publishing",ar_receipt
+2026-08-13,5760.00,BRT-5340,"Kelfield Pharmaceuticals",ar_receipt
+2026-08-14,-1550.40,VOI-29503,"Vantage Office Interiors",ap_payment
+2026-08-14,-1239.60,NDS-62331,"Nineladies Data Services",ap_payment
+2026-08-15,-3038.40,WMR-50026,"Wrenfield Market Research",ap_payment
+2026-08-15,3120.00,BRT-5009,"Netherby Financial Advisers",ar_receipt
+2026-08-15,13140.00,BRT-5096,"Netherby Financial Advisers",ar_receipt
+2026-08-15,1368.00,BRT-5104,"Bexfield Care Homes",ar_receipt
+2026-08-15,1440.00,BRT-5132,"Stanhope Dental Chain",ar_receipt
+2026-08-16,-43233.60,MWL-36321,"Metro Workspace (Leeds) Ltd",ap_payment
+2026-08-16,-32925.60,HTM-95076,"Harrier Travel Management",ap_payment
+2026-08-16,-17839.20,ICL-75081,"Ironbridge Components Ltd",ap_payment
+2026-08-16,-3933.60,MWL-29149,"Metro Workspace (Leeds) Ltd",ap_payment
+2026-08-16,6240.00,BRT-5062,"Nawton Vehicle Hire",ar_receipt
+2026-08-16,3120.00,BRT-5237,"Aldwark Shipping Agency",ar_receipt
+2026-08-17,-4122.00,EES-72286,"Eastfield Energy Supply",ap_payment
+2026-08-17,-1165.20,DSL-31459,"Dentonware Software Ltd",ap_payment
+2026-08-17,30000.00,BRT-5067,"Yearsley Cold Storage",ar_receipt
+2026-08-17,31200.00,BRT-5081,"Ugthorpe Haulage",ar_receipt
+2026-08-17,4320.00,BRT-5229,"Carden Health Partners",ar_receipt
+2026-08-18,-780.00,UL-78671,"Ullswater Logistics",ap_payment
+2026-08-18,-93.60,CCC-16076,"Calder Courier Co",ap_payment
+2026-08-18,6840.00,BRT-5166,"Danby Wiske Architects",ar_receipt
+2026-08-18,3420.00,BRT-5186,"Oldstead Hospitality",ar_receipt
+2026-08-19,-5137.20,IOP-15787,"Ingleton Office Plants",ap_payment
+2026-08-19,5760.00,BRT-5053,"Dunmore Estates Ltd",ar_receipt
+2026-08-19,7200.00,BRT-5304,"Oldstead Hospitality",ar_receipt
+2026-08-20,624.00,BRT-5065,"Danby Wiske Architects",ar_receipt
+2026-08-20,2160.00,BRT-5129,"Wexcombe Garden Centres",ar_receipt
+2026-08-21,1620.00,BRT-5240,"Pickhill Software",ar_receipt
+2026-08-21,3540.00,BRT-5243,"Jarrow Marine Engineering",ar_receipt
+2026-08-21,31200.00,BRT-5268,"Boltby Drone Services",ar_receipt
+2026-08-22,-2800.80,YHS-45829,"Yarrow Health & Safety Ltd",ap_payment
+2026-08-22,-10502.40,MWL-25863,"Metro Workspace (Leeds) Ltd",ap_payment
+2026-08-22,23040.00,BRT-5145,"Lydgate Property Management",ar_receipt
+2026-08-22,59640.00,BRT-5332,"Hutton Rudby Robotics",ar_receipt
+2026-08-23,9672.00,BRT-5039,"Kirkhammer Steel",ar_receipt
+2026-08-23,2160.00,BRT-5151,"Ashford Retail Group plc",ar_receipt
+2026-08-23,19080.00,BRT-5160,"Nawton Vehicle Hire",ar_receipt
+2026-08-23,14400.00,BRT-5190,"Kelfield Pharmaceuticals",ar_receipt
+2026-08-24,-4242.00,RCS-73540,"Rowanfield Cleaning Services",ap_payment
+2026-08-24,-37776.00,JEH-31105,"Jessop Event Hire",ap_payment
+2026-08-24,-1423.20,HPP-68327,"Hartley Print & Packaging",ap_payment
+2026-08-24,42240.00,BRT-5205,"Bexfield Care Homes",ar_receipt
+2026-08-24,2160.00,BRT-5244,"Pickhill Software",ar_receipt
+2026-08-25,-19632.00,FMS-91311,"Foxglove Marketing Studio",ap_payment
+2026-08-25,15360.00,BRT-5010,"Yearsley Cold Storage",ar_receipt
+2026-08-25,2496.00,BRT-5164,"Easingwold Law",ar_receipt
+2026-08-25,34080.00,BRT-5227,"Bluebird Logistics Ltd",ar_receipt
+2026-08-25,1080.00,BRT-5377,"Wexcombe Garden Centres",ar_receipt
+2026-08-25,-54472.40,PAYROLL-2026-08,"Elmswell Payroll Bureau",salaries
+2026-08-26,8640.00,BRT-5070,"Oldstead Hospitality",ar_receipt
+2026-08-26,18720.00,BRT-5258,"Underwood Veterinary Group",ar_receipt
+2026-08-27,-8635.20,PSS-81109,"Pennine Security Systems",ap_payment
+2026-08-27,-2324.40,ICL-22340,"Ironbridge Components Ltd",ap_payment
+2026-08-27,624.00,BRT-5007,"Grassington Outdoor Wear",ar_receipt
+2026-08-28,-6930.00,DSL-44188,"Dentonware Software Ltd",ap_payment
+2026-08-28,-4454.40,EPB-99314,"Elmswell Payroll Bureau",ap_payment
+2026-08-28,7488.00,BRT-5092,"Underwood Veterinary Group",ar_receipt
+2026-08-28,24960.00,BRT-5171,"Helmsley Outdoor Events",ar_receipt
+2026-08-28,11520.00,BRT-5275,"Bluebird Logistics Ltd",ar_receipt
+2026-08-28,-67.17,CHARGES-2026-08,"Bank",bank_fees
+2026-08-29,-5257.20,HBM-77311,"Holloway Business Media",ap_payment
+2026-08-29,-15472.80,VOI-19285,"Vantage Office Interiors",ap_payment
+2026-08-29,1440.00,BRT-5043,"Yearsley Cold Storage",ar_receipt
+2026-08-30,-1476.00,TWD-46117,"Thornbury Web Design",ap_payment
+2026-08-30,6120.00,BRT-5105,"Ouseburn Breweries",ar_receipt
+2026-08-30,57600.00,BRT-5245,"Juniper Lane Interiors",ar_receipt
+2026-08-30,23040.00,BRT-5341,"Nawton Vehicle Hire",ar_receipt
+2026-08-31,-8737.20,EES-45972,"Eastfield Energy Supply",ap_payment
+2026-08-31,-3837.60,QR-62150,"Quayside Recruitment",ap_payment
+2026-08-31,-3850.80,HBM-38195,"Holloway Business Media",ap_payment
+2026-08-31,-1670.40,NOS-13892,"Northgate Office Supplies Ltd",ap_payment
+2026-08-31,-973.20,HBM-64197,"Holloway Business Media",ap_payment
+2026-08-31,-963.60,CAV-21671,"Cresswell Audio Visual",ap_payment
+2026-08-31,3420.00,BRT-5286,"Tarnbrook Utilities",ar_receipt

@@ -1,0 +1,13 @@
+date,amount,reference,counterparty,kind
+2026-04-18,17280.00,BRT-5222,"Ugthorpe Haulage",ar_receipt
+2026-04-21,-4392.00,EPB-33401,"Elmswell Payroll Bureau",ap_payment
+2026-04-21,10080.00,BRT-5320,"Oldstead Hospitality",ar_receipt
+2026-04-24,-1855.20,TWD-70678,"Thornbury Web Design",ap_payment
+2026-04-24,2700.00,BRT-5011,"Ugthorpe Haulage",ar_receipt
+2026-04-25,6840.00,BRT-5036,"Redmayne Sports Group",ar_receipt
+2026-04-25,-53749.57,PAYROLL-2026-04,"Elmswell Payroll Bureau",salaries
+2026-04-27,7200.00,BRT-5358,"Osmotherley Gins",ar_receipt
+2026-04-28,-53.52,CHARGES-2026-04,"Bank",bank_fees
+2026-04-29,1368.00,BRT-5143,"Levisham Rail Services",ar_receipt
+2026-04-30,-2842.80,KIB-63498,"Kestrel Insurance Brokers",ap_payment
+2026-04-30,-15206.40,TWD-73225,"Thornbury Web Design",ap_payment

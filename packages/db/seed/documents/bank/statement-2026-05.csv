@@ -1,0 +1,77 @@
+date,amount,reference,counterparty,kind
+2026-05-04,4104.00,BRT-5073,"Nawton Vehicle Hire",ar_receipt
+2026-05-05,2964.00,BRT-5087,"Redmayne Sports Group",ar_receipt
+2026-05-05,5760.00,BRT-5134,"Redmayne Sports Group",ar_receipt
+2026-05-06,624.00,BRT-5063,"Helmsley Outdoor Events",ar_receipt
+2026-05-06,13344.00,BRT-5311,"Oldstead Hospitality",ar_receipt
+2026-05-07,10020.00,BRT-5372,"Garsdale Foods Ltd",ar_receipt
+2026-05-08,-1345.20,IOP-22993,"Ingleton Office Plants",ap_payment
+2026-05-09,1872.00,BRT-5306,"Ugthorpe Haulage",ar_receipt
+2026-05-11,-16850.40,HBM-64193,"Holloway Business Media",ap_payment
+2026-05-12,-10059.60,MWL-69280,"Metro Workspace (Leeds) Ltd",ap_payment
+2026-05-12,5760.00,BRT-5382,"Dunmore Estates Ltd",ar_receipt
+2026-05-13,1140.00,BRT-5115,"Nunthorpe Solar",ar_receipt
+2026-05-14,-679.20,DSL-61985,"Dentonware Software Ltd",ap_payment
+2026-05-14,-31911.60,QR-39724,"Quayside Recruitment",ap_payment
+2026-05-14,-4492.80,KIB-96371,"Kestrel Insurance Brokers",ap_payment
+2026-05-14,12960.00,BRT-5099,"Nunthorpe Solar",ar_receipt
+2026-05-14,3120.00,BRT-5253,"Muker Wool Co",ar_receipt
+2026-05-15,-3991.20,BFG-56749,"Bricknell Facilities Group",ap_payment
+2026-05-15,52560.00,BRT-5195,"Oldstead Hospitality",ar_receipt
+2026-05-15,12060.00,BRT-5371,"Ashford Retail Group plc",ar_receipt
+2026-05-16,-369.60,HPP-21279,"Hartley Print & Packaging",ap_payment
+2026-05-16,5760.00,BRT-5192,"Ugthorpe Haulage",ar_receipt
+2026-05-17,-4395.60,EPB-58204,"Elmswell Payroll Bureau",ap_payment
+2026-05-17,3720.00,BRT-5293,"Netherby Financial Advisers",ar_receipt
+2026-05-18,-47856.00,FSM-14515,"Farrier & Sons Maintenance",ap_payment
+2026-05-18,3072.00,BRT-5101,"Levisham Rail Services",ar_receipt
+2026-05-18,1440.00,BRT-5265,"Verity Media Productions",ar_receipt
+2026-05-19,-4260.00,BFG-71811,"Bricknell Facilities Group",ap_payment
+2026-05-19,8640.00,BRT-5139,"Marwood Construction plc",ar_receipt
+2026-05-19,6480.00,BRT-5163,"Zeals Automotive Ltd",ar_receipt
+2026-05-20,-2205.60,DSL-93156,"Dentonware Software Ltd",ap_payment
+2026-05-20,-16856.40,EES-20690,"Eastfield Energy Supply",ap_payment
+2026-05-20,-16453.20,BE-77572,"Birchmoor Electrical",ap_payment
+2026-05-20,-1932.00,BE-29217,"Birchmoor Electrical",ap_payment
+2026-05-20,7800.00,BRT-5343,"Stanhope Dental Chain",ar_receipt
+2026-05-21,-916.80,EPB-53543,"Elmswell Payroll Bureau",ap_payment
+2026-05-21,-6838.80,WMR-64419,"Wrenfield Market Research",ap_payment
+2026-05-21,2868.00,BRT-5095,"Oldstead Hospitality",ar_receipt
+2026-05-21,1620.00,BRT-5297,"Ampleforth Digital",ar_receipt
+2026-05-22,-2986.80,FMS-95127,"Foxglove Marketing Studio",ap_payment
+2026-05-22,18000.00,BRT-5048,"Middleham Racing Supplies",ar_receipt
+2026-05-22,10800.00,BRT-5106,"Middleham Racing Supplies",ar_receipt
+2026-05-22,3864.00,BRT-5259,"Ouseburn Breweries",ar_receipt
+2026-05-22,2280.00,BRT-5325,"Carden Health Partners",ar_receipt
+2026-05-23,-6835.20,BFG-32718,"Bricknell Facilities Group",ap_payment
+2026-05-23,-35414.40,VOI-18774,"Vantage Office Interiors",ap_payment
+2026-05-23,23040.00,BRT-5327,"Dunmore Estates Ltd",ar_receipt
+2026-05-23,2280.00,BRT-5331,"Fadmoor Renewables",ar_receipt
+2026-05-24,-4888.80,CCC-42581,"Calder Courier Co",ap_payment
+2026-05-24,-3056.40,QR-29965,"Quayside Recruitment",ap_payment
+2026-05-24,24000.00,BRT-5379,"Crayke Data Centres",ar_receipt
+2026-05-25,-6678.00,NOS-32843,"Northgate Office Supplies Ltd",ap_payment
+2026-05-25,-7458.00,FSM-96949,"Farrier & Sons Maintenance",ap_payment
+2026-05-25,23040.00,BRT-5336,"Oldstead Hospitality",ar_receipt
+2026-05-25,-55262.66,PAYROLL-2026-05,"Elmswell Payroll Bureau",salaries
+2026-05-26,-3764.40,JEH-11503,"Jessop Event Hire",ap_payment
+2026-05-26,-2690.40,HBM-60011,"Holloway Business Media",ap_payment
+2026-05-26,-6393.60,GLP-49675,"Gillingham Legal Partners",ap_payment
+2026-05-26,456.00,BRT-5138,"Gilling East Media",ar_receipt
+2026-05-26,1368.00,BRT-5162,"Osmotherley Gins",ar_receipt
+2026-05-27,1704.00,BRT-5003,"Kirkhammer Steel",ar_receipt
+2026-05-27,2496.00,BRT-5025,"Thixendale Farm Foods",ar_receipt
+2026-05-27,1140.00,BRT-5181,"Tarnbrook Utilities",ar_receipt
+2026-05-28,-596.40,JEH-36928,"Jessop Event Hire",ap_payment
+2026-05-28,-915.60,OVL-24775,"Oakhurst Vehicle Leasing",ap_payment
+2026-05-28,912.00,BRT-5185,"Ugthorpe Haulage",ar_receipt
+2026-05-28,1140.00,BRT-5207,"Thixendale Farm Foods",ar_receipt
+2026-05-28,-68.91,CHARGES-2026-05,"Bank",bank_fees
+2026-05-29,-3481.20,FMA-62996,"Fenwick & Marsh Accountants LLP",ap_payment
+2026-05-29,3120.00,BRT-5359,"Lydgate Property Management",ar_receipt
+2026-05-30,-17310.00,VOI-25651,"Vantage Office Interiors",ap_payment
+2026-05-30,-6651.60,DAS-27551,"Dunholme Archive Storage",ap_payment
+2026-05-30,-29599.20,VOI-35123,"Vantage Office Interiors",ap_payment
+2026-05-30,13416.00,BRT-5089,"Kilburn Joinery Group",ar_receipt
+2026-05-30,31680.00,BRT-5396,"Crayke Data Centres",ar_receipt
+2026-05-31,-5035.20,DSL-44773,"Dentonware Software Ltd",ap_payment

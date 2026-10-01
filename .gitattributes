@@ -1,0 +1,4 @@
+# Generated demo data: keep diffs and language stats quiet
+packages/db/seed/generated/** linguist-generated=true -diff
+packages/db/seed/documents/** linguist-generated=true -diff
+packages/db/seed/documents/**/*.pdf binary

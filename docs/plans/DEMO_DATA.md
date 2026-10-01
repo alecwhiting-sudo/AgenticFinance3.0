@@ -1,6 +1,6 @@
 # Demo Data Studio — Transaction Generator Agent plan
 
-**Status:** Outline agreed, detail to finalise at Phase 1 start ·
+**Status:** v1 built 2026-10-01 (deterministic pipelines; LLM enrichment pending API key) ·
 **Builds in:** Phase 1 (framework proof + P2P dataset), extended each phase ·
 **Architecture:** `../ARCHITECTURE.md` §6b
 
