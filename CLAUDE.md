@@ -1,5 +1,11 @@
 # CLAUDE.md — project conventions
 
+> **NOTE (2026-10-01):** The design has moved on from the layout below. The
+> agreed target is a TypeScript monorepo (web / api / worker) per
+> `docs/ARCHITECTURE.md` and `docs/MASTER_PLAN.md` — read those first. The
+> Python per-agent layout described here is the placeholder scaffold and is
+> replaced in Phase 0, when this file gets rewritten.
+
 ## What this repo is
 
 An agentic finance function: AI agents that perform finance workflows for a small

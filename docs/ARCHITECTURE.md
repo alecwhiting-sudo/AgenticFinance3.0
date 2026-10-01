@@ -160,6 +160,87 @@ each process plan.
 - **EPM** — plan versions, assumptions, variance (appears in Phase 5).
 - **Admin** — users, seed reset, model/config, usage & cost.
 
+## 6a. Live experience layer (demo wow factor)
+
+Visual feedback is a product requirement, not decoration: clients must *see*
+the system working, tastefully. One mechanism powers all of it:
+
+- Every meaningful step — work item claimed, tool called, command proposed,
+  gateway decision, journal posted, human approval, exception raised — writes a
+  row to `agent.activity_event` (actor, verb, object refs, case id, summary
+  text, timestamp). The API exposes it as a **Server-Sent Events stream**
+  (`GET /activity/stream`, filterable by agent/case/process); the workbench
+  subscribes. No websocket infra, no polling.
+
+What the UI does with it (minimal, tasteful — motion only where something real
+happened; no spinners-for-show, no fake progress):
+
+- **Live activity feed** — a quiet ticker on the dashboard; each event a single
+  calm line ("Invoice Exception Agent requested goods receipt for INV-0231"),
+  subtle fade-in, no sound, no toast storms.
+- **Agent cards that breathe** — a soft pulse on the roster card while an agent
+  holds a claimed item; idle cards are static.
+- **Process flow view** — the signature demo screen: a horizontal pipeline per
+  process (P2P: captured → matched → exception → approved → posted → paid)
+  with document chips moving stage to stage as events arrive, exceptions
+  branching visibly to the agent lane and back.
+- **Run transcript, live** — a run page that renders the agent's steps as they
+  happen: thinking summary, tool call, result, proposed command, gateway
+  verdict. This is the "look inside the agent's head" moment.
+- **Numbers that settle** — KPI tiles (open exceptions, items today, cost)
+  animate briefly to their new value on change, then rest.
+- **Demo pacing toggle** — an admin setting that throttles the worker slightly
+  (e.g. 1–2s between visible steps) so live runs read as deliberate, not a
+  flash; off = full speed. Pacing delays presentation of real events; it never
+  fabricates events.
+
+Design language: lots of whitespace, one accent colour, small type, motion
+under 300ms. The `dataviz` conventions apply to all charts. Built in Phase 1
+(stream + feed + agent cards + live transcript); the process flow view ships
+with P2P in Phase 2 and is reused by O2C/R2R.
+
+## 6b. Demo Data Studio (transaction & evidence generator)
+
+A **Transaction Generator Agent** manufactures the business: transactions for
+P2P, O2C and R2R plus their evidence — supplier invoice PDFs, POs, emails,
+contracts/sales documents, remittance advices, bank statement lines.
+
+**Two-stage design keeps LLM cost one-off and tiny:**
+
+1. **Generate (LLM, once per dataset):** the agent produces *structured JSON*
+   in batches — suppliers, customers, items, then correlated transaction
+   narratives (a PO, its receipt, its invoice, the covering email, planted
+   exceptions) with realistic names, line items, prose for emails/contracts.
+   Batched ~25–50 records per call on a cheap model profile; a full dataset is
+   tens of calls, not thousands. Regeneration is a button in the workbench
+   Admin area ("rebuild demo dataset"), not a continuously running agent.
+2. **Render (deterministic, free):** template code turns the JSON into
+   artefacts — invoice/PO/contract PDFs from 3–4 HTML templates with varying
+   supplier branding, `.eml`/markdown emails, CSV bank statements. Rendering
+   costs nothing and is reproducible from the committed JSON.
+
+**Target volume (impressive, not expensive):** ~6 months of history for
+Brightline — ≈40 suppliers, 60 customers, 300 AP invoices (with PO/receipt
+chains), 400 AR invoices, ~900 bank lines, 12–15% planted exceptions across
+the known-exception taxonomy, plus a small daily "drip" generator that seeds
+10–20 fresh items per demo day so queues never look dead. Roughly 800–1,000
+small PDFs ≈ 40–60 MB.
+
+**Storage (D10):** generated JSON + rendered documents are committed to the
+repo under `packages/db/seed/` and deployed inside the Railway containers;
+the `evidence.document` table stores metadata + file path, and the API serves
+file bytes from disk. At this size git handles it comfortably — no Cloudflare/
+S3 bill, no egress, survives redeploys because the repo is the source. Your
+"folders on my drive" instinct is right; the repo *is* that folder, with the
+bonus of versioning. Runtime-generated artefacts (e.g. payment confirmations)
+are small and DB-stored. If the corpus ever outgrows git comfort (>250 MB),
+move binaries to git LFS or a Railway volume — noted, not needed now.
+
+The generator is itself a registered agent in the framework (identity, skills
+defining the business's "story", eval checks that generated books balance and
+exception quotas are met) — so it doubles as a demo of agents doing useful
+non-finance work. Detailed plan: `plans/DEMO_DATA.md`.
+
 ## 7. Security posture (demo vs prod)
 
 Demo: single shared role, simple email login, real controls that matter to the
@@ -211,11 +292,13 @@ approval on money movement, evidence timelines, evals before promote.
 
 | # | Decision | Status |
 |---|---|---|
-| D1 | TypeScript monorepo (web/api/worker) | Proposed |
-| D2 | Postgres-only infra (queue, state) — no Kafka/Redis/Temporal | Proposed |
+| D1 | TypeScript monorepo (web/api/worker) | Agreed (Alec, 2026-10-01) |
+| D2 | Postgres-only infra (queue, state) — no Kafka/Redis/Temporal | Agreed (Alec, 2026-10-01) |
 | D3 | Build order: Framework → P2P → R2R → O2C → PM | Agreed (Alec, 2026-10-01) |
 | D4 | Mini ERP owns the ledger; no external ERP integration | Agreed (Alec, 2026-10-01) |
 | D5 | Single combined user role for demo | Agreed (Alec, 2026-10-01) |
 | D6 | Prod version stubbed, unplanned | Agreed (Alec, 2026-10-01) |
-| D7 | Drizzle + Zod + Fastify + Next.js | Proposed |
-| D8 | Fictional company "Brightline Ltd" (UK, GBP) | Proposed |
+| D7 | Drizzle + Zod + Fastify + Next.js | Agreed (Alec, 2026-10-01) |
+| D8 | Fictional company "Brightline Ltd" (UK, GBP) | Agreed by default (rename welcome) |
+| D9 | Live activity stream (SSE + `activity_event` table) powers all visual feedback | Agreed (Alec, 2026-10-01) |
+| D10 | Demo documents generated once, committed to the repo, served from the container's filesystem — no paid object storage in demo | Agreed (Alec, 2026-10-01) |

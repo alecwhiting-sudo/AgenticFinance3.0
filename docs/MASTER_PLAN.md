@@ -78,12 +78,19 @@ phase ends demo-ready.
 - Agent registry, releases, skills (versioned), work queue, runs, command
   gateway, audit/evidence tables.
 - Agent runtime: Anthropic-SDK loop with typed tools, budgets, run transcripts.
+- **Live experience layer v1** (ARCHITECTURE.md §6a): activity_event + SSE
+  stream, live activity feed, breathing agent cards, live run transcript,
+  demo pacing toggle.
 - Workbench v1: agent roster, agent detail (config, skills, releases), work
-  queue view, run viewer (step-by-step transcript), manual task submission.
+  queue view, run viewer (live step-by-step transcript), manual task
+  submission.
 - Eval harness v1: define test cases per agent, run suite, view pass/fail.
-- One trivial "Hello Finance" agent proving the whole loop end to end.
+- **Demo Data Studio v1** (ARCHITECTURE.md §6b): the Transaction Generator
+  Agent — the first real agent on the framework — generates Brightline's
+  masters and P2P dataset (JSON once via LLM, documents rendered free from
+  templates, committed to the repo). Includes the daily "drip" of fresh items.
 - **Demo moment:** edit a skill in the UI → new version → run evals → promote
-  → watch the agent work an item with the new behaviour.
+  → watch the generator agent work live in the activity feed and transcript.
 
 ### Phase 2 — Mini ERP core + P2P (first real process)
 - ERP core: entities/periods, chart of accounts, GL journal + trial balance,
@@ -93,9 +100,12 @@ phase ends demo-ready.
   (deterministic), **Invoice Exception Agent**, approval workflow, payment
   proposal → human approval → simulated payment, AP subledger posting to GL.
 - Seeded exception scenarios (price variance, qty mismatch, missing receipt,
-  duplicate invoice) so the agent always has interesting work in a demo.
-- **Demo moment:** drop a dummy invoice in → extraction → match exception →
-  agent investigates → human approves resolution → posted and visibly in TB.
+  duplicate invoice) so the agent always has interesting work in a demo —
+  supplied by the Demo Data Studio.
+- **Process flow view** for P2P (the signature live pipeline screen, §6a).
+- **Demo moment:** drop a dummy invoice in → watch it move across the live
+  pipeline → match exception branches to the agent → human approves the
+  resolution → posted and visibly in the trial balance.
 
 ### Phase 3 — R2R
 - Per its own plan (`docs/plans/R2R.md`): period close checklist, recurring
@@ -137,12 +147,17 @@ PM then reuse mature plumbing.
 
 - One fictional company (working name: **Brightline Ltd**, a ~15-person UK
   services/products business), one entity, GBP, monthly periods.
-- Deterministic seed scripts generate 6 months of history: suppliers,
-  customers, POs, invoices (including planted exceptions), bank transactions,
-  budgets — so every demo starts from a rich, consistent state.
-- `pnpm seed:reset` restores the pristine demo state in one command.
-- Dummy documents (invoice PDFs, remittances) generated and stored with the
-  seed so extraction agents have real-looking inputs.
+- The **Transaction Generator Agent** (Demo Data Studio, ARCHITECTURE.md §6b)
+  manufactures 6 months of correlated history for P2P, O2C and R2R — masters,
+  POs, receipts, invoices, contracts, emails, remittances, bank lines — with
+  12–15% planted exceptions, plus a daily drip of fresh items so queues never
+  look dead in a demo.
+- **Cost control:** LLM generates structured JSON once per dataset (tens of
+  cheap batched calls, single-digit £); documents are rendered from templates
+  deterministically for free; artefacts are committed to the repo and served
+  from the container's filesystem — no object-storage or egress costs.
+- `pnpm seed:reset` restores the pristine demo state in one command without
+  re-invoking the LLM.
 
 ## 7. Per-process plans
 
@@ -162,11 +177,13 @@ script, out of scope.
 - Alec can add a new exception scenario via seed data without code changes to
   the framework.
 
-## 9. Open questions (answer before Phase 0)
+## 9. Resolved questions
 
-1. Confirm stack: TypeScript monorepo (Next.js workbench + Node platform
-   worker) — see ARCHITECTURE.md §2. *(Recommended; say "yes" or state a
-   preference for Python.)*
-2. Fictional company: keep "Brightline Ltd / UK / GBP" or substitute something
-   closer to your real business so the demo doubles as a rehearsal?
-3. Any client-demo deadline that should shape phase ordering?
+1. Stack: TypeScript monorepo confirmed (Alec, 2026-10-01).
+2. Fictional company: Brightline Ltd / UK / GBP by default; Alec can rename at
+   any point before Phase 1 seeds are generated.
+3. No client-demo deadline given; phases stay as ordered.
+4. Visual feedback is a core requirement (ARCHITECTURE.md §6a) — tasteful,
+   minimal, impactful; built into Phase 1 and every process phase.
+5. Demo documents live in the repo and are served from the container's disk —
+   no paid object storage for the demo (ARCHITECTURE.md §6b, D10).
