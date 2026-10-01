@@ -1,0 +1,195 @@
+import Link from "next/link";
+import { getJson } from "@/lib/api";
+import { Badge, Card, SectionTitle, toneForStatus } from "@/components/ui";
+import {
+  DraftReleaseButton,
+  LatestSkillVersions,
+  PromoteButton,
+  RunEvalsButton,
+  SkillEditor,
+} from "@/components/agentActions";
+
+type Detail = {
+  agent: { id: string; slug: string; name: string; purpose: string; owner: string; status: string };
+  releases: {
+    id: string;
+    version: number;
+    status: string;
+    modelProfile: string;
+    maxModelCalls: number;
+    maxCostMinor: number;
+    commandPermissions: string[];
+    instructions: string;
+    createdBy: string;
+    promotedBy: string | null;
+    promotedAt: string | null;
+    notes: string | null;
+  }[];
+  skills: { id: string; slug: string; name: string; description: string }[];
+  skillVersions: { id: string; skillId: string; version: number; instructions: string }[];
+  evalCases: { id: string; name: string }[];
+  evalRuns: {
+    id: string;
+    status: string;
+    passed: number;
+    failed: number;
+    startedAt: string;
+    results: { name?: string; passed?: boolean; failures?: string[]; runId?: string }[];
+  }[];
+  recentRuns: { id: string; outcome: string | null; resultSummary: string | null; startedAt: string; modelCalls: number }[];
+};
+
+export default async function AgentDetail({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const d = await getJson<Detail>(`/agents/${slug}`);
+  if (!d) return <main>Agent not found.</main>;
+
+  const active = d.releases.find((r) => r.status === "active");
+  const latestVersionPerSkill = d.skills.map(
+    (s) => d.skillVersions.filter((v) => v.skillId === s.id).sort((a, b) => b.version - a.version)[0],
+  );
+
+  return (
+    <main className="space-y-6">
+      <LatestSkillVersions ids={latestVersionPerSkill.filter(Boolean).map((v) => v!.id)} />
+      <section className="flex items-start justify-between">
+        <div>
+          <h2 className="text-2xl font-semibold tracking-tight">{d.agent.name}</h2>
+          <p className="mt-1 max-w-2xl text-sm" style={{ color: "var(--muted)" }}>
+            {d.agent.purpose}
+          </p>
+        </div>
+        <Badge tone={toneForStatus(d.agent.status)}>{d.agent.status}</Badge>
+      </section>
+
+      <section className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <SectionTitle>Skills (edit → saves a new version)</SectionTitle>
+          <div className="space-y-5">
+            {d.skills.map((s) => {
+              const latest = d.skillVersions
+                .filter((v) => v.skillId === s.id)
+                .sort((a, b) => b.version - a.version)[0];
+              return (
+                <div key={s.id}>
+                  <div className="mb-1 flex items-center justify-between">
+                    <span className="text-sm font-medium">{s.name}</span>
+                    <span className="text-xs" style={{ color: "var(--muted)" }}>
+                      latest v{latest?.version ?? "—"}
+                    </span>
+                  </div>
+                  <SkillEditor
+                    skillSlug={s.slug}
+                    skillName={s.name}
+                    latestInstructions={latest?.instructions ?? ""}
+                  />
+                </div>
+              );
+            })}
+            {d.skills.length === 0 && (
+              <p className="text-sm" style={{ color: "var(--muted)" }}>No skills attached.</p>
+            )}
+          </div>
+        </Card>
+
+        <Card>
+          <div className="mb-3 flex items-center justify-between">
+            <SectionTitle>Releases</SectionTitle>
+            {active && (
+              <DraftReleaseButton
+                agentSlug={d.agent.slug}
+                base={{
+                  instructions: active.instructions,
+                  commandPermissions: active.commandPermissions,
+                  modelProfile: active.modelProfile,
+                  maxModelCalls: active.maxModelCalls,
+                  maxCostMinor: active.maxCostMinor,
+                }}
+              />
+            )}
+          </div>
+          <ul className="space-y-3">
+            {d.releases.map((r) => (
+              <li key={r.id} className="flex items-center justify-between rounded-lg border p-3" style={{ borderColor: "var(--border)" }}>
+                <div>
+                  <div className="text-sm font-medium">
+                    v{r.version} <Badge tone={toneForStatus(r.status)}>{r.status}</Badge>
+                  </div>
+                  <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>
+                    model {r.modelProfile} · ≤{r.maxModelCalls} calls · permissions: {r.commandPermissions.join(", ") || "none"}
+                    {r.promotedBy ? ` · promoted by ${r.promotedBy}` : ` · by ${r.createdBy}`}
+                  </div>
+                </div>
+                {(r.status === "draft" || r.status === "evaluated") && (
+                  <PromoteButton agentSlug={d.agent.slug} version={r.version} />
+                )}
+              </li>
+            ))}
+          </ul>
+        </Card>
+      </section>
+
+      <section className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <div className="mb-3 flex items-center justify-between">
+            <SectionTitle>Evals ({d.evalCases.length} cases)</SectionTitle>
+            <RunEvalsButton agentSlug={d.agent.slug} />
+          </div>
+          <ul className="space-y-3">
+            {d.evalRuns.map((er) => (
+              <li key={er.id} className="rounded-lg border p-3" style={{ borderColor: "var(--border)" }}>
+                <div className="flex items-center justify-between text-sm">
+                  <span>
+                    <Badge tone={toneForStatus(er.status)}>{er.status}</Badge>{" "}
+                    <span className="tabular-nums">{er.passed} passed / {er.failed} failed</span>
+                  </span>
+                  <span className="text-xs" style={{ color: "var(--muted)" }}>
+                    {new Date(er.startedAt).toLocaleString()}
+                  </span>
+                </div>
+                <ul className="mt-2 space-y-1 text-xs" style={{ color: "var(--muted)" }}>
+                  {er.results.map((r, i) => (
+                    <li key={i}>
+                      {r.passed ? "✓" : "✗"}{" "}
+                      {r.runId ? (
+                        <Link href={`/runs/${r.runId}`} className="hover:underline">{r.name}</Link>
+                      ) : (
+                        r.name
+                      )}
+                      {!r.passed && r.failures?.length ? ` — ${r.failures.join("; ")}` : ""}
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            ))}
+            {d.evalRuns.length === 0 && (
+              <p className="text-sm" style={{ color: "var(--muted)" }}>No eval runs yet.</p>
+            )}
+          </ul>
+        </Card>
+
+        <Card>
+          <SectionTitle>Recent runs</SectionTitle>
+          <ul className="space-y-2">
+            {d.recentRuns.map((r) => (
+              <li key={r.id} className="text-sm">
+                <Link href={`/runs/${r.id}`} className="hover:underline">
+                  <Badge tone={toneForStatus(r.outcome ?? "running")}>{r.outcome ?? "running"}</Badge>{" "}
+                  <span className="text-xs" style={{ color: "var(--muted)" }}>
+                    {new Date(r.startedAt).toLocaleString()} · {r.modelCalls} model calls
+                  </span>
+                  <div className="truncate text-xs" style={{ color: "var(--muted)" }}>
+                    {r.resultSummary ?? "…"}
+                  </div>
+                </Link>
+              </li>
+            ))}
+            {d.recentRuns.length === 0 && (
+              <p className="text-sm" style={{ color: "var(--muted)" }}>No runs yet.</p>
+            )}
+          </ul>
+        </Card>
+      </section>
+    </main>
+  );
+}

@@ -1,24 +1,14 @@
 /**
- * Agent worker skeleton. In Phase 1 this process claims work items from the
- * agent.work_item queue and runs agent loops. For Phase 0 it proves the
- * deploy shape: connects to the database, exposes /health for Railway, and
- * heartbeats so it is visible in logs.
+ * Agent worker: claims work items from the agent.work_item queue and runs
+ * agent loops (ARCHITECTURE.md §1, §4). Exposes /health for Railway.
  */
 import Fastify from "fastify";
-import pg from "pg";
-import { createDb } from "@af/db";
 import type { Health } from "@af/shared";
+import { pool } from "./lib/db.js";
+import { startProcessor } from "./runtime/processor.js";
 
-const VERSION = "0.1.0";
+const VERSION = "0.2.0";
 const SERVICE = "worker";
-const HEARTBEAT_MS = 30_000;
-
-let pool: pg.Pool | null = null;
-try {
-  ({ pool } = createDb());
-} catch {
-  // run degraded; /health reports it
-}
 
 async function dbOk(): Promise<boolean> {
   if (!pool) return false;
@@ -43,10 +33,9 @@ app.get("/health", async (): Promise<Health> => {
   };
 });
 
-setInterval(async () => {
-  app.log.info({ db: (await dbOk()) ? "ok" : "unavailable" }, "heartbeat");
-}, HEARTBEAT_MS);
-
 const port = Number(process.env.PORT ?? 3002);
 await app.listen({ port, host: "0.0.0.0" });
-app.log.info("worker up — queue processing arrives in Phase 1");
+startProcessor((msg) => app.log.info(msg));
+app.log.info(
+  `worker up — model ${process.env.ANTHROPIC_API_KEY ? "enabled" : "DISABLED (no ANTHROPIC_API_KEY; deterministic handlers only)"}`,
+);

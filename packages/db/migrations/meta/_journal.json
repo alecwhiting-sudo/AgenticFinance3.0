@@ -8,6 +8,13 @@
       "when": 1790882579116,
       "tag": "0000_spooky_hulk",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790885100780,
+      "tag": "0001_simple_vulture",
+      "breakpoints": true
     }
   ]
 }

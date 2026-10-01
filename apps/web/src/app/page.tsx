@@ -1,52 +1,26 @@
+import Link from "next/link";
 import type { CompanyOverview, Health } from "@af/shared";
+import { getJson } from "@/lib/api";
+import { Card, SectionTitle, Stat } from "@/components/ui";
+import LiveFeed from "@/components/LiveFeed";
 
-const API_URL = process.env.API_URL ?? "http://localhost:3001";
-
-async function getJson<T>(path: string): Promise<T | null> {
-  try {
-    const res = await fetch(`${API_URL}${path}`, { cache: "no-store" });
-    if (!res.ok) return null;
-    return (await res.json()) as T;
-  } catch {
-    return null;
-  }
-}
-
-function Card({
-  label,
-  value,
-  hint,
-}: {
-  label: string;
-  value: string | number;
-  hint?: string;
-}) {
-  return (
-    <div
-      className="rounded-xl border p-5"
-      style={{ background: "var(--card)", borderColor: "var(--border)" }}
-    >
-      <div className="text-xs uppercase tracking-wide" style={{ color: "var(--muted)" }}>
-        {label}
-      </div>
-      <div className="mt-1 text-2xl font-semibold tabular-nums">{value}</div>
-      {hint && (
-        <div className="mt-1 text-xs" style={{ color: "var(--muted)" }}>
-          {hint}
-        </div>
-      )}
-    </div>
-  );
-}
+type AgentRow = {
+  slug: string;
+  name: string;
+  purpose: string;
+  status: string;
+  activeRelease: { version: number } | null;
+  totalRuns: number;
+  openWorkItems: number;
+};
 
 export default async function Dashboard() {
-  const [health, overview] = await Promise.all([
+  const [health, overview, agents] = await Promise.all([
     getJson<Health>("/health"),
     getJson<CompanyOverview>("/company/overview"),
+    getJson<AgentRow[]>("/agents"),
   ]);
-
-  const apiUp = health !== null;
-  const dbUp = health?.db === "ok";
+  const openItems = (agents ?? []).reduce((n, a) => n + a.openWorkItems, 0);
 
   return (
     <main className="space-y-8">
@@ -64,31 +38,53 @@ export default async function Dashboard() {
       </section>
 
       <section className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <Card label="Accounts" value={overview?.counts.accounts ?? "—"} />
-        <Card label="Suppliers" value={overview?.counts.suppliers ?? "—"} />
-        <Card label="Customers" value={overview?.counts.customers ?? "—"} />
-        <Card label="Items" value={overview?.counts.items ?? "—"} />
+        <Stat label="Agents" value={agents?.length ?? "—"} />
+        <Stat label="Open work items" value={openItems} />
+        <Stat label="API" value={health ? "up" : "down"} hint={health ? `v${health.version}` : "unreachable"} />
+        <Stat label="Database" value={health?.db === "ok" ? "up" : "down"} />
+      </section>
+
+      <section className="grid gap-4 md:grid-cols-5">
+        <Card className="md:col-span-3">
+          <SectionTitle>Live activity</SectionTitle>
+          <LiveFeed />
+        </Card>
+        <Card className="md:col-span-2">
+          <SectionTitle>Agent roster</SectionTitle>
+          <ul className="space-y-3">
+            {(agents ?? []).map((a) => (
+              <li key={a.slug}>
+                <Link href={`/agents/${a.slug}`} className="block rounded-lg p-2 -m-2 hover:bg-black/5 dark:hover:bg-white/5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">{a.name}</span>
+                    <span
+                      className="inline-block h-2.5 w-2.5 rounded-full"
+                      style={{
+                        background: a.openWorkItems > 0 ? "var(--accent)" : "var(--border)",
+                        animation: a.openWorkItems > 0 ? "breathe 2s ease-in-out infinite" : undefined,
+                      }}
+                    />
+                  </div>
+                  <div className="text-xs" style={{ color: "var(--muted)" }}>
+                    {a.activeRelease ? `release v${a.activeRelease.version}` : "no active release"} ·{" "}
+                    {a.totalRuns} runs · {a.openWorkItems} open
+                  </div>
+                </Link>
+              </li>
+            ))}
+            {(agents ?? []).length === 0 && (
+              <li className="text-sm" style={{ color: "var(--muted)" }}>No agents registered.</li>
+            )}
+          </ul>
+        </Card>
       </section>
 
       <section className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <Card label="Agents" value={0} hint="roster arrives in Phase 1" />
-        <Card label="Open work items" value={0} hint="queue arrives in Phase 1" />
-        <Card
-          label="API"
-          value={apiUp ? "up" : "down"}
-          hint={apiUp ? `v${health!.version}` : "unreachable"}
-        />
-        <Card
-          label="Database"
-          value={dbUp ? "up" : "down"}
-          hint={dbUp ? "postgres" : "unavailable"}
-        />
+        <Stat label="Accounts" value={overview?.counts.accounts ?? "—"} />
+        <Stat label="Suppliers" value={overview?.counts.suppliers ?? "—"} />
+        <Stat label="Customers" value={overview?.counts.customers ?? "—"} />
+        <Stat label="Items" value={overview?.counts.items ?? "—"} />
       </section>
-
-      <footer className="pt-4 text-xs" style={{ color: "var(--muted)" }}>
-        Phase 0 skeleton — the live activity feed, agent roster and process
-        views land in Phase 1.
-      </footer>
     </main>
   );
 }

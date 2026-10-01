@@ -1,30 +1,30 @@
 import cors from "@fastify/cors";
 import Fastify from "fastify";
 import { count, eq } from "drizzle-orm";
-import {
-  account,
-  createDb,
-  customer,
-  item,
-  supplier,
-  type Db,
-} from "@af/db";
+import { account, customer, item, supplier } from "@af/db";
 import type { CompanyOverview, Health } from "@af/shared";
-import pg from "pg";
+import { ZodError } from "zod";
+import { db, pool } from "./lib/db.js";
+import { agentRoutes } from "./routes/agents.js";
+import { workRoutes } from "./routes/work.js";
+import { commandRoutes } from "./routes/commands.js";
+import { activityRoutes } from "./routes/activity.js";
 
-const VERSION = "0.1.0";
+const VERSION = "0.2.0";
 const SERVICE = "api";
-
-let db: Db | null = null;
-let pool: pg.Pool | null = null;
-try {
-  ({ db, pool } = createDb());
-} catch {
-  // Boot without a database so healthchecks still answer; /health says degraded.
-}
 
 const app = Fastify({ logger: { level: process.env.LOG_LEVEL ?? "info" } });
 await app.register(cors, { origin: true });
+
+app.setErrorHandler((err: unknown, _req, reply) => {
+  if (err instanceof ZodError) {
+    return reply.code(400).send({ error: "validation failed", issues: err.issues });
+  }
+  const status = (err as { statusCode?: number }).statusCode ?? 500;
+  app.log.error(err);
+  const message = err instanceof Error ? err.message : "internal error";
+  return reply.code(status).send({ error: message });
+});
 
 async function dbOk(): Promise<boolean> {
   if (!pool) return false;
@@ -58,8 +58,9 @@ app.get("/company/overview", async (_req, reply) => {
       and(eq(p.companyId, co.id), lte(p.startDate, today), gte(p.endDate, today)),
   });
 
-  const countOf = async (table: typeof account | typeof supplier | typeof customer | typeof item) =>
-    (await db!.select({ n: count() }).from(table))[0]?.n ?? 0;
+  const countOf = async (
+    table: typeof account | typeof supplier | typeof customer | typeof item,
+  ) => (await db!.select({ n: count() }).from(table))[0]?.n ?? 0;
 
   const overview: CompanyOverview = {
     company: { code: co.code, name: co.name, currency: co.currency },
@@ -73,6 +74,11 @@ app.get("/company/overview", async (_req, reply) => {
   };
   return overview;
 });
+
+agentRoutes(app);
+workRoutes(app);
+commandRoutes(app);
+activityRoutes(app);
 
 const port = Number(process.env.PORT ?? 3001);
 await app.listen({ port, host: "0.0.0.0" });

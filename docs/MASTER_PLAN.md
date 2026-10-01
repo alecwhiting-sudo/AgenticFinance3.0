@@ -76,7 +76,11 @@ is a one-time manual step — see README "Deploying to Railway".)*
 - Deploy skeleton services to Railway via CLI (web + platform + Postgres).
 - **Demo moment:** app loads, shows the company, empty queues, healthchecks.
 
-### Phase 1 — Agent framework + workbench core
+### Phase 1 — Agent framework + workbench core 🔶 core built 2026-10-01
+*(Registry, skills/releases, queue, runs, command gateway, SSE activity feed,
+run viewer, eval harness and the Hello Finance proof agent are built and
+verified. Remaining: Demo Data Studio v1 and live-LLM verification once an
+ANTHROPIC_API_KEY is configured.)*
 - Agent registry, releases, skills (versioned), work queue, runs, command
   gateway, audit/evidence tables.
 - Agent runtime: Anthropic-SDK loop with typed tools, budgets, run transcripts.

@@ -1,10 +1,18 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "AgenticFinance",
   description: "Agentic finance workbench",
 };
+
+const nav = [
+  { href: "/", label: "Dashboard" },
+  { href: "/agents", label: "Agents" },
+  { href: "/work", label: "Work" },
+  { href: "/approvals", label: "Approvals" },
+];
 
 export default function RootLayout({
   children,
@@ -14,11 +22,25 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        <div className="mx-auto max-w-5xl px-4 py-10">
-          <header className="mb-10 flex items-baseline justify-between">
-            <h1 className="text-lg font-semibold tracking-tight">
-              AgenticFinance
-            </h1>
+        <div className="mx-auto max-w-5xl px-4 py-8">
+          <header className="mb-8 flex items-baseline justify-between">
+            <div className="flex items-baseline gap-8">
+              <Link href="/" className="text-lg font-semibold tracking-tight">
+                AgenticFinance
+              </Link>
+              <nav className="flex gap-5 text-sm">
+                {nav.map((n) => (
+                  <Link
+                    key={n.href}
+                    href={n.href}
+                    className="hover:underline"
+                    style={{ color: "var(--muted)" }}
+                  >
+                    {n.label}
+                  </Link>
+                ))}
+              </nav>
+            </div>
             <span className="text-xs" style={{ color: "var(--muted)" }}>
               workbench · demo
             </span>
