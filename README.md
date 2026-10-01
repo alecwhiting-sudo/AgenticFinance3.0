@@ -1,59 +1,68 @@
 # AgenticFinance 3.0
 
-A modern, agentic finance function — a workspace for running AI agents that handle
-real finance workflows (close, reporting, AP/AR, forecasting, analysis) for a small
-business, and a sandbox for exploring agentic coding patterns in finance.
+An agentic finance function for a small business — AI agents running finance
+processes (P2P, R2R, O2C, performance management) on a mini ERP/EPM, with a
+workbench to manage, monitor, test and evolve the agents. Demo-first; a
+production version follows once the business is ready.
 
-## How this repo is organised
-
-```
-agents/           One directory per agent. Each agent is an independently
-                  deployable Railway service with its own Dockerfile and
-                  railway.json.
-  example-agent/  A minimal working agent to copy as a template.
-shared/           Code shared across agents (clients, schemas, utilities).
-docs/             Architecture and design docs. The architecture doc lives here.
-scripts/          Operational scripts (deploy, local dev helpers).
-```
-
-## Principles
-
-- **One agent, one service.** Each agent deploys as its own Railway service so
-  it can be scaled, scheduled, and rolled back independently.
-- **Agents are boring web services.** Every agent exposes a small HTTP surface
-  (`/health`, `/run`) so Railway, cron triggers, and other agents can invoke it.
-- **The intelligence lives in the agent loop**, built on the Anthropic API —
-  tools, structured outputs, and human-in-the-loop checkpoints where money moves.
-- **Humans approve irreversible actions.** Agents draft, reconcile, and propose;
-  payments and filings require explicit approval.
-
-## Deploying to Railway
-
-Deployment is done with the [Railway CLI](https://docs.railway.com/guides/cli):
-
-```bash
-railway login                  # once
-cd agents/example-agent
-railway link                   # link this directory to its Railway service
-railway up                     # build & deploy
-```
-
-Or use the helper: `scripts/deploy.sh <agent-name>`.
-
-Each agent reads its configuration from environment variables (set via
-`railway variables` or the Railway dashboard). See `.env.example` for the
-common set.
-
-## Local development
-
-```bash
-cd agents/example-agent
-pip install -e .
-cp ../../.env.example .env     # fill in values
-uvicorn example_agent.main:app --reload
-```
+**Plans and design:** `docs/MASTER_PLAN.md` · `docs/ARCHITECTURE.md` ·
+`docs/plans/` · research basis in `docs/research/`.
 
 ## Status
 
-Scaffold stage. The architecture doc (to be added under `docs/`) will drive the
-real agent roster and the shared infrastructure.
+**Phase 0 complete** — monorepo skeleton, Postgres schema + migrations,
+Brightline Ltd seed data, three deployable services, Railway configs.
+Next: Phase 1 (agent framework + workbench core + live activity stream +
+Demo Data Studio).
+
+## Structure
+
+| Path | What |
+|---|---|
+| `apps/web` | Next.js workbench (port 3000) |
+| `apps/api` | Fastify platform API — finance services, command gateway (3001) |
+| `apps/worker` | Agent runtime — queue claiming, agent loops (3002) |
+| `packages/shared` | Zod schemas/types shared across apps |
+| `packages/db` | Drizzle schema, migrations, seeds (`seed/brightline.json`) |
+| `docs` | Master plan, architecture, per-process plans, research |
+
+## Quick start (local)
+
+```bash
+pnpm install
+createdb agenticfinance            # or any Postgres you have
+export DATABASE_URL=postgresql://user:pass@localhost:5432/agenticfinance
+pnpm db:migrate && pnpm db:seed    # pnpm seed:reset → pristine demo state
+pnpm dev:api & pnpm dev:worker & API_URL=http://localhost:3001 pnpm dev:web
+```
+
+Open http://localhost:3000 — the dashboard shows Brightline Ltd, master-data
+counts, the current period, and service health.
+
+## Deploying to Railway
+
+One Railway project, four services: `web`, `api`, `worker`, and the Postgres
+plugin. Each app service builds from the **repo root** using its own
+Dockerfile (`apps/<name>/Dockerfile`; settings in `apps/<name>/railway.json`).
+
+One-time setup:
+
+```bash
+railway login
+railway init                       # create the project
+railway add --database postgres    # Postgres plugin
+# create the three services (repeat per service):
+railway add --service api          # then set in the dashboard or via CLI:
+#   - config file path: apps/api/railway.json
+#   - env: DATABASE_URL=${{Postgres.DATABASE_URL}}
+#   - web also needs API_URL=<api service internal/public URL>
+```
+
+Deploys:
+
+```bash
+scripts/deploy.sh api      # railway up with the right service linked
+scripts/deploy.sh worker
+scripts/deploy.sh web
+railway run pnpm db:migrate && railway run pnpm db:seed   # once per DB
+```

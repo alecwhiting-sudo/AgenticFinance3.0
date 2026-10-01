@@ -28,3 +28,11 @@ htmlcov/
 
 # Railway
 .railway/
+
+# JS/TS
+node_modules/
+.next/
+*.tsbuildinfo
+dist/
+.turbo/
+.sandbox-ca.crt

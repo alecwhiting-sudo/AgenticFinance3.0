@@ -1,47 +1,68 @@
 # CLAUDE.md — project conventions
 
-> **NOTE (2026-10-01):** The design has moved on from the layout below. The
-> agreed target is a TypeScript monorepo (web / api / worker) per
-> `docs/ARCHITECTURE.md` and `docs/MASTER_PLAN.md` — read those first. The
-> Python per-agent layout described here is the placeholder scaffold and is
-> replaced in Phase 0, when this file gets rewritten.
-
 ## What this repo is
 
-An agentic finance function: AI agents that perform finance workflows for a small
-business. Agents are Python services deployed to Railway (one Railway service per
-agent), invoked over HTTP or on a schedule.
+An agentic finance function for a small business: a mini ERP/EPM on PostgreSQL,
+an agent framework (registry, versioned skills/releases, work queue, command
+gateway, evals), and a workbench front end — demo-first, production later.
+**Source of truth:** `docs/MASTER_PLAN.md` (phases, scope) and
+`docs/ARCHITECTURE.md` (design, decisions D1–D10). Read both before structural
+changes. Per-process plans live in `docs/plans/`.
 
 ## Layout
 
-- `agents/<name>/` — one deployable agent per directory. Each has:
-  - `pyproject.toml` (package name matches the directory, underscored)
-  - `src/<package>/main.py` — FastAPI app exposing `/health` and `/run`
-  - `src/<package>/agent.py` — the agent loop (Anthropic API)
-  - `Dockerfile` + `railway.json` — Railway deployment
-  - `README.md` — what the agent does, its inputs/outputs, required env vars
-- `shared/` — cross-agent code. Keep it dependency-light; agents vendor it via
-  path dependency or copy until it stabilises.
-- `docs/` — architecture and design docs. **Read `docs/` before structural
-  changes**; the architecture doc there is the source of truth once added.
-- `scripts/deploy.sh <agent>` — wraps `railway up` for a given agent.
+pnpm workspace monorepo, TypeScript throughout (Node 22, ESM):
+
+- `apps/web` — Next.js workbench (Tailwind v4; design: minimal, one accent
+  colour, CSS variables in `globals.css` for light/dark).
+- `apps/api` — Fastify platform API. Owns all business logic: finance
+  services, command gateway, registries. **The only writer to ERP tables.**
+- `apps/worker` — agent runtime. Claims work items, runs agent loops
+  (Anthropic SDK), proposes typed commands to the API — never writes ERP
+  tables directly.
+- `packages/shared` — Zod schemas and types shared by all apps.
+- `packages/db` — Drizzle schema (`src/schema.ts`, Postgres schemas `core`,
+  `erp`, later `epm`/`agent`/`evidence`), migrations, seeds. Seed data in
+  `seed/` is committed JSON/documents; seeding never calls an LLM.
+- `scripts/deploy.sh <web|api|worker>` — Railway deploy wrapper.
 
 ## Conventions
 
-- Python ≥ 3.11, FastAPI, `anthropic` SDK. Format with the repo defaults
-  (ruff, if configured).
-- New agent = copy `agents/example-agent`, rename package, update README and
-  `railway.json`.
-- Secrets and config come from environment variables only — never commit keys.
-  Document every required variable in the agent's README and `.env.example`.
-- Default model comes from the `ANTHROPIC_MODEL` env var; don't hardcode model
-  IDs in agent logic.
-- Finance safety rule: any action that moves money, files with an authority, or
-  sends external communications must go through an explicit human-approval
-  checkpoint. Agents propose; humans approve.
+- Strict TypeScript; `pnpm -r typecheck && pnpm -r build` must pass before
+  commit/push.
+- Money: integer minor units (pence) or `numeric`; never floats.
+- Journal rules (from Phase 2): append-only once posted; reversals, not edits;
+  every journal has a `source_type`/`source_id`.
+- Schema changes: edit `packages/db/src/schema.ts` → `pnpm db:generate` →
+  commit the generated migration → `pnpm db:migrate`. Never edit applied
+  migrations. Keep all table definitions in that single file (drizzle-kit
+  can't follow cross-file ESM imports).
+- New API surface: define the Zod schema in `packages/shared` first; web and
+  worker consume the inferred types.
+- Secrets/config via env vars only (`.env.example` documents them). Model from
+  `ANTHROPIC_MODEL*` env vars; never hardcode model IDs.
+- Finance safety rule: anything that moves money, posts material journals, or
+  sends external communications requires an explicit human-approval checkpoint
+  through the command gateway. Agents propose; humans approve.
+- Agent behaviour changes (instructions, skills, tools, model) always create a
+  new release; nothing mutates an active release.
+
+## Local development
+
+```bash
+pnpm install
+export DATABASE_URL=postgresql://af:af@localhost:5432/agenticfinance
+pnpm db:migrate && pnpm db:seed   # seed:reset for a pristine state
+pnpm dev:api      # :3001
+pnpm dev:worker   # :3002
+pnpm dev:web      # :3000 (set API_URL=http://localhost:3001)
+```
 
 ## Deployment
 
-Railway CLI only (`railway login`, `railway link`, `railway up`), from inside
-the agent's directory. `railway.json` controls build/start. Don't introduce
+Railway CLI only: three services (web, api, worker) + Postgres plugin in one
+Railway project. Each service builds from the **repo root** with its
+`apps/<name>/Dockerfile` (config in `apps/<name>/railway.json`); deploy with
+`scripts/deploy.sh <name>` or `railway up` from the repo root with the service
+linked. Run migrations via `railway run pnpm db:migrate`. Don't introduce
 other deploy mechanisms without updating the architecture doc.

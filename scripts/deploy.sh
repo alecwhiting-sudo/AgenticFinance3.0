@@ -1,23 +1,16 @@
 #!/usr/bin/env bash
-# Deploy an agent to Railway: scripts/deploy.sh <agent-name>
-# Assumes `railway login` has been done and the agent directory has been
-# linked to its Railway service with `railway link`.
+# Deploy a service to Railway: scripts/deploy.sh <web|api|worker>
+# Requires `railway login` (or RAILWAY_TOKEN) and the project linked
+# (`railway link`) at the repo root. Builds use apps/<name>/Dockerfile from
+# the repo root, per apps/<name>/railway.json.
 set -euo pipefail
 
-if [[ $# -ne 1 ]]; then
-  echo "usage: $0 <agent-name>" >&2
-  echo "agents:" >&2
-  ls "$(dirname "$0")/../agents" >&2
+if [[ $# -ne 1 ]] || [[ ! -d "$(dirname "$0")/../apps/$1" ]]; then
+  echo "usage: $0 <web|api|worker>" >&2
   exit 1
 fi
 
-AGENT_DIR="$(cd "$(dirname "$0")/../agents/$1" && pwd)"
-
-if [[ ! -f "$AGENT_DIR/railway.json" ]]; then
-  echo "error: $AGENT_DIR has no railway.json" >&2
-  exit 1
-fi
-
-cd "$AGENT_DIR"
-echo "Deploying $1 from $AGENT_DIR ..."
-railway up
+cd "$(dirname "$0")/.."
+echo "Deploying $1 ..."
+railway up --service "$1" --path-as-root . --config "apps/$1/railway.json" 2>/dev/null \
+  || railway up --service "$1"

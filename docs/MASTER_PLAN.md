@@ -67,7 +67,9 @@ These are the non-negotiables we keep even at demo scale:
 Phases are sequential; milestones within a phase are the "small steps". Each
 phase ends demo-ready.
 
-### Phase 0 — Repo restructure and foundations
+### Phase 0 — Repo restructure and foundations ✅ built 2026-10-01
+*(Code complete and verified locally; Railway project creation + first deploy
+is a one-time manual step — see README "Deploying to Railway".)*
 - Restructure repo to the target layout (see ARCHITECTURE.md §8).
 - PostgreSQL on Railway; migrations tooling; seed-data framework for the
   fictional company (name, chart of accounts, suppliers, customers, items).
