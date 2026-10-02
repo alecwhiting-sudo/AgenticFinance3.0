@@ -19,17 +19,31 @@ type Invoice = {
 };
 
 const STAGES = ["all", "captured", "matched", "exception", "approved", "posted", "scheduled", "paid", "rejected"];
+const FORMATS = [
+  { key: "all", label: "any format" },
+  { key: "text_pdf", label: "pdf" },
+  { key: "scan_pdf", label: "scanned" },
+  { key: "ubl_xml", label: "e-invoice" },
+];
 
 export default async function InvoicesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; format?: string }>;
 }) {
-  const { status } = await searchParams;
+  const { status, format } = await searchParams;
   const filter = status && status !== "all" ? status : undefined;
+  const formatFilter = format && format !== "all" ? format : undefined;
   const invoices = await getJson<Invoice[]>(
-    `/p2p/invoices?limit=100${filter ? `&status=${filter}` : ""}`,
+    `/p2p/invoices?limit=100${filter ? `&status=${filter}` : ""}${formatFilter ? `&format=${formatFilter}` : ""}`,
   );
+  const href = (s?: string, f?: string) => {
+    const params = new URLSearchParams();
+    if (s && s !== "all") params.set("status", s);
+    if (f && f !== "all") params.set("format", f);
+    const q = params.toString();
+    return q ? `/p2p/invoices?${q}` : "/p2p/invoices";
+  };
 
   return (
     <main className="space-y-5">
@@ -41,7 +55,7 @@ export default async function InvoicesPage({
         {STAGES.map((s) => (
           <Link
             key={s}
-            href={s === "all" ? "/p2p/invoices" : `/p2p/invoices?status=${s}`}
+            href={href(s, formatFilter)}
             className="rounded-full border px-3 py-1 text-xs"
             style={{
               borderColor: "var(--border)",
@@ -50,6 +64,22 @@ export default async function InvoicesPage({
             }}
           >
             {s}
+          </Link>
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {FORMATS.map((f) => (
+          <Link
+            key={f.key}
+            href={href(filter, f.key)}
+            className="rounded-full border px-3 py-1 text-xs"
+            style={{
+              borderColor: "var(--border)",
+              background: (f.key === "all" && !formatFilter) || f.key === formatFilter ? "var(--card)" : "transparent",
+              color: (f.key === "all" && !formatFilter) || f.key === formatFilter ? "var(--foreground)" : "var(--muted)",
+            }}
+          >
+            {f.label}
           </Link>
         ))}
       </div>

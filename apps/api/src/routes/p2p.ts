@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import { count, desc, eq, sql } from "drizzle-orm";
+import { and, count, desc, eq, sql } from "drizzle-orm";
 import { apInvoice, apPayment, purchase, supplier, journal, journalLine, caseEvent } from "@af/db";
 import { requireDb } from "../lib/db.js";
 import { decidePurchase } from "../services/purchaseIntake.js";
@@ -42,12 +42,14 @@ export function p2pRoutes(app: FastifyInstance): void {
     return rows.map((p) => ({ ...p, supplierName: byId.get(p.supplierId) ?? "?" }));
   });
 
-  app.get<{ Querystring: { status?: string; limit?: string } }>("/p2p/invoices", async (req) => {
+  app.get<{ Querystring: { status?: string; format?: string; limit?: string } }>("/p2p/invoices", async (req) => {
     const db = requireDb();
+    const conds = [
+      req.query.status ? eq(apInvoice.status, req.query.status as typeof apInvoice.$inferSelect.status) : null,
+      req.query.format ? eq(apInvoice.format, req.query.format) : null,
+    ].filter((c) => c !== null);
     const rows = await db.query.apInvoice.findMany({
-      where: req.query.status
-        ? (t) => eq(t.status, req.query.status as typeof apInvoice.$inferSelect.status)
-        : undefined,
+      where: conds.length ? and(...conds) : undefined,
       orderBy: (t) => desc(t.invoiceDate),
       limit: Math.min(Number(req.query.limit ?? 50), 200),
     });
