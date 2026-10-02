@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import DripButton from "@/components/DripButton";
-import { PUBLIC_API_URL } from "@/lib/api";
 import AdminData from "@/components/AdminData";
 import { Card, SectionTitle } from "@/components/ui";
 
@@ -23,14 +23,9 @@ export default function AdminPage() {
         <p className="text-sm" style={{ color: "var(--muted)" }}>
           The living system diagram and schema map, maintained alongside the
           architecture doc —{" "}
-          <a
-            href={`${PUBLIC_API_URL}/docs/architecture.html`}
-            target="_blank"
-            className="hover:underline"
-            style={{ color: "var(--accent)" }}
-          >
-            open the diagram ↗
-          </a>
+          <Link href="/admin/architecture" className="hover:underline" style={{ color: "var(--accent)" }}>
+            view the diagram →
+          </Link>
         </p>
       </Card>
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getJson } from "@/lib/api";
 import { Badge, Card, toneForStatus } from "@/components/ui";
+import PermissionsMatrix from "@/components/PermissionsMatrix";
 
 export const metadata: Metadata = { title: "Agents" };
 
@@ -95,6 +96,8 @@ export default async function AgentsPage() {
       {agents.length === 0 && (
         <p className="text-sm" style={{ color: "var(--muted)" }}>No agents registered.</p>
       )}
+
+      <PermissionsMatrix />
     </main>
   );
 }

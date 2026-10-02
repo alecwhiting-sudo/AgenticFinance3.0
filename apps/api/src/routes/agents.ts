@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import { and, count, desc, eq, inArray } from "drizzle-orm";
+import { and, count, desc, eq, inArray, sql } from "drizzle-orm";
 import {
   agent,
   agentRelease,
@@ -45,6 +45,31 @@ export function agentRoutes(app: FastifyInstance): void {
     return result;
   });
 
+  /** Permissions matrix (UI_CONVENTIONS §2.3): who may propose what, and
+   * which commands always need a human — the control-room view. */
+  app.get("/agents/permissions", async () => {
+    const db = requireDb();
+    const { commandDefs } = await import("@af/shared");
+    const commands = Object.entries(commandDefs).map(([type, def]) => ({
+      type,
+      requiresApproval: (def as { requiresApproval: boolean }).requiresApproval,
+    }));
+    const agents = await db.query.agent.findMany({ orderBy: (t, o) => o.asc(t.process) });
+    const rows = [];
+    for (const a of agents) {
+      const active = await db.query.agentRelease.findFirst({
+        where: (t) => and(eq(t.agentId, a.id), eq(t.status, "active")),
+      });
+      rows.push({
+        slug: a.slug,
+        name: a.name,
+        process: a.process,
+        permissions: active?.commandPermissions ?? [],
+      });
+    }
+    return { commands, agents: rows };
+  });
+
   app.get<{ Params: { slug: string } }>("/agents/:slug", async (req, reply) => {
     const db = requireDb();
     const a = await db.query.agent.findFirst({ where: (t) => eq(t.slug, req.params.slug) });
@@ -79,7 +104,45 @@ export function agentRoutes(app: FastifyInstance): void {
       limit: 20,
       columns: { transcript: false },
     });
-    return { agent: a, releases, skills, skillVersions: allVersions, evalCases, evalRuns, recentRuns };
+    // Staff-record strip (UI_CONVENTIONS §2.1/§2.5): workload, outcomes,
+    // escalation rate, tokens per completed case — from data we already keep.
+    const [stats] = (
+      await db.execute(sql`
+        select
+          count(*) filter (where outcome = 'completed')::int as completed,
+          count(*) filter (where outcome in ('escalated', 'abstained'))::int as handed_back,
+          count(*) filter (where outcome = 'failed')::int as failed,
+          count(*)::int as total,
+          coalesce(sum(input_tokens + output_tokens), 0)::bigint as tokens
+        from agent.agent_run where agent_id = ${a.id} and finished_at is not null
+      `)
+    ).rows as { completed: number; handed_back: number; failed: number; total: number; tokens: string }[];
+    const [open] = (
+      await db.execute(sql`
+        select count(*)::int as n from agent.work_item
+        where agent_id = ${a.id} and status in ('pending', 'claimed', 'running')
+      `)
+    ).rows as { n: number }[];
+    const latestEval = evalRuns.find((e) => e.status === "passed" || e.status === "failed");
+    return {
+      agent: a,
+      releases,
+      skills,
+      skillVersions: allVersions,
+      evalCases,
+      evalRuns,
+      recentRuns,
+      stats: {
+        ...stats,
+        tokens: Number(stats?.tokens ?? 0),
+        openWorkItems: open?.n ?? 0,
+        escalationRate: stats && stats.total > 0 ? Math.round((stats.handed_back / stats.total) * 100) : null,
+        tokensPerCompleted: stats && stats.completed > 0 ? Math.round(Number(stats.tokens) / stats.completed) : null,
+        latestEval: latestEval
+          ? { passed: latestEval.passed, failed: latestEval.failed, status: latestEval.status, at: latestEval.startedAt }
+          : null,
+      },
+    };
   });
 
   app.post<{ Params: { slug: string } }>("/skills/:slug/versions", async (req, reply) => {

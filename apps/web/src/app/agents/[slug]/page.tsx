@@ -37,6 +37,17 @@ type Detail = {
     results: { name?: string; passed?: boolean; failures?: string[]; runId?: string }[];
   }[];
   recentRuns: { id: string; outcome: string | null; resultSummary: string | null; startedAt: string; modelCalls: number }[];
+  stats: {
+    completed: number;
+    handed_back: number;
+    failed: number;
+    total: number;
+    tokens: number;
+    openWorkItems: number;
+    escalationRate: number | null;
+    tokensPerCompleted: number | null;
+    latestEval: { passed: number; failed: number; status: string; at: string } | null;
+  } | null;
 };
 
 export default async function AgentDetail({ params }: { params: Promise<{ slug: string }> }) {
@@ -61,6 +72,32 @@ export default async function AgentDetail({ params }: { params: Promise<{ slug: 
         </div>
         <Badge tone={toneForStatus(d.agent.status)}>{d.agent.status}</Badge>
       </section>
+
+      {/* Staff-record strip (UI_CONVENTIONS §2.1): the agent as a member of
+          staff — workload, track record, cost, latest appraisal. */}
+      {d.stats && (
+        <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          {[
+            { v: d.stats.openWorkItems, l: "in queue now" },
+            { v: d.stats.completed, l: "cases completed" },
+            { v: d.stats.escalationRate !== null ? `${d.stats.escalationRate}%` : "—", l: "handed to humans" },
+            { v: d.stats.failed, l: "failed runs" },
+            {
+              v: d.stats.tokensPerCompleted !== null ? `${(d.stats.tokensPerCompleted / 1000).toFixed(1)}k` : "0",
+              l: "tokens / completed case",
+            },
+            {
+              v: d.stats.latestEval ? `${d.stats.latestEval.passed}/${d.stats.latestEval.passed + d.stats.latestEval.failed}` : "—",
+              l: "latest eval score",
+            },
+          ].map((s) => (
+            <Card key={s.l} className="!p-3 text-center">
+              <div className="text-xl font-semibold tabular-nums">{s.v}</div>
+              <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>{s.l}</div>
+            </Card>
+          ))}
+        </section>
+      )}
 
       <section className="grid gap-4 md:grid-cols-2">
         <Card>
@@ -108,23 +145,49 @@ export default async function AgentDetail({ params }: { params: Promise<{ slug: 
               />
             )}
           </div>
-          <ul className="space-y-3">
-            {d.releases.map((r) => (
-              <li key={r.id} className="flex items-center justify-between rounded-lg border p-3" style={{ borderColor: "var(--border)" }}>
-                <div>
-                  <div className="text-sm font-medium">
-                    v{r.version} <Badge tone={toneForStatus(r.status)}>{r.status}</Badge>
-                  </div>
-                  <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>
-                    model {r.modelProfile} · ≤{r.maxModelCalls} calls · permissions: {r.commandPermissions.join(", ") || "none"}
-                    {r.promotedBy ? ` · promoted by ${r.promotedBy}` : ` · by ${r.createdBy}`}
-                  </div>
+          {/* Release pipeline (UI_CONVENTIONS §2.3): draft → evaluated →
+              active, with eval evidence attached to the stage it gates. */}
+          <div className="mb-3 grid grid-cols-3 gap-2 text-center text-xs" style={{ color: "var(--muted)" }}>
+            {["draft", "evaluated", "active"].map((stage, i) => {
+              const n = d.releases.filter((r) => r.status === stage).length;
+              return (
+                <div key={stage} className="rounded-lg border px-2 py-1.5" style={{ borderColor: n > 0 ? "var(--accent)" : "var(--border)" }}>
+                  <span className="font-medium" style={{ color: n > 0 ? "var(--accent)" : undefined }}>
+                    {i > 0 && "→ "}{stage}
+                  </span>{" "}
+                  <span className="tabular-nums">{n}</span>
+                  {stage === "evaluated" && <div className="mt-0.5">eval suite gates promotion</div>}
+                  {stage === "draft" && <div className="mt-0.5">edit skills / model</div>}
+                  {stage === "active" && <div className="mt-0.5">one live release</div>}
                 </div>
-                {(r.status === "draft" || r.status === "evaluated") && (
-                  <PromoteButton agentSlug={d.agent.slug} version={r.version} />
-                )}
-              </li>
-            ))}
+              );
+            })}
+          </div>
+          <ul className="space-y-3">
+            {d.releases.map((r) => {
+              const releaseEval = d.evalRuns.find((er) => er.status !== "running");
+              return (
+                <li key={r.id} className="flex items-center justify-between rounded-lg border p-3" style={{ borderColor: r.status === "active" ? "var(--accent)" : "var(--border)" }}>
+                  <div>
+                    <div className="text-sm font-medium">
+                      v{r.version} <Badge tone={toneForStatus(r.status)}>{r.status}</Badge>
+                      {r.status === "active" && releaseEval && (
+                        <span className="ml-2 text-xs" style={{ color: "var(--muted)" }}>
+                          evals {releaseEval.passed}/{releaseEval.passed + releaseEval.failed}
+                        </span>
+                      )}
+                    </div>
+                    <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>
+                      model {r.modelProfile} · ≤{r.maxModelCalls} calls · permissions: {r.commandPermissions.join(", ") || "none"}
+                      {r.promotedBy ? ` · promoted by ${r.promotedBy}` : ` · by ${r.createdBy}`}
+                    </div>
+                  </div>
+                  {(r.status === "draft" || r.status === "evaluated") && (
+                    <PromoteButton agentSlug={d.agent.slug} version={r.version} />
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </Card>
       </section>

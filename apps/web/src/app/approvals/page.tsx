@@ -14,14 +14,7 @@ type Cmd = {
   createdAt: string;
   requiresApproval: boolean;
   agentName: string;
-  context: {
-    invoiceId: string;
-    invoiceNumber: string;
-    supplierName: string | null;
-    grossMinor: number;
-    exceptionCode: string | null;
-    documentPath: string | null;
-  } | null;
+  context: Record<string, unknown> | null;
 };
 type PendingPurchase = {
   id: string;
@@ -33,7 +26,7 @@ type PendingPurchase = {
   totalMinor: number;
 };
 
-const gbp = (minor: number) => `£${(minor / 100).toLocaleString("en-GB", { minimumFractionDigits: 2 })}`;
+import { money as gbp } from "@/lib/format";
 
 export default async function ApprovalsPage() {
   const [proposed, purchases] = await Promise.all([
@@ -42,7 +35,12 @@ export default async function ApprovalsPage() {
   ]);
   return (
     <main className="space-y-6">
-      <h2 className="text-2xl font-semibold tracking-tight">Approvals</h2>
+      <div className="flex items-baseline justify-between">
+        <h2 className="text-2xl font-semibold tracking-tight">Approvals</h2>
+        <Link href="/decisions" className="text-sm hover:underline" style={{ color: "var(--accent)" }}>
+          Decision history →
+        </Link>
+      </div>
       <p className="text-sm" style={{ color: "var(--muted)" }}>
         Everything a human must decide, in one inbox. Spend is approved once —
         here, at the moment of intent; clean invoices then flow straight
@@ -81,14 +79,40 @@ export default async function ApprovalsPage() {
                   {c.context ? (
                     <>
                       <div className="text-sm font-medium">
-                        {String(c.params.resolution ?? c.type).replace(/_/g, " ")} ·{" "}
-                        <Link href={`/p2p/invoices/${c.context.invoiceId}`} className="hover:underline">
-                          {c.context.invoiceNumber}
-                        </Link>{" "}
-                        · {c.context.supplierName ?? "unknown supplier"}{" "}
-                        <span className="tabular-nums">{gbp(c.context.grossMinor)}</span>{" "}
-                        {c.context.exceptionCode && <Badge tone="warn">{c.context.exceptionCode}</Badge>}
+                        {c.context.kind === "bank" ? (
+                          <>
+                            post bank line {String(c.context.reference)} · {String(c.context.counterparty)} ·{" "}
+                            <span className="tabular-nums">{gbp(Number(c.context.amountMinor))}</span> → account{" "}
+                            <Link href={`/ledger/${String(c.context.accountCode)}`} className="hover:underline">{String(c.context.accountCode)}</Link>
+                          </>
+                        ) : c.context.kind === "receipt" ? (
+                          <>
+                            apply receipt {String(c.context.reference)} ({gbp(Number(c.context.amountMinor))}) to{" "}
+                            <Link href={`/o2c/invoices/${String(c.context.invoiceId)}`} className="hover:underline">{String(c.context.invoiceNumber)}</Link>
+                          </>
+                        ) : c.context.kind === "dunning" ? (
+                          <>
+                            send chase letter for{" "}
+                            <Link href={`/o2c/invoices/${String(c.context.invoiceId)}`} className="hover:underline">{String(c.context.invoiceNumber)}</Link>{" "}
+                            · <span className="tabular-nums">{gbp(Number(c.context.grossMinor))}</span> · was due {String(c.context.dueDate)}
+                          </>
+                        ) : (
+                          <>
+                            {String(c.params.resolution ?? c.type).replace(/_/g, " ")} ·{" "}
+                            <Link href={`/p2p/invoices/${String(c.context.invoiceId)}`} className="hover:underline">
+                              {String(c.context.invoiceNumber)}
+                            </Link>{" "}
+                            · {String(c.context.supplierName ?? "unknown supplier")}{" "}
+                            <span className="tabular-nums">{gbp(Number(c.context.grossMinor))}</span>{" "}
+                            {c.context.exceptionCode ? <Badge tone="warn">{String(c.context.exceptionCode)}</Badge> : null}
+                          </>
+                        )}
                       </div>
+                      {c.context.kind === "dunning" && typeof c.params.text === "string" && (
+                        <p className="mt-2 whitespace-pre-line rounded-lg border p-2 text-xs leading-5" style={{ borderColor: "var(--border)", color: "var(--muted)" }}>
+                          {c.params.text}
+                        </p>
+                      )}
                       {typeof c.params.rationale === "string" && (
                         <div className="mt-1 text-xs" style={{ color: "var(--muted)" }}>
                           “{c.params.rationale}”

@@ -32,7 +32,7 @@ type Detail = {
   }[];
 };
 
-const gbp = (minor: number) => `£${(minor / 100).toLocaleString("en-GB", { minimumFractionDigits: 2 })}`;
+import { money as gbp } from "@/lib/format";
 
 export default async function PurchasePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

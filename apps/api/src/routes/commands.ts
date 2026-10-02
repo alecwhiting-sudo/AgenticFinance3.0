@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { caseEvent, command } from "@af/db";
 import { createPurchase, type CreatePurchaseParams } from "../services/purchaseIntake.js";
 import { captureInvoice, resolveInvoiceException, type CaptureInvoiceData, type ResolveParams } from "../services/invoiceIntake.js";
@@ -211,9 +211,72 @@ export function commandRoutes(app: FastifyInstance): void {
             };
           }
         }
+        if (cmd.type === "bank.txn.post") {
+          const p = cmd.params as { bankTransactionId?: string; accountCode?: string };
+          const txn = p.bankTransactionId
+            ? await db.query.bankTransaction.findFirst({ where: (t) => eq(t.id, p.bankTransactionId!) })
+            : null;
+          if (txn)
+            context = {
+              kind: "bank",
+              reference: txn.reference,
+              counterparty: txn.counterparty,
+              amountMinor: txn.amountMinor,
+              accountCode: p.accountCode ?? null,
+            };
+        }
+        if (cmd.type === "ar.receipt.apply") {
+          const p = cmd.params as { bankTransactionId?: string; invoiceId?: string };
+          const txn = p.bankTransactionId
+            ? await db.query.bankTransaction.findFirst({ where: (t) => eq(t.id, p.bankTransactionId!) })
+            : null;
+          const inv = p.invoiceId
+            ? await db.query.arInvoice.findFirst({ where: (t) => eq(t.id, p.invoiceId!) })
+            : null;
+          if (txn && inv)
+            context = {
+              kind: "receipt",
+              reference: txn.reference,
+              amountMinor: txn.amountMinor,
+              invoiceId: inv.id,
+              invoiceNumber: inv.number,
+              grossMinor: inv.grossMinor,
+            };
+        }
+        if (cmd.type === "ar.dunning.send") {
+          const p = cmd.params as { invoiceId?: string };
+          const inv = p.invoiceId
+            ? await db.query.arInvoice.findFirst({ where: (t) => eq(t.id, p.invoiceId!) })
+            : null;
+          if (inv)
+            context = {
+              kind: "dunning",
+              invoiceId: inv.id,
+              invoiceNumber: inv.number,
+              grossMinor: inv.grossMinor,
+              dueDate: inv.dueDate,
+            };
+        }
         return { ...cmd, agentName: agent?.name ?? cmd.agentId, context };
       }),
     );
+  });
+
+  /** Decision history (UI_CONVENTIONS §2.4): every human yes/no, newest
+   * first — the audit surface for "who approved what, when, and why". */
+  app.get("/decisions", async () => {
+    const db = requireDb();
+    const rows = (
+      await db.execute(sql`
+        select c.id, c.type, c.status, c.decided_by, c.decision_reason, c.decided_at, c.params,
+               a.name as agent_name
+        from agent.command c
+        left join agent.agent a on a.id = c.agent_id
+        where c.decided_by is not null and c.decided_by <> 'standing-authority'
+        order by c.decided_at desc limit 100
+      `)
+    ).rows;
+    return rows;
   });
 
   app.post<{ Params: { id: string }; Body: { decidedBy: string; reason?: string; approve: boolean } }>(
