@@ -13,6 +13,8 @@ const nav = [
   { href: "/agents", label: "Agents" },
   { href: "/p2p", label: "P2P" },
   { href: "/ledger", label: "Ledger" },
+  { href: "/r2r", label: "R2R" },
+  { href: "/reports", label: "Reports" },
   { href: "/work", label: "Work" },
   { href: "/approvals", label: "Approvals" },
 ];

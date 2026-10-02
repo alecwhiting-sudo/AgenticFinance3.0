@@ -546,3 +546,14 @@ export const fdpParameterSet = fdp.table("parameter_set", {
   parameters: jsonb("parameters").$type<Record<string, unknown>>().notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+/** Agent-drafted flux/variance commentary per period (plans/R2R.md §5).
+ * Always a draft until a human regenerates or edits; display-only. */
+export const reportCommentary = erp.table("report_commentary", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  periodCode: text("period_code").notNull(),
+  text: text("text").notNull(),
+  runId: uuid("run_id"),
+  draftedBy: text("drafted_by").notNull(), // agent slug or human
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});

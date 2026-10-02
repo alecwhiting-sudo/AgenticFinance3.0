@@ -270,6 +270,46 @@ async function invoiceCaptureFallback(
   };
 }
 
+/** Keyless commentary (plans/R2R.md §5): a grounded template over the
+ * figures in the payload — biggest movers by absolute change, named with
+ * their real amounts. Never invents a number. */
+async function commentaryFallback(
+  resolved: ResolvedRelease,
+  runId: string,
+  payload: Record<string, unknown>,
+  steps: TranscriptStep[],
+): Promise<LoopResult> {
+  const periodCode = String(payload.periodCode ?? "");
+  const figures = (payload.figures ?? []) as {
+    code: string; name: string; type: string; thisMinor: number; prevMinor: number;
+  }[];
+  if (!periodCode || figures.length === 0)
+    return { outcome: "escalated", summary: "No figures in the task payload — cannot draft grounded commentary." };
+
+  const gbp = (m: number) => `£${(Math.abs(m) / 100).toLocaleString("en-GB", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+  const movers = figures
+    .map((f) => ({ ...f, delta: f.thisMinor - f.prevMinor }))
+    .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))
+    .slice(0, 3)
+    .filter((f) => f.delta !== 0);
+  const totalThis = figures.reduce((n, f) => n + f.thisMinor, 0);
+  const totalPrev = figures.reduce((n, f) => n + f.prevMinor, 0);
+  await appendStep(runId, steps, { kind: "note", label: "figures grounded", detail: { accounts: figures.length, movers: movers.map((m) => m.code) } });
+
+  const lines = [
+    `Net P&L movement for ${periodCode}: ${gbp(totalThis)} ${totalThis >= 0 ? "net cost" : "net income"} (prior month ${gbp(totalPrev)}).`,
+    ...movers.map((m) =>
+      `${m.name} (${m.code}) ${m.delta > 0 ? "up" : "down"} ${gbp(m.delta)} month on month — ${gbp(m.prevMinor)} to ${gbp(m.thisMinor)}.`),
+    `Watch items: ${movers[0] ? `${movers[0].name} trend` : "none"}; open exceptions and unmatched bank lines are listed on the R2R dashboard.`,
+    `Basis: live economic state; figures are month movements from the ledger.`,
+  ];
+  const text = lines.join(" ");
+  const { ok, data } = await proposeCommand(runId, 1, "report.commentary.save", { periodCode, text }, steps);
+  if (!ok)
+    return { outcome: "failed", summary: `Gateway rejected commentary save: ${String((data as { error?: string }).error ?? "unknown")}` };
+  return { outcome: "completed", summary: `Drafted ${periodCode} flux commentary from ${figures.length} accounts; top mover ${movers[0]?.name ?? "n/a"}. Saved as draft for human review.` };
+}
+
 /** Keyless bank-rec playbook (plans/R2R.md §2): known kinds map to accounts,
  * AR receipts are O2C's (abstain), unknowns get keyword heuristics or
  * escalate. Every posting proposal still needs a human (bank.txn.post). */
@@ -421,6 +461,9 @@ async function deterministicHandler(
   }
   if (taskType === "bank.reconcile" || (taskType === "eval.case" && typeof payload.bankTransactionId === "string")) {
     return bankReconcileFallback(resolved, runId, payload, steps);
+  }
+  if (taskType === "r2r.commentary" || (taskType === "eval.case" && Array.isArray(payload.figures))) {
+    return commentaryFallback(resolved, runId, payload, steps);
   }
   if (taskType === "hello.greet" || taskType === "eval.case") {
     const topic = String(payload.topic ?? "the business");

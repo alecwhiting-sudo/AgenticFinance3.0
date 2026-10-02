@@ -36,6 +36,13 @@
       "when": 1790935786390,
       "tag": "0004_flowery_golden_guardian",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790938769672,
+      "tag": "0005_lazy_moondragon",
+      "breakpoints": true
     }
   ]
 }

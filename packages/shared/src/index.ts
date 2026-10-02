@@ -93,6 +93,15 @@ export const commandDefs = {
       emailPath: z.string().optional(),
     }),
   },
+  /** Save a draft flux/variance commentary for a period. Display-only text,
+   * no economic effect — standing authority (plans/R2R.md §5). */
+  "report.commentary.save": {
+    requiresApproval: false,
+    params: z.object({
+      periodCode: z.string().regex(/^\d{4}-\d{2}$/),
+      text: z.string().min(40).max(8000),
+    }),
+  },
   /** Post an unmatched bank line against an account — a judgement call, so
    * ALWAYS a human approval (plans/R2R.md §2). Deterministic kind-rules never
    * use this; it exists for the Reconciliation Agent's proposals. */
