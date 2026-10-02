@@ -1,0 +1,99 @@
+import type { FastifyInstance } from "fastify";
+import { desc, eq } from "drizzle-orm";
+import { apInvoice, apPayment, bankTransaction, supplier } from "@af/db";
+import { decidePaymentRun, proposePaymentRun, reconcileBank } from "../services/payments.js";
+import { requireDb } from "../lib/db.js";
+import { emitActivity } from "../lib/activity.js";
+
+export function paymentRoutes(app: FastifyInstance): void {
+  /** Scheduler: group due posted invoices into one proposed run (M4). */
+  app.post<{ Body: { runDate?: string } }>("/p2p/payments/propose", async (req, reply) => {
+    const db = requireDb();
+    const runDate = req.body?.runDate ?? new Date().toISOString().slice(0, 10);
+    const run = await proposePaymentRun(db, runDate);
+    if (!run) return reply.code(200).send({ run: null, message: "nothing due" });
+    await emitActivity({
+      actorType: "system",
+      actorId: "payment-scheduler",
+      verb: "proposed_payment_run",
+      objectType: "ap_payment",
+      objectId: run.id,
+      summary: `Payment run ${run.paymentRef}: ${run.invoiceIds.length} invoices, awaiting approval`,
+    });
+    return { run };
+  });
+
+  app.get("/p2p/payments", async () => {
+    const db = requireDb();
+    const runs = await db.query.apPayment.findMany({
+      orderBy: (t) => desc(t.createdAt),
+      limit: 100,
+    });
+    // Resolve invoice refs so the UI can show what each run settles.
+    return Promise.all(
+      runs.map(async (r) => {
+        const invoices = await Promise.all(
+          r.invoiceIds.slice(0, 20).map(async (id) => {
+            const inv = await db.query.apInvoice.findFirst({ where: (t) => eq(t.id, id) });
+            if (!inv) return null;
+            const sup = await db.query.supplier.findFirst({ where: (t) => eq(t.id, inv.supplierId) });
+            return {
+              id: inv.id,
+              number: inv.supplierInvoiceNumber,
+              supplierName: sup?.name ?? null,
+              grossMinor: inv.grossMinor,
+            };
+          }),
+        );
+        return { ...r, invoices: invoices.filter(Boolean), invoiceCount: r.invoiceIds.length };
+      }),
+    );
+  });
+
+  /** Human checkpoint: executing a run moves money (CLAUDE.md safety rule). */
+  app.post<{ Params: { id: string }; Body: { approve: boolean; decidedBy: string } }>(
+    "/p2p/payments/:id/decide",
+    async (req, reply) => {
+      const db = requireDb();
+      const { approve, decidedBy } = req.body;
+      if (!decidedBy) return reply.code(400).send({ error: "decidedBy required" });
+      const result = await decidePaymentRun(db, req.params.id, approve, decidedBy);
+      await emitActivity({
+        actorType: "human",
+        actorId: decidedBy,
+        verb: approve ? "approved_payment_run" : "rejected_payment_run",
+        objectType: "ap_payment",
+        objectId: req.params.id,
+        summary: approve
+          ? `${decidedBy} approved payment run; settled and ${result.status}`
+          : `${decidedBy} rejected payment run; invoices back to posted`,
+      });
+      return result;
+    },
+  );
+
+  app.get<{ Querystring: { status?: string; limit?: string } }>("/p2p/bank", async (req) => {
+    const db = requireDb();
+    const limit = Math.min(Number(req.query.limit ?? 100), 500);
+    return db.query.bankTransaction.findMany({
+      ...(req.query.status === "unmatched" ? { where: eq(bankTransaction.status, "unmatched") } : {}),
+      orderBy: (t) => desc(t.txnDate),
+      limit,
+    });
+  });
+
+  app.post("/p2p/bank/reconcile", async () => {
+    const db = requireDb();
+    const stats = await reconcileBank(db);
+    if (stats.matched > 0)
+      await emitActivity({
+        actorType: "system",
+        actorId: "reconciliation-matcher",
+        verb: "reconciled_bank",
+        objectType: "bank_transaction",
+        objectId: "batch",
+        summary: `Matched ${stats.matched} of ${stats.scanned} open bank lines`,
+      });
+    return stats;
+  });
+}

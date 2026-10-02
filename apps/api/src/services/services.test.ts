@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { approvalBandFor, priceWithinTolerance } from "./policy.js";
 import { isDuplicate, threeWayMatch } from "./match.js";
 import { apInvoiceJournalLines, validateJournalLines } from "./posting.js";
+import { bankTxnMatchesPayment, selectDueInvoices } from "./payments.js";
 import type { PurchaseLine } from "@af/db";
 
 const line = (over: Partial<PurchaseLine> = {}): PurchaseLine => ({
@@ -137,5 +138,39 @@ describe("posting rules", () => {
     expect(lines.find((l) => l.accountCode === "6400")!.amountMinor).toBe(10_000);
     expect(lines.find((l) => l.accountCode === "2200")!.amountMinor).toBe(4_000);
     expect(lines.find((l) => l.accountCode === "2000")!.amountMinor).toBe(-24_000);
+  });
+});
+
+describe("payment scheduler + reconciliation (M4)", () => {
+  it("selects only posted invoices due within the horizon", () => {
+    const invs = [
+      { status: "posted", dueDate: "2026-09-25" },
+      { status: "posted", dueDate: "2026-10-05" },
+      { status: "posted", dueDate: "2026-11-01" },
+      { status: "exception", dueDate: "2026-09-25" },
+      { status: "paid", dueDate: "2026-09-25" },
+    ];
+    const due = selectDueInvoices(invs, "2026-10-01", 7);
+    expect(due.map((i) => i.dueDate)).toEqual(["2026-09-25", "2026-10-05"]);
+  });
+  it("matches a bank line to a run by reference and amount", () => {
+    const pay = { paymentRef: "RUN-2026-10-01-00042", totalMinor: 123_45 };
+    expect(
+      bankTxnMatchesPayment({ reference: "RUN-2026-10-01-00042", amountMinor: -123_45, kind: "ap_payment" }, pay),
+    ).toBe(true);
+    expect(
+      bankTxnMatchesPayment({ reference: "RUN-2026-10-01-00042", amountMinor: -123_44, kind: "ap_payment" }, pay),
+    ).toBe(false);
+    expect(
+      bankTxnMatchesPayment({ reference: "RUN-2026-10-01-00042", amountMinor: -123_45, kind: "salaries" }, pay),
+    ).toBe(false);
+  });
+  it("matches the loader's PAY-<invoice> convention", () => {
+    expect(
+      bankTxnMatchesPayment(
+        { reference: "AC-51380", amountMinor: -50_000, kind: "ap_payment" },
+        { paymentRef: "PAY-AC-51380", totalMinor: 50_000 },
+      ),
+    ).toBe(true);
   });
 });

@@ -57,7 +57,16 @@ export default async function P2PPage() {
             exception fires.
           </p>
         </div>
-        <DripButton />
+        <span className="flex items-center gap-3">
+          <Link
+            href="/p2p/payments"
+            className="rounded-lg border px-3 py-1.5 text-sm"
+            style={{ borderColor: "var(--border)" }}
+          >
+            Payments &amp; reconciliation
+          </Link>
+          <DripButton />
+        </span>
       </section>
 
       <ApiDownBanner show={apiDown} />
