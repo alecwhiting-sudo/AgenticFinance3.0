@@ -140,7 +140,7 @@ export default async function ReportsPage({
         (m) => -profitAt(m),
       )}
 
-      <Commentary period={months[months.length - 1] ?? ""} />
+      <Commentary period={months[months.length - 1] ?? ""} months={months} />
     </main>
   );
 }

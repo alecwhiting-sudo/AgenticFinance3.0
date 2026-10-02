@@ -114,6 +114,16 @@ export function r2rRoutes(app: FastifyInstance): void {
     return { period, periods, bank, monthEnd, openExceptions, failedEvents };
   });
 
+  /** Latest draft commentary across all periods (so the UI can find where
+   * the most recent draft lives even when the displayed period moved on). */
+  app.get("/r2r/commentary/latest", async () => {
+    const db = requireDb();
+    const row = await db.query.reportCommentary.findFirst({
+      orderBy: (t) => desc(t.createdAt),
+    });
+    return { commentary: row ?? null };
+  });
+
   /** Latest draft commentary for a period. */
   app.get<{ Querystring: { period?: string } }>("/r2r/commentary", async (req, reply) => {
     const db = requireDb();
