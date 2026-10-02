@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import CommandPalette from "@/components/CommandPalette";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "AgenticFinance",
+  title: { default: "AgenticFinance", template: "%s · AgenticFinance" },
   description: "Agentic finance workbench",
 };
 
@@ -43,8 +44,11 @@ export default function RootLayout({
                 ))}
               </nav>
             </div>
-            <span className="text-xs" style={{ color: "var(--muted)" }}>
-              workbench · demo
+            <span className="flex items-center gap-3">
+              <CommandPalette />
+              <span className="text-xs" style={{ color: "var(--muted)" }}>
+                workbench · demo
+              </span>
             </span>
           </header>
           {children}

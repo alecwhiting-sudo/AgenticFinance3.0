@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getJson, PUBLIC_API_URL } from "@/lib/api";
+import { Breadcrumbs } from "@/components/Chrome";
 import { Badge, Card, SectionTitle, toneForStatus } from "@/components/ui";
 
 type Detail = {
@@ -63,6 +64,9 @@ export default async function PurchasePage({ params }: { params: Promise<{ id: s
 
   return (
     <main className="space-y-6">
+      <div className="print:hidden">
+        <Breadcrumbs trail={[{ href: "/p2p", label: "P2P" }, { label: p.number }]} />
+      </div>
       <section className="flex items-start justify-between print:hidden">
         <div>
           <h2 className="text-2xl font-semibold tracking-tight">

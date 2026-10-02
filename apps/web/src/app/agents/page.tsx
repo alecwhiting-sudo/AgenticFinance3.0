@@ -1,6 +1,9 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { getJson } from "@/lib/api";
 import { Badge, Card, toneForStatus } from "@/components/ui";
+
+export const metadata: Metadata = { title: "Agents" };
 
 type AgentRow = {
   slug: string;

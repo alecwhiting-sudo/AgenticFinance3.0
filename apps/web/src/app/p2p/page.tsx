@@ -1,7 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
-import { getJson, PUBLIC_API_URL } from "@/lib/api";
+import { getJson } from "@/lib/api";
+import { money } from "@/lib/format";
+import { ApiDownBanner } from "@/components/Chrome";
 import { Badge, Card, SectionTitle, Stat, toneForStatus } from "@/components/ui";
 import DripButton from "@/components/DripButton";
+
+export const metadata: Metadata = { title: "P2P" };
 
 type Pipeline = {
   invoiceStages: { status: string; n: number }[];
@@ -30,7 +35,6 @@ type Purchase = {
   status: string;
 };
 
-const gbp = (minor: number) => `£${(minor / 100).toLocaleString("en-GB", { minimumFractionDigits: 2 })}`;
 const INVOICE_STAGES = ["captured", "matched", "exception", "approved", "posted", "scheduled", "paid"];
 
 export default async function P2PPage() {
@@ -56,19 +60,16 @@ export default async function P2PPage() {
         <DripButton />
       </section>
 
-      {apiDown && (
-        <div className="rounded-xl border p-4 text-sm" style={{ borderColor: "#d97706", color: "#d97706" }}>
-          The web server cannot reach the API — counts below are blank, not zero. Check the
-          web service&apos;s API_URL variable (server-side) and the api service&apos;s health.
-        </div>
-      )}
+      <ApiDownBanner show={apiDown} />
 
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-7">
         {INVOICE_STAGES.map((s) => (
-          <Card key={s} className="!p-3 text-center">
-            <div className="text-xl font-semibold tabular-nums">{stageCount(s)}</div>
-            <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>{s}</div>
-          </Card>
+          <Link key={s} href={`/p2p/invoices?status=${s}`}>
+            <Card className="!p-3 text-center transition-transform hover:-translate-y-0.5">
+              <div className="text-xl font-semibold tabular-nums">{stageCount(s)}</div>
+              <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>{s}</div>
+            </Card>
+          </Link>
         ))}
       </section>
 
@@ -87,15 +88,11 @@ export default async function P2PPage() {
                 <div>
                   <Badge tone="warn">{i.exceptionCode}</Badge>{" "}
                   <span className="font-medium">{i.supplierName}</span>{" "}
-                  {i.documentPath ? (
-                    <a href={`${PUBLIC_API_URL}/${i.documentPath}`} target="_blank" className="hover:underline" style={{ color: "var(--muted)" }}>
-                      {i.supplierInvoiceNumber} ↗
-                    </a>
-                  ) : (
-                    <span style={{ color: "var(--muted)" }}>{i.supplierInvoiceNumber}</span>
-                  )}
+                  <Link href={`/p2p/invoices/${i.id}`} className="hover:underline" style={{ color: "var(--muted)" }}>
+                    {i.supplierInvoiceNumber}
+                  </Link>
                 </div>
-                <span className="tabular-nums">{gbp(i.grossMinor)}</span>
+                <span className="tabular-nums">{money(i.grossMinor)}</span>
               </li>
             ))}
             {(exceptions ?? []).length === 0 && (
@@ -114,7 +111,7 @@ export default async function P2PPage() {
                     <Badge tone={toneForStatus(p.status)}>{p.status}</Badge>{" "}
                     {p.approvalBand && <Badge>{p.approvalBand}</Badge>}
                   </span>
-                  <span className="tabular-nums">{gbp(p.totalMinor)}</span>
+                  <span className="tabular-nums">{money(p.totalMinor)}</span>
                 </div>
                 <div className="text-xs" style={{ color: "var(--muted)" }}>
                   {p.requestedBy} — {p.businessNeed}

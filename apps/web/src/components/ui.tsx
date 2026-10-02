@@ -43,9 +43,9 @@ export function Stat({
 export function Badge({ children, tone = "neutral" }: { children: React.ReactNode; tone?: string }) {
   const colors: Record<string, string> = {
     neutral: "var(--muted)",
-    good: "var(--accent)",
-    warn: "#d97706",
-    bad: "#dc2626",
+    good: "var(--good)",
+    warn: "var(--warn)",
+    bad: "var(--bad)",
   };
   return (
     <span

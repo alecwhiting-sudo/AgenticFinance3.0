@@ -1,7 +1,10 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { getJson } from "@/lib/api";
 import { Badge, Card, SectionTitle, toneForStatus } from "@/components/ui";
 import SubmitTask from "@/components/SubmitTask";
+
+export const metadata: Metadata = { title: "Work" };
 
 type Item = {
   id: string;

@@ -28,7 +28,7 @@ export default async function SupplierView({ params }: { params: Promise<{ id: s
       style={{ background: "var(--card)", borderColor: "var(--border)" }}
     >
       {!approved && (
-        <div className="mb-6 rounded-lg border p-3 text-sm print:hidden" style={{ borderColor: "#d97706", color: "#d97706" }}>
+        <div className="mb-6 rounded-lg border p-3 text-sm print:hidden" style={{ borderColor: "var(--warn)", color: "var(--warn)" }}>
           Not yet approved — this view becomes the purchase order when approval lands.
         </div>
       )}

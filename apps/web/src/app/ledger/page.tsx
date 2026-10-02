@@ -1,5 +1,9 @@
+import type { Metadata } from "next";
+import Link from "next/link";
 import { getJson } from "@/lib/api";
 import { Card, SectionTitle } from "@/components/ui";
+
+export const metadata: Metadata = { title: "Ledger" };
 
 type TB = {
   accounts: { code: string; name: string; type: string; balance_minor: number }[];
@@ -41,7 +45,9 @@ export default async function LedgerPage() {
                 {rows.map((a) => (
                   <tr key={a.code} className="border-b last:border-0" style={{ borderColor: "var(--border)" }}>
                     <td className="py-1.5 pr-3 tabular-nums" style={{ color: "var(--muted)" }}>{a.code}</td>
-                    <td className="py-1.5">{a.name}</td>
+                    <td className="py-1.5">
+                      <Link href={`/ledger/${a.code}`} className="hover:underline">{a.name}</Link>
+                    </td>
                     <td className="py-1.5 text-right tabular-nums">{gbp(a.balance_minor)}</td>
                   </tr>
                 ))}

@@ -142,11 +142,37 @@ export function commandRoutes(app: FastifyInstance): void {
   app.get<{ Querystring: { status?: string } }>("/commands", async (req) => {
     const db = requireDb();
     const status = (req.query.status ?? "proposed") as typeof command.$inferSelect.status;
-    return db.query.command.findMany({
+    const rows = await db.query.command.findMany({
       where: (t) => eq(t.status, status),
       orderBy: (t) => desc(t.createdAt),
       limit: 100,
     });
+    // Enrich each command with what/why/who context so the approvals inbox can
+    // render a decision card instead of raw params (UI_CONVENTIONS §2.4).
+    return Promise.all(
+      rows.map(async (cmd) => {
+        const agent = cmd.agentId
+          ? await db.query.agent.findFirst({ where: (t) => eq(t.id, cmd.agentId!) })
+          : undefined;
+        let context: Record<string, unknown> | null = null;
+        const invoiceId = (cmd.params as Record<string, unknown>).invoiceId as string | undefined;
+        if (cmd.type === "ap.invoice.resolve" && invoiceId) {
+          const inv = await db.query.apInvoice.findFirst({ where: (t) => eq(t.id, invoiceId) });
+          if (inv) {
+            const supplier = await db.query.supplier.findFirst({ where: (t) => eq(t.id, inv.supplierId) });
+            context = {
+              invoiceId: inv.id,
+              invoiceNumber: inv.supplierInvoiceNumber,
+              supplierName: supplier?.name ?? null,
+              grossMinor: inv.grossMinor,
+              exceptionCode: inv.exceptionCode,
+              documentPath: inv.documentPath,
+            };
+          }
+        }
+        return { ...cmd, agentName: agent?.name ?? cmd.agentId, context };
+      }),
+    );
   });
 
   app.post<{ Params: { id: string }; Body: { decidedBy: string; reason?: string; approve: boolean } }>(

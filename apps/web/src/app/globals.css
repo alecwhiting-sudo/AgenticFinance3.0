@@ -7,6 +7,9 @@
   --accent: #0d9488;
   --card: #ffffff;
   --border: #e7e5e4;
+  --warn: #b45309;
+  --bad: #dc2626;
+  --good: #0d9488;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -17,6 +20,9 @@
     --accent: #2dd4bf;
     --card: #1c1917;
     --border: #292524;
+    --warn: #f59e0b;
+    --bad: #f87171;
+    --good: #2dd4bf;
   }
 }
 

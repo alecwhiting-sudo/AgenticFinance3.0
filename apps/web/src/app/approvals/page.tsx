@@ -1,8 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { getJson } from "@/lib/api";
 import { Badge, Card, SectionTitle } from "@/components/ui";
 import DecideCommand from "@/components/DecideCommand";
 import DecidePurchase from "@/components/DecidePurchase";
+
+export const metadata: Metadata = { title: "Approvals" };
 
 type Cmd = {
   id: string;
@@ -10,6 +13,15 @@ type Cmd = {
   params: Record<string, unknown>;
   createdAt: string;
   requiresApproval: boolean;
+  agentName: string;
+  context: {
+    invoiceId: string;
+    invoiceNumber: string;
+    supplierName: string | null;
+    grossMinor: number;
+    exceptionCode: string | null;
+    documentPath: string | null;
+  } | null;
 };
 type PendingPurchase = {
   id: string;
@@ -64,12 +76,36 @@ export default async function ApprovalsPage() {
         <ul className="space-y-3">
           {(proposed ?? []).map((c) => (
             <li key={c.id} className="rounded-lg border p-3" style={{ borderColor: "var(--border)" }}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-sm font-medium">{c.type}</div>
-                  <pre className="mt-1 text-xs" style={{ color: "var(--muted)" }}>
-                    {JSON.stringify(c.params, null, 2)}
-                  </pre>
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  {c.context ? (
+                    <>
+                      <div className="text-sm font-medium">
+                        {String(c.params.resolution ?? c.type).replace(/_/g, " ")} ·{" "}
+                        <Link href={`/p2p/invoices/${c.context.invoiceId}`} className="hover:underline">
+                          {c.context.invoiceNumber}
+                        </Link>{" "}
+                        · {c.context.supplierName ?? "unknown supplier"}{" "}
+                        <span className="tabular-nums">{gbp(c.context.grossMinor)}</span>{" "}
+                        {c.context.exceptionCode && <Badge tone="warn">{c.context.exceptionCode}</Badge>}
+                      </div>
+                      {typeof c.params.rationale === "string" && (
+                        <div className="mt-1 text-xs" style={{ color: "var(--muted)" }}>
+                          “{c.params.rationale}”
+                        </div>
+                      )}
+                      <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>
+                        proposed by {c.agentName}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-sm font-medium">{c.type} · proposed by {c.agentName}</div>
+                      <pre className="mt-1 overflow-x-auto text-xs" style={{ color: "var(--muted)" }}>
+                        {JSON.stringify(c.params, null, 2)}
+                      </pre>
+                    </>
+                  )}
                 </div>
                 <DecideCommand commandId={c.id} />
               </div>
