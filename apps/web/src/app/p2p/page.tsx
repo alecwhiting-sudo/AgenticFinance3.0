@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getJson } from "@/lib/api";
 import { Badge, Card, SectionTitle, Stat, toneForStatus } from "@/components/ui";
 
@@ -90,7 +91,7 @@ export default async function P2PPage() {
               <li key={p.id} className="text-sm">
                 <div className="flex items-center justify-between">
                   <span>
-                    <span className="font-medium">{p.number}</span> · {p.supplierName}{" "}
+                    <Link href={`/p2p/purchases/${p.id}`} className="font-medium hover:underline">{p.number}</Link> · {p.supplierName}{" "}
                     <Badge tone={toneForStatus(p.status)}>{p.status}</Badge>{" "}
                     {p.approvalBand && <Badge>{p.approvalBand}</Badge>}
                   </span>

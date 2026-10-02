@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { desc, eq } from "drizzle-orm";
 import { caseEvent, command } from "@af/db";
+import { createPurchase, type CreatePurchaseParams } from "../services/purchaseIntake.js";
 import { commandDefs, proposeCommandSchema, type CommandType } from "@af/shared";
 import { requireDb } from "../lib/db.js";
 import { emitActivity } from "../lib/activity.js";
@@ -28,6 +29,16 @@ async function executeCommand(
         });
       }
       return { noted: true };
+    }
+    case "purchase.create": {
+      const created = await createPurchase(db, params as CreatePurchaseParams);
+      return {
+        purchaseId: created.id,
+        number: created.number,
+        totalMinor: created.totalMinor,
+        approvalBand: created.approvalBand,
+        status: created.status,
+      };
     }
   }
 }

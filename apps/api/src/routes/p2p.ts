@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { count, desc, eq, sql } from "drizzle-orm";
 import { apInvoice, purchase } from "@af/db";
 import { requireDb } from "../lib/db.js";
+import { decidePurchase } from "../services/purchaseIntake.js";
 
 export function p2pRoutes(app: FastifyInstance): void {
   /** Stage counts for the P2P pipeline view (plans/P2P.md M1). */
@@ -53,6 +54,28 @@ export function p2pRoutes(app: FastifyInstance): void {
     const suppliers = await db.query.supplier.findMany();
     const byId = new Map(suppliers.map((s) => [s.id, s.name]));
     return rows.map((i) => ({ ...i, supplierName: byId.get(i.supplierId) ?? "?" }));
+  });
+
+  app.post<{ Params: { id: string }; Body: { approve: boolean; decidedBy: string } }>(
+    "/p2p/purchases/:id/decide",
+    async (req, reply) => {
+      const db = requireDb();
+      const { approve, decidedBy } = req.body ?? ({} as { approve: boolean; decidedBy: string });
+      if (typeof approve !== "boolean" || !decidedBy)
+        return reply.code(400).send({ error: "approve (boolean) and decidedBy required" });
+      return decidePurchase(db, req.params.id, approve, decidedBy);
+    },
+  );
+
+  /** The single-record thread: requisition -> approval -> receipts -> invoices. */
+  app.get<{ Params: { id: string } }>("/p2p/purchases/:id", async (req, reply) => {
+    const db = requireDb();
+    const p = await db.query.purchase.findFirst({ where: (t) => eq(t.id, req.params.id) });
+    if (!p) return reply.code(404).send({ error: "purchase not found" });
+    const sup = await db.query.supplier.findFirst({ where: (t) => eq(t.id, p.supplierId) });
+    const receipts = await db.query.goodsReceipt.findMany({ where: (t) => eq(t.purchaseId, p.id) });
+    const invoices = await db.query.apInvoice.findMany({ where: (t) => eq(t.purchaseId, p.id) });
+    return { purchase: p, supplier: sup, receipts, invoices };
   });
 
   /** Trial balance from journal lines (debit positive, credit negative). */

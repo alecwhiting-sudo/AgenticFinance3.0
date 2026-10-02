@@ -41,6 +41,29 @@ export const commandDefs = {
       note: z.string().min(1).max(4000),
     }),
   },
+  /** Create a Purchase in `requested` state (unified Purchase model, D12).
+   * Standing authority: creating an ask moves no money. The deterministic
+   * approval router then auto-approves the auto band or queues a human task. */
+  "purchase.create": {
+    requiresApproval: false,
+    params: z.object({
+      supplierCode: z.string().optional(),
+      supplierName: z.string().optional(),
+      requestedBy: z.string().min(1),
+      businessNeed: z.string().min(3).max(1000),
+      lines: z
+        .array(
+          z.object({
+            description: z.string().min(1),
+            qty: z.number().int().positive(),
+            unitPriceMinor: z.number().int().positive(),
+            accountCode: z.string().regex(/^\d{4}$/),
+          }),
+        )
+        .min(1)
+        .max(10),
+    }),
+  },
 } as const;
 export type CommandType = keyof typeof commandDefs;
 export const commandTypeSchema = z.enum(

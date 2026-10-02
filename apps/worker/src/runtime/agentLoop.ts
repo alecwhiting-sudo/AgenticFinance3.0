@@ -92,6 +92,86 @@ function buildSystemPrompt(resolved: ResolvedRelease): string {
     .join("\n\n");
 }
 
+const ACCOUNT_GUESS: [RegExp, string][] = [
+  [/software|subscription|licen[cs]e|hosting|saas|tool/i, "6200"],
+  [/travel|hotel|train|flight|mileage/i, "6300"],
+  [/marketing|campaign|advert|brand|conference|sponsor/i, "6400"],
+  [/legal|accountan|insurance|payroll|recruit|professional/i, "6500"],
+  [/rent|office space|cleaning|facilities|electric/i, "6100"],
+  [/subcontract|contractor|associate day/i, "5000"],
+];
+
+/** Keyless purchase intake: parse the ask, propose purchase.create through the
+ * gateway. The LLM path does this with judgement; this proves the plumbing. */
+async function purchaseRequestFallback(
+  resolved: ResolvedRelease,
+  runId: string,
+  text: string,
+  steps: TranscriptStep[],
+): Promise<LoopResult> {
+  if (/\b(pay|transfer|remit|send (the )?money|bank details?|sort code)\b/i.test(text)) {
+    return {
+      outcome: "abstained",
+      summary: `This asks me to move money or touch bank details ("${text.slice(0, 80)}") — outside my remit. Payments follow from approved purchases; bank-detail changes are human-only.`,
+    };
+  }
+  const amountMatch = text.match(/£\s*([\d,]+(?:\.\d{1,2})?)\s*(k)?/i);
+  if (!amountMatch) {
+    return {
+      outcome: "escalated",
+      summary: `I couldn't find an amount in the request ("${text.slice(0, 80)}"). Please resubmit with an estimated cost (e.g. "about £200").`,
+    };
+  }
+  let totalMinor = Math.round(parseFloat(amountMatch[1]!.replace(/,/g, "")) * 100);
+  if (amountMatch[2]) totalMinor *= 1000;
+  const qtyMatch = text.replace(amountMatch[0], "").match(/\b(\d{1,3})\b\s*(?:x\s*)?[a-z]/i);
+  const qty = qtyMatch ? Math.max(1, parseInt(qtyMatch[1]!, 10)) : 1;
+  const unitPriceMinor = Math.max(1, Math.round(totalMinor / qty));
+  const accountCode = ACCOUNT_GUESS.find(([re]) => re.test(text))?.[1] ?? "6900";
+
+  let supplierCode: string | undefined;
+  let supplierName: string | undefined;
+  if (db) {
+    const suppliers = await db.query.supplier.findMany();
+    const hit = suppliers.find((s) =>
+      text.toLowerCase().includes(s.name.toLowerCase().split(" ")[0]!.toLowerCase()) && s.name.split(" ")[0]!.length > 3,
+    );
+    if (hit) supplierCode = hit.code;
+    else supplierCode = suppliers.find((s) => s.code === "SUP-001")?.code ?? suppliers[0]?.code;
+  }
+  if (!supplierCode) supplierName = "General Procurement";
+
+  const params = {
+    ...(supplierCode ? { supplierCode } : { supplierName }),
+    requestedBy: resolved.agent.owner,
+    businessNeed: text.slice(0, 500),
+    lines: [{ description: text.slice(0, 120), qty, unitPriceMinor, accountCode }],
+  };
+  await appendStep(runId, steps, { kind: "note", label: "parsed request", detail: { qty, unitPriceMinor, accountCode, supplierCode: supplierCode ?? supplierName } });
+
+  const res = await fetch(`${API_URL}/commands/propose`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ type: "purchase.create", params, idempotencyKey: `${runId}:1`, runId }),
+  });
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  await appendStep(runId, steps, { kind: "command", label: "propose purchase.create", detail: { status: res.status, response: data } });
+  if (!res.ok) {
+    return { outcome: "failed", summary: `Gateway rejected purchase.create: ${String((data as { error?: string }).error ?? res.status)}` };
+  }
+  const result = (data as { result?: { number?: string; approvalBand?: string; status?: string } }).result ?? data;
+  const number = String(result.number ?? "created");
+  const band = String(result.approvalBand ?? "standard");
+  const status = String(result.status ?? "requested");
+  return {
+    outcome: "completed",
+    summary:
+      status === "approved"
+        ? `Purchase ${number} created for £${(totalMinor / 100).toFixed(2)} and auto-approved under standing policy (${band} band). Supplier view issued; nothing further needed.`
+        : `Purchase ${number} created for £${(totalMinor / 100).toFixed(2)} — awaits ${band} approval in the workbench inbox.`,
+  };
+}
+
 /** Deterministic fallback so the framework runs end-to-end without a model. */
 async function deterministicHandler(
   resolved: ResolvedRelease,
@@ -105,6 +185,10 @@ async function deterministicHandler(
     label: "deterministic mode",
     detail: { reason: "no model configured for this run" },
   });
+  // Purchase intake (plans/P2P.md M2): any task carrying free text.
+  if (taskType === "purchase.request" || (taskType === "eval.case" && typeof payload.text === "string")) {
+    return purchaseRequestFallback(resolved, runId, String(payload.text ?? ""), steps);
+  }
   if (taskType === "hello.greet" || taskType === "eval.case") {
     const topic = String(payload.topic ?? "the business");
     const audience = String(payload.audience ?? "the team");
@@ -161,6 +245,32 @@ export async function runAgentLoop(
       name: "get_company_overview",
       description: "Read live Brightline Ltd master data: company details and counts of accounts, suppliers, customers and items.",
       input_schema: { type: "object", properties: {}, additionalProperties: false },
+      strict: true,
+    },
+    {
+      name: "get_suppliers",
+      description: "List registered suppliers (code, name, payment terms). Use the code in purchase.create.",
+      input_schema: { type: "object", properties: {}, additionalProperties: false },
+      strict: true,
+    },
+    {
+      name: "get_accounts",
+      description: "List the chart of accounts (code, name, type) for coding purchase lines.",
+      input_schema: { type: "object", properties: {}, additionalProperties: false },
+      strict: true,
+    },
+    {
+      name: "get_category_budget",
+      description: "Budget vs committed vs actual for an expense account in a period (YYYY-MM).",
+      input_schema: {
+        type: "object",
+        properties: {
+          accountCode: { type: "string" },
+          periodCode: { type: "string" },
+        },
+        required: ["accountCode", "periodCode"],
+        additionalProperties: false,
+      },
       strict: true,
     },
     {
@@ -275,6 +385,29 @@ export async function runAgentLoop(
         };
         await appendStep(runId, steps, { kind: "outcome", label: result.outcome, detail: { summary: result.summary } });
         return result;
+      }
+      if (tu.name === "get_suppliers" || tu.name === "get_accounts" || tu.name === "get_category_budget") {
+        let result: unknown = { error: "database unavailable" };
+        if (db) {
+          if (tu.name === "get_suppliers") {
+            result = (await db.query.supplier.findMany({ limit: 60 })).map((s) => ({
+              code: s.code,
+              name: s.name,
+              paymentTermsDays: s.paymentTermsDays,
+            }));
+          } else if (tu.name === "get_accounts") {
+            result = (await db.query.account.findMany()).map((a) => ({ code: a.code, name: a.name, type: a.type }));
+          } else {
+            const q = input as { accountCode: string; periodCode: string };
+            result =
+              (await db.query.categoryBudget.findFirst({
+                where: (t, { and, eq: e }) => and(e(t.accountCode, q.accountCode), e(t.periodCode, q.periodCode)),
+              })) ?? { note: "no budget row for that account/period" };
+          }
+        }
+        await appendStep(runId, steps, { kind: "tool_call", label: tu.name, detail: { input, preview: JSON.stringify(result).slice(0, 500) } });
+        toolResults.push({ type: "tool_result", tool_use_id: tu.id, content: JSON.stringify(result) });
+        continue;
       }
       if (tu.name === "get_company_overview") {
         const overview = await companyOverview();
