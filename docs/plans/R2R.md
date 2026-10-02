@@ -117,3 +117,16 @@ payment-looking asks are out of both agents' remit.
    events through the same pipe (show the journals).
 4. `/reports`: P&L with month columns; click a number → account → journal →
    source. Close Agent's draft commentary alongside; regenerate it live.
+
+## 9. Backlog (noted 2026-10-02)
+
+- **Commentary quality (Alec):** first live drafts are too basic to be worth
+  reading. Develop the Close Agent's skills: richer structure (headline,
+  revenue vs cost split, margin movement, MoM and YTD views, driver
+  attribution by drilling movements/events, materiality thresholds so trivia
+  is omitted), tone calibrated to a board pack, and eval cases that fail
+  bland output (assert specific drivers and figures are named, not just "X
+  went up"). Candidates: give the agent tools to pull prior commentary and
+  account detail; consider the `reasoning` tier for this task only if evals
+  show the default tier can't reach the bar (eval before promote, per
+  CLAUDE.md model routing).
