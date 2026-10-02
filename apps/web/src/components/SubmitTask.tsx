@@ -63,12 +63,16 @@ export default function SubmitTask({ agents }: { agents: { slug: string; name: s
               setBusy(false);
               return;
             }
-            const res = await fetch(`${apiUrl}/work-items`, {
-              method: "POST",
-              headers: { "content-type": "application/json" },
-              body: JSON.stringify({ type, agentSlug, payload: parsed }),
-            });
-            setMsg(res.ok ? "Task queued — watch the live feed." : "Submit failed.");
+            try {
+              const res = await fetch(`${apiUrl}/work-items`, {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ type, agentSlug, payload: parsed }),
+              });
+              setMsg(res.ok ? "Task queued — watch the live feed." : "Submit failed.");
+            } catch {
+              setMsg(`Cannot reach the API at ${apiUrl} — check NEXT_PUBLIC_API_URL.`);
+            }
             setBusy(false);
             setTimeout(() => router.refresh(), 2000);
           }}

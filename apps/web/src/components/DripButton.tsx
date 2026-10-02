@@ -28,16 +28,21 @@ export default function DripButton() {
         disabled={busy}
         onClick={async () => {
           setBusy(true);
-          const res = await fetch(`${apiUrl}/p2p/drip`, {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({ scenario }),
-          });
-          const data = (await res.json().catch(() => null)) as { supplier?: string } | null;
-          setMsg(res.ok ? `Invoice from ${data?.supplier} landed — watch the live feed.` : "Drip failed.");
-          setBusy(false);
-          setTimeout(() => router.refresh(), 2500);
-          setTimeout(() => router.refresh(), 7000);
+          try {
+            const res = await fetch(`${apiUrl}/p2p/drip`, {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({ scenario }),
+            });
+            const data = (await res.json().catch(() => null)) as { supplier?: string } | null;
+            setMsg(res.ok ? `Invoice from ${data?.supplier} landed — watch the live feed.` : "Drip failed.");
+            setTimeout(() => router.refresh(), 2500);
+            setTimeout(() => router.refresh(), 7000);
+          } catch {
+            setMsg(`Cannot reach the API at ${apiUrl} from this browser — check NEXT_PUBLIC_API_URL on the web service (needs a rebuild after changing).`);
+          } finally {
+            setBusy(false);
+          }
         }}
         className="rounded-lg px-3 py-1.5 text-sm font-medium text-white disabled:opacity-40"
         style={{ background: "var(--accent)" }}

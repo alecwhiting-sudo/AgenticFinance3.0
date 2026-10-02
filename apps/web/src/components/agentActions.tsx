@@ -9,12 +9,16 @@ const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 const USER = "alec";
 
 async function post(path: string, body: unknown): Promise<{ ok: boolean; data: unknown }> {
-  const res = await fetch(`${apiUrl}${path}`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  return { ok: res.ok, data: await res.json().catch(() => null) };
+  try {
+    const res = await fetch(`${apiUrl}${path}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return { ok: res.ok, data: await res.json().catch(() => null) };
+  } catch {
+    return { ok: false, data: { error: `cannot reach API at ${apiUrl}` } };
+  }
 }
 
 export function SkillEditor({

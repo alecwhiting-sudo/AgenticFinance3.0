@@ -38,6 +38,7 @@ export default async function P2PPage() {
     getJson<Invoice[]>("/p2p/invoices?status=exception&limit=50"),
     getJson<Purchase[]>("/p2p/purchases?limit=12"),
   ]);
+  const apiDown = pipeline === null;
   const stageCount = (s: string) => pipeline?.invoiceStages.find((x) => x.status === s)?.n ?? 0;
   const bandCount = (b: string) => pipeline?.bands.find((x) => x.band === b)?.n ?? 0;
 
@@ -53,6 +54,13 @@ export default async function P2PPage() {
         </div>
         <DripButton />
       </section>
+
+      {apiDown && (
+        <div className="rounded-xl border p-4 text-sm" style={{ borderColor: "#d97706", color: "#d97706" }}>
+          The web server cannot reach the API — counts below are blank, not zero. Check the
+          web service&apos;s API_URL variable (server-side) and the api service&apos;s health.
+        </div>
+      )}
 
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-7">
         {INVOICE_STAGES.map((s) => (

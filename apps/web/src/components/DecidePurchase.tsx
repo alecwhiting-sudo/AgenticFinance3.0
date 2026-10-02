@@ -10,11 +10,13 @@ export default function DecidePurchase({ purchaseId }: { purchaseId: string }) {
   const [busy, setBusy] = useState(false);
   const decide = async (approve: boolean) => {
     setBusy(true);
-    await fetch(`${apiUrl}/p2p/purchases/${purchaseId}/decide`, {
+    try {
+      await fetch(`${apiUrl}/p2p/purchases/${purchaseId}/decide`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ approve, decidedBy: "alec" }),
     });
+    } catch { /* surfaced by refresh showing unchanged state */ }
     setBusy(false);
     router.refresh();
   };

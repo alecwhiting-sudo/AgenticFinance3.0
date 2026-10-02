@@ -10,11 +10,13 @@ export default function DecideCommand({ commandId }: { commandId: string }) {
   const [busy, setBusy] = useState(false);
   const decide = async (approve: boolean) => {
     setBusy(true);
-    await fetch(`${apiUrl}/commands/${commandId}/decide`, {
+    try {
+      await fetch(`${apiUrl}/commands/${commandId}/decide`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ decidedBy: "alec", approve }),
     });
+    } catch { /* surfaced by refresh showing unchanged state */ }
     setBusy(false);
     router.refresh();
   };
