@@ -103,4 +103,6 @@ adminRoutes(app);
 o2cRoutes(app);
 
 const port = Number(process.env.PORT ?? 3001);
-await app.listen({ port, host: "0.0.0.0" });
+// "::" = dual-stack: Railway private networking is IPv6-only, so an
+// IPv4-only bind makes api.railway.internal unreachable from the worker.
+await app.listen({ port, host: "::" });
