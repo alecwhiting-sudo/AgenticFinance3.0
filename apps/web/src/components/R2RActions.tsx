@@ -27,16 +27,16 @@ export function RunMonthEndButton({ period }: { period: string }) {
     router.refresh();
   };
   return (
-    <span className="flex items-center gap-2">
-      {msg && <span className="text-xs" style={{ color: "var(--muted)" }}>{msg}</span>}
+    <span className="flex flex-col items-end gap-1">
       <button
         disabled={busy}
         onClick={run}
-        className="rounded-lg px-3 py-1.5 text-sm font-medium text-white disabled:opacity-40"
+        className="min-w-[9.5rem] whitespace-nowrap rounded-lg px-3 py-1.5 text-center text-sm font-medium text-white disabled:opacity-40"
         style={{ background: "var(--accent)" }}
       >
         {busy ? "Posting…" : "Run month-end"}
       </button>
+      {msg && <span className="text-xs" style={{ color: "var(--muted)" }}>{msg}</span>}
     </span>
   );
 }
@@ -59,16 +59,16 @@ export function ReconcileButton() {
     router.refresh();
   };
   return (
-    <span className="flex items-center gap-2">
-      {msg && <span className="text-xs" style={{ color: "var(--muted)" }}>{msg}</span>}
+    <span className="flex flex-col items-end gap-1">
       <button
         disabled={busy}
         onClick={run}
-        className="rounded-lg border px-3 py-1.5 text-sm disabled:opacity-40"
+        className="min-w-[6.5rem] whitespace-nowrap rounded-lg border px-3 py-1.5 text-center text-sm disabled:opacity-40"
         style={{ borderColor: "var(--border)" }}
       >
         {busy ? "Matching…" : "Reconcile"}
       </button>
+      {msg && <span className="text-xs" style={{ color: "var(--muted)" }}>{msg}</span>}
     </span>
   );
 }
