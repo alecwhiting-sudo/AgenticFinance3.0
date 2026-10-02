@@ -38,7 +38,7 @@ export default async function R2RPage({
     return { matched, open };
   };
   const kinds = [...new Set(s.bank.map((b) => b.kind))].sort();
-  const totalOpen = s.bank.filter((b) => b.status === "unmatched" && b.kind !== "ar_receipt").reduce((n, b) => n + b.n, 0);
+  const totalOpen = s.bank.filter((b) => b.status === "unmatched").reduce((n, b) => n + b.n, 0);
 
   return (
     <main className="space-y-6">
@@ -91,7 +91,7 @@ export default async function R2RPage({
                       {open === 0 ? (
                         <Badge tone="good">clear</Badge>
                       ) : k === "ar_receipt" ? (
-                        <Badge>{open} awaiting O2C</Badge>
+                        <Badge tone="warn">{open} unapplied</Badge>
                       ) : (
                         <Badge tone="warn">{open} open</Badge>
                       )}

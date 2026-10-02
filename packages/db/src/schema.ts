@@ -557,3 +557,36 @@ export const reportCommentary = erp.table("report_commentary", {
   draftedBy: text("drafted_by").notNull(), // agent slug or human
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+/* ================= O2C (plans/O2C.md) ================= */
+
+export const arInvoiceStatus = erp.enum("ar_invoice_status", ["issued", "posted", "paid"]);
+
+export const arInvoice = erp.table("ar_invoice", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  number: text("number").notNull().unique(),
+  customerId: uuid("customer_id").notNull().references(() => customer.id),
+  invoiceDate: date("invoice_date").notNull(),
+  dueDate: date("due_date").notNull(),
+  lines: jsonb("lines").$type<PurchaseLine[]>().notNull(),
+  netMinor: integer("net_minor").notNull(),
+  vatMinor: integer("vat_minor").notNull(),
+  grossMinor: integer("gross_minor").notNull(),
+  status: arInvoiceStatus("status").notNull().default("issued"),
+  documentPath: text("document_path"),
+  contractPath: text("contract_path"),
+  remittancePath: text("remittance_path"),
+  journalId: uuid("journal_id"),
+  receiptJournalId: uuid("receipt_journal_id"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Sent dunning letters (plans/O2C.md §5) — always human-approved before
+ * recording; sending is simulated in the demo. */
+export const arDunning = erp.table("ar_dunning", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  invoiceId: uuid("invoice_id").notNull().references(() => arInvoice.id),
+  text: text("text").notNull(),
+  sentBy: text("sent_by").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});

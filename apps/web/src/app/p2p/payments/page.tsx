@@ -5,6 +5,7 @@ import { money, formatDate } from "@/lib/format";
 import { ApiDownBanner, Breadcrumbs } from "@/components/Chrome";
 import { Badge, Card, SectionTitle, toneForStatus } from "@/components/ui";
 import { DecideRun, InvestigateButton, ProposeRunButton, ReconcileButton } from "@/components/PaymentActions";
+import { InvestigateReceiptButton } from "@/components/O2CActions";
 
 export const metadata: Metadata = { title: "Payments" };
 
@@ -132,7 +133,10 @@ export default async function PaymentsPage() {
                   {t.status === "matched" ? (
                     <Badge tone="good">matched</Badge>
                   ) : t.kind === "ar_receipt" ? (
-                    <Badge>awaiting O2C</Badge>
+                    <span className="flex items-center gap-2">
+                      <Badge tone="warn">unapplied</Badge>
+                      <InvestigateReceiptButton bankTransactionId={t.id} />
+                    </span>
                   ) : (
                     <span className="flex items-center gap-2">
                       <Badge tone="warn">unmatched</Badge>

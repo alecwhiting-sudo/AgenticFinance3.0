@@ -25,10 +25,13 @@ import {
   goodsReceipt,
   purchase,
   supplier,
+  arInvoice,
+  customer,
   type Db,
   type PurchaseLine,
 } from "@af/db";
 import { threeWayMatch, isDuplicate } from "./match.js";
+import { applyReceiptsByRule, postArInvoice } from "./arIntake.js";
 import { parseUblInvoice } from "./ubl.js";
 import {
   commitPurchaseBudget,
@@ -67,8 +70,26 @@ type StudioChain = {
   paid: boolean;
   paidDate: string | null;
 };
+type StudioArInvoice = {
+  id: string;
+  customerCode: string;
+  number: string;
+  invoiceDate: string;
+  dueDate: string;
+  lines: StudioLine[];
+  netMinor: number;
+  vatMinor: number;
+  grossMinor: number;
+  file: string;
+  contractFile: string | null;
+  paid: boolean;
+  paidDate: string | null;
+  remittanceFile: string | null;
+};
 export type StudioDataset = {
   ap: StudioChain[];
+  ar: StudioArInvoice[];
+  customers: { code: string; name: string; email: string; paymentTermsDays: number }[];
   bank: { date: string; amountMinor: number; reference: string; counterparty: string; kind: string }[];
 };
 
@@ -110,7 +131,7 @@ export async function truncateTransactions(db: Db): Promise<void> {
   await db.execute(sql`
     truncate table erp.journal_line, erp.journal, erp.bank_transaction, erp.ap_payment,
       erp.ap_invoice, erp.goods_receipt, erp.purchase, erp.category_budget,
-      erp.report_commentary, fdp.movement, fdp.event cascade`);
+      erp.report_commentary, erp.ar_dunning, erp.ar_invoice, fdp.movement, fdp.event cascade`);
 }
 
 export async function loadDemoDataset(db: Db, opts: LoadOptions = {}): Promise<LoadResult> {
@@ -161,7 +182,7 @@ export async function loadDemoDataset(db: Db, opts: LoadOptions = {}): Promise<L
 
   const stats: Record<string, number> = { purchases: 0, receipts: 0, invoices: 0, posted: 0, paid: 0, exceptions: 0, mismatches: 0, ublParsed: 0 };
   const seenInvoices = new Map<string, { supplierInvoiceNumber: string; grossMinor: number; invoiceDate: string }[]>();
-  const total = dataset.ap.length + 1; // +1 for the bank feed step
+  const total = dataset.ap.length + 2; // + bank feed + AR load steps
   let done = 0;
 
   for (const chain of dataset.ap) {
@@ -349,6 +370,59 @@ export async function loadDemoDataset(db: Db, opts: LoadOptions = {}): Promise<L
   }
   done++;
   opts.onProgress?.(done, total, "bank feed loaded");
+
+  // 5. O2C: customers, AR invoices posted through the pipe, receipts applied
+  // by the deterministic matcher against the bank lines just loaded.
+  const customers = await db.query.customer.findMany();
+  const customerByCode = new Map(customers.map((c) => [c.code, c]));
+  for (const c of dataset.customers) {
+    if (!customerByCode.has(c.code)) {
+      const [row] = await db
+        .insert(customer)
+        .values({ companyId: companyRow.id, code: c.code, name: c.name, email: c.email, paymentTermsDays: c.paymentTermsDays })
+        .onConflictDoNothing({ target: customer.code })
+        .returning();
+      if (row) customerByCode.set(c.code, row);
+    }
+  }
+  for (const a of dataset.ar) {
+    const cust = customerByCode.get(a.customerCode);
+    if (!cust) continue;
+    const [inv] = await db
+      .insert(arInvoice)
+      .values({
+        number: a.number,
+        customerId: cust.id,
+        invoiceDate: a.invoiceDate,
+        dueDate: a.dueDate,
+        lines: toLines(a.lines),
+        netMinor: a.netMinor,
+        vatMinor: a.vatMinor,
+        grossMinor: a.grossMinor,
+        documentPath: a.file,
+        contractPath: a.contractFile,
+        remittancePath: a.remittanceFile,
+      })
+      .onConflictDoNothing({ target: arInvoice.number })
+      .returning();
+    if (!inv) continue;
+    await postArInvoice(db, inv.id, "loader");
+    stats.arInvoices = (stats.arInvoices ?? 0) + 1;
+    if (opts.paceMs && stats.arInvoices % 25 === 0)
+      await emitActivity({
+        actorType: "system",
+        actorId: "demo-replay",
+        verb: "posted_straight_through",
+        objectType: "ar_invoice",
+        objectId: inv.id,
+        summary: `AR billing: ${stats.arInvoices} customer invoices posted`,
+      });
+  }
+  const { applied, leftovers } = await applyReceiptsByRule(db, "loader");
+  stats.receiptsApplied = applied;
+  stats.receiptsLeft = leftovers;
+  done++;
+  opts.onProgress?.(done, total, `AR loaded, ${applied} receipts applied`);
 
   log(`loaded: ${JSON.stringify(stats)}`);
   const [{ n: journals }] = (await db.execute(sql`select count(*) as n from erp.journal`)).rows as { n: string }[];

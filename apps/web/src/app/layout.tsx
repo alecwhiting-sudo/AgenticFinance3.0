@@ -12,6 +12,7 @@ const nav = [
   { href: "/", label: "Dashboard" },
   { href: "/agents", label: "Agents" },
   { href: "/p2p", label: "P2P" },
+  { href: "/o2c", label: "O2C" },
   { href: "/ledger", label: "Ledger" },
   { href: "/r2r", label: "R2R" },
   { href: "/reports", label: "Reports" },

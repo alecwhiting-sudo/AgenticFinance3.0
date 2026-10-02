@@ -270,6 +270,90 @@ async function invoiceCaptureFallback(
   };
 }
 
+/** Keyless cash application (plans/O2C.md §4): exact amount + unique
+ * candidate → propose; reference contained in a candidate number → propose;
+ * else escalate. Every application needs a human (ar.receipt.apply). */
+async function cashApplicationFallback(
+  resolved: ResolvedRelease,
+  runId: string,
+  payload: Record<string, unknown>,
+  steps: TranscriptStep[],
+): Promise<LoopResult> {
+  const bankTransactionId = String(payload.bankTransactionId ?? "");
+  const reference = String(payload.reference ?? "");
+  const amountMinor = Number(payload.amountMinor ?? 0);
+  const candidates = (payload.candidates ?? []) as {
+    invoiceId: string; number: string; grossMinor: number; customerName: string;
+  }[];
+  await appendStep(runId, steps, {
+    kind: "note",
+    label: "cash application",
+    detail: { reference, amountMinor, candidates: candidates.map((c) => c.number) },
+  });
+
+  const propose = async (c: (typeof candidates)[number], why: string) => {
+    const rationale = `Receipt "${reference}" for ${amountMinor} matches invoice ${c.number} (${c.customerName}, ${c.grossMinor}): ${why}`;
+    const { ok, data } = await proposeCommand(
+      runId, 1, "ar.receipt.apply",
+      { bankTransactionId, invoiceId: c.invoiceId, rationale }, steps,
+    );
+    if (!ok)
+      return { outcome: "failed" as const, summary: `Gateway rejected application: ${String((data as { error?: string }).error ?? "unknown")}` };
+    return { outcome: "completed" as const, summary: `Proposed applying receipt to ${c.number} — awaiting human approval. ${why}` };
+  };
+
+  const amountHits = candidates.filter((c) => c.grossMinor === amountMinor);
+  if (amountHits.length === 1) return propose(amountHits[0]!, "exact amount, single open invoice at that value.");
+  const refHit = candidates.find((c) => reference.includes(c.number) || c.number.includes(reference));
+  if (refHit && refHit.grossMinor === amountMinor)
+    return propose(refHit, "reference cites the invoice number and the amount agrees.");
+  if (amountHits.length > 1)
+    return {
+      outcome: "escalated",
+      summary: `${amountHits.length} open invoices share this amount (${amountHits.map((c) => c.number).join(", ")}) and the reference decides nothing — a human should pick, or request a remittance advice.`,
+    };
+  return {
+    outcome: "escalated",
+    summary: `No open invoice matches receipt amount ${amountMinor} — possible part-payment or unknown payer; a human should investigate.`,
+  };
+}
+
+/** Keyless collections letter (plans/O2C.md §5): firm, courteous, grounded
+ * in the payload facts only. Sending always needs a human. */
+async function collectionsFallback(
+  resolved: ResolvedRelease,
+  runId: string,
+  payload: Record<string, unknown>,
+  steps: TranscriptStep[],
+): Promise<LoopResult> {
+  const invoiceId = String(payload.invoiceId ?? "");
+  const number = String(payload.number ?? "");
+  const customerName = String(payload.customerName ?? "");
+  const grossMinor = Number(payload.grossMinor ?? 0);
+  const dueDate = String(payload.dueDate ?? "");
+  const daysOverdue = Number(payload.daysOverdue ?? 0);
+  if (!invoiceId || !number || grossMinor <= 0)
+    return { outcome: "escalated", summary: "Missing invoice facts in the task payload — cannot draft a grounded letter." };
+  const gbp = `£${(grossMinor / 100).toLocaleString("en-GB", { minimumFractionDigits: 2 })}`;
+  await appendStep(runId, steps, { kind: "note", label: "drafting dunning letter", detail: { number, daysOverdue } });
+
+  const text = [
+    `Dear ${customerName},`,
+    `Our records show invoice ${number} for ${gbp}, due on ${dueDate}, remains unpaid (${daysOverdue} days overdue).`,
+    `If payment has already been made, please share the remittance details so we can apply it promptly. Otherwise we would appreciate settlement within 7 days.`,
+    `If anything is blocking payment — a query on the invoice, or a copy needed — reply to this message and we will resolve it quickly.`,
+    `Kind regards,\nAccounts Receivable, Brightline Ltd`,
+  ].join("\n\n");
+
+  const { ok, data } = await proposeCommand(runId, 1, "ar.dunning.send", { invoiceId, text }, steps);
+  if (!ok)
+    return { outcome: "failed", summary: `Gateway rejected dunning: ${String((data as { error?: string }).error ?? "unknown")}` };
+  return {
+    outcome: "completed",
+    summary: `Drafted a chase letter for ${number} (${customerName}, ${gbp}, ${daysOverdue} days overdue) — awaiting human approval before anything is sent.`,
+  };
+}
+
 /** Keyless commentary (plans/R2R.md §5): a grounded template over the
  * figures in the payload — biggest movers by absolute change, named with
  * their real amounts. Never invents a number. */
@@ -458,6 +542,12 @@ async function deterministicHandler(
   }
   if (taskType === "invoice.exception" || (taskType === "eval.case" && typeof payload.exceptionCode === "string")) {
     return invoiceExceptionFallback(resolved, runId, payload, steps);
+  }
+  if (taskType === "ar.cash.apply" || (taskType === "eval.case" && Array.isArray(payload.candidates))) {
+    return cashApplicationFallback(resolved, runId, payload, steps);
+  }
+  if (taskType === "ar.collections" || (taskType === "eval.case" && typeof payload.daysOverdue === "number")) {
+    return collectionsFallback(resolved, runId, payload, steps);
   }
   if (taskType === "bank.reconcile" || (taskType === "eval.case" && typeof payload.bankTransactionId === "string")) {
     return bankReconcileFallback(resolved, runId, payload, steps);

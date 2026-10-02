@@ -38,6 +38,27 @@ async function executeCommand(
     case "ap.invoice.resolve": {
       return resolveInvoiceException(db, params as ResolveParams, actor);
     }
+    case "ar.receipt.apply": {
+      const { applyReceipt } = await import("../services/arIntake.js");
+      const p = params as { bankTransactionId: string; invoiceId: string };
+      return applyReceipt(db, { ...p, postedBy: actor }) as Promise<Record<string, unknown>>;
+    }
+    case "ar.dunning.send": {
+      const p = params as { invoiceId: string; text: string };
+      const { arDunning } = await import("@af/db");
+      const inv = await db.query.arInvoice.findFirst({ where: (t) => eq(t.id, p.invoiceId) });
+      if (!inv) throw Object.assign(new Error("ar invoice not found"), { statusCode: 404 });
+      await db.insert(arDunning).values({ invoiceId: inv.id, text: p.text, sentBy: actor });
+      await emitActivity({
+        actorType: "human",
+        actorId: actor,
+        verb: "sent_dunning",
+        objectType: "ar_invoice",
+        objectId: inv.id,
+        summary: `Dunning letter for ${inv.number} approved and sent (simulated)`,
+      });
+      return { sent: true, invoiceNumber: inv.number };
+    }
     case "report.commentary.save": {
       const p = params as { periodCode: string; text: string };
       const { reportCommentary } = await import("@af/db");

@@ -102,6 +102,26 @@ export const commandDefs = {
       text: z.string().min(40).max(8000),
     }),
   },
+  /** Apply a customer receipt to an AR invoice — a judgement call when the
+   * deterministic matcher couldn't decide, so ALWAYS human-approved
+   * (plans/O2C.md §4). */
+  "ar.receipt.apply": {
+    requiresApproval: true,
+    params: z.object({
+      bankTransactionId: z.string().uuid(),
+      invoiceId: z.string().uuid(),
+      rationale: z.string().min(10).max(2000),
+    }),
+  },
+  /** Send a dunning letter — external communication, ALWAYS human-approved
+   * (CLAUDE.md finance safety rule; plans/O2C.md §5). Send is simulated. */
+  "ar.dunning.send": {
+    requiresApproval: true,
+    params: z.object({
+      invoiceId: z.string().uuid(),
+      text: z.string().min(80).max(4000),
+    }),
+  },
   /** Post an unmatched bank line against an account — a judgement call, so
    * ALWAYS a human approval (plans/R2R.md §2). Deterministic kind-rules never
    * use this; it exists for the Reconciliation Agent's proposals. */

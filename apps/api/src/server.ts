@@ -17,6 +17,7 @@ import { dripRoutes } from "./routes/drip.js";
 import { paymentRoutes } from "./routes/payments.js";
 import { r2rRoutes } from "./routes/r2r.js";
 import { adminRoutes } from "./routes/admin.js";
+import { o2cRoutes } from "./routes/o2c.js";
 
 const VERSION = "0.2.0";
 const SERVICE = "api";
@@ -99,6 +100,7 @@ dripRoutes(app);
 paymentRoutes(app);
 r2rRoutes(app);
 adminRoutes(app);
+o2cRoutes(app);
 
 const port = Number(process.env.PORT ?? 3001);
 await app.listen({ port, host: "0.0.0.0" });
