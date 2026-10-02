@@ -16,6 +16,7 @@ type AgentRow = {
   activeRelease: { version: number; modelProfile: string } | null;
   totalRuns: number;
   openWorkItems: number;
+  month: { period: string; items: number; tokens: number; costCents: number };
 };
 
 /** Modules are families for agents (D13): the roster reads like an org chart. */
@@ -84,6 +85,9 @@ export default async function AgentsPage() {
                           <span>no active release</span>
                         )}
                         <span>{a.totalRuns} runs</span>
+                        <span>
+                          this month: {a.month.items} items · {(a.month.tokens / 1000).toFixed(0)}k tok · ~${(a.month.costCents / 100).toFixed(2)}
+                        </span>
                       </div>
                     </Card>
                   </Link>

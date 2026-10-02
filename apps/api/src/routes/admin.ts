@@ -101,4 +101,45 @@ export function adminRoutes(app: FastifyInstance): void {
     await work();
     return { started: true, mode, job };
   });
+
+  /** Flush agent history to keep the demo cheap (D14): strip run transcripts
+   * older than 30 days, prune eval_run rows older than 90 days (their
+   * eval_summary rollups survive), and prune old activity events. Economic
+   * data (events, movements, journals) is never touched here. */
+  app.post("/admin/flush-history", async () => {
+    const db = requireDb();
+    const [{ n: transcripts }] = (
+      await db.execute(sql`
+        with u as (
+          update agent.agent_run set transcript = '[]'::jsonb
+          where started_at < now() - interval '30 days' and transcript <> '[]'::jsonb
+          returning 1)
+        select count(*)::int as n from u
+      `)
+    ).rows as { n: number }[];
+    const [{ n: evalRuns }] = (
+      await db.execute(sql`
+        with d as (
+          delete from agent.eval_run where started_at < now() - interval '90 days' returning 1)
+        select count(*)::int as n from d
+      `)
+    ).rows as { n: number }[];
+    const [{ n: activity }] = (
+      await db.execute(sql`
+        with d as (
+          delete from agent.activity_event where at < now() - interval '30 days' returning 1)
+        select count(*)::int as n from d
+      `)
+    ).rows as { n: number }[];
+    await emitActivity({
+      actorType: "human",
+      actorId: "admin",
+      verb: "flushed_history",
+      objectType: "dataset",
+      objectId: "history",
+      summary: `History flush: ${transcripts} transcripts stripped, ${evalRuns} old eval runs pruned (summaries kept), ${activity} activity events pruned`,
+    });
+    return { transcripts, evalRuns, activity };
+  });
+
 }

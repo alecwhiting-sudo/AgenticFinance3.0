@@ -592,3 +592,16 @@ export const arDunning = erp.table("ar_dunning", {
   sentBy: text("sent_by").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+/** Compact per-eval-run rollup (D14): survives demo data flushes so agent
+ * performance is comparable period on period while raw eval_run rows and
+ * transcripts can be pruned to keep the demo cheap. Append-only. */
+export const evalSummary = ag.table("eval_summary", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  agentId: uuid("agent_id").notNull().references(() => agent.id),
+  releaseVersion: integer("release_version").notNull(),
+  periodCode: text("period_code").notNull(), // YYYY-MM of the run
+  passed: integer("passed").notNull(),
+  failed: integer("failed").notNull(),
+  finishedAt: timestamp("finished_at", { withTimezone: true }).notNull().defaultNow(),
+});

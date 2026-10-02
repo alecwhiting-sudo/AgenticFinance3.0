@@ -57,6 +57,13 @@
       "when": 1790956724472,
       "tag": "0007_cold_starjammers",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1790959966270,
+      "tag": "0008_quiet_wilson_fisk",
+      "breakpoints": true
     }
   ]
 }

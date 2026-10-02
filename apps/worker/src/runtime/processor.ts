@@ -5,7 +5,7 @@
  * graded against their eval case's assertions.
  */
 import { and, eq, sql } from "drizzle-orm";
-import { agentRun, command, evalRun, workItem } from "@af/db";
+import { agentRun, command, evalRun, evalSummary, workItem } from "@af/db";
 import { db } from "../lib/db.js";
 import { emitActivity } from "../lib/activity.js";
 import { runAgentLoop, type ResolvedRelease } from "./agentLoop.js";
@@ -117,6 +117,7 @@ async function gradeEvalCase(
   const totalCases = await db.query.evalCase.findMany({ where: (t) => eq(t.agentId, er.agentId) });
   const done = results.length >= totalCases.length;
   const passCount = results.filter((r) => (r as { passed?: boolean }).passed).length;
+  const finishedAt = new Date();
   await db
     .update(evalRun)
     .set({
@@ -126,12 +127,23 @@ async function gradeEvalCase(
       ...(done
         ? {
             status: results.length === passCount ? "passed" : "failed",
-            finishedAt: new Date(),
+            finishedAt,
           }
         : {}),
     })
     .where(eq(evalRun.id, evalRunId));
   if (done) {
+    // D14: compact rollup that survives demo-data flushes — eval history
+    // stays comparable period on period even after raw rows are pruned.
+    const release = await db.query.agentRelease.findFirst({ where: (t) => eq(t.id, er.releaseId) });
+    await db.insert(evalSummary).values({
+      agentId: er.agentId,
+      releaseVersion: release?.version ?? 0,
+      periodCode: finishedAt.toISOString().slice(0, 7),
+      passed: passCount,
+      failed: results.length - passCount,
+      finishedAt,
+    });
     await emitActivity({
       actorType: "system",
       actorId: "eval-harness",

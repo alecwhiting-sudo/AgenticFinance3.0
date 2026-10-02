@@ -37,6 +37,7 @@ type Detail = {
     results: { name?: string; passed?: boolean; failures?: string[]; runId?: string }[];
   }[];
   recentRuns: { id: string; outcome: string | null; resultSummary: string | null; startedAt: string; modelCalls: number }[];
+  history: { period: string; items: number; tokens: number; costCents: number; evalPassed: number | null; evalFailed: number | null }[];
   stats: {
     completed: number;
     handed_back: number;
@@ -97,6 +98,42 @@ export default async function AgentDetail({ params }: { params: Promise<{ slug: 
             </Card>
           ))}
         </section>
+      )}
+
+      {d.history.length > 0 && (
+        <Card>
+          <SectionTitle>Performance over time — tokens priced on the current rate card; eval summaries survive history flushes</SectionTitle>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b text-left text-xs uppercase tracking-wide" style={{ borderColor: "var(--border)", color: "var(--muted)" }}>
+                <th className="py-2">Period</th>
+                <th className="py-2 text-right">Items</th>
+                <th className="py-2 text-right">Tokens</th>
+                <th className="py-2 text-right">Est. cost</th>
+                <th className="py-2 text-right">Cost / item</th>
+                <th className="py-2 text-right">Eval pass rate</th>
+              </tr>
+            </thead>
+            <tbody>
+              {d.history.map((h) => (
+                <tr key={h.period} className="border-b last:border-0" style={{ borderColor: "var(--border)" }}>
+                  <td className="py-1.5 tabular-nums">{h.period}</td>
+                  <td className="py-1.5 text-right tabular-nums">{h.items}</td>
+                  <td className="py-1.5 text-right tabular-nums">{(h.tokens / 1000).toFixed(1)}k</td>
+                  <td className="py-1.5 text-right tabular-nums">${(h.costCents / 100).toFixed(2)}</td>
+                  <td className="py-1.5 text-right tabular-nums">
+                    {h.items > 0 ? `$${(h.costCents / 100 / h.items).toFixed(3)}` : "—"}
+                  </td>
+                  <td className="py-1.5 text-right tabular-nums">
+                    {h.evalPassed !== null
+                      ? `${h.evalPassed}/${(h.evalPassed ?? 0) + (h.evalFailed ?? 0)}`
+                      : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
       )}
 
       <section className="grid gap-4 md:grid-cols-2">

@@ -35,11 +35,35 @@ export function agentRoutes(app: FastifyInstance): void {
         .select({ open: count() })
         .from(workItem)
         .where(and(eq(workItem.agentId, a.id), inArray(workItem.status, ["pending", "claimed", "running"])));
+      // this calendar month: items worked, tokens, estimated cost (rate card)
+      const period = new Date().toISOString().slice(0, 7);
+      const monthRows = (
+        await db.execute(sql`
+          select rel.model_profile, count(*)::int as items,
+                 coalesce(sum(r.input_tokens),0)::bigint as tin,
+                 coalesce(sum(r.output_tokens),0)::bigint as tout
+          from agent.agent_run r
+          join agent.agent_release rel on rel.id = r.release_id
+          where r.agent_id = ${a.id} and r.finished_at is not null
+            and to_char(r.started_at, 'YYYY-MM') = ${period}
+          group by rel.model_profile
+        `)
+      ).rows as { model_profile: string; items: number; tin: string; tout: string }[];
+      const { estimateCostCents } = await import("../services/rateCard.js");
+      const month = monthRows.reduce(
+        (acc, r) => ({
+          items: acc.items + r.items,
+          tokens: acc.tokens + Number(r.tin) + Number(r.tout),
+          costCents: acc.costCents + estimateCostCents(r.model_profile, Number(r.tin), Number(r.tout)),
+        }),
+        { items: 0, tokens: 0, costCents: 0 },
+      );
       result.push({
         ...a,
         activeRelease: active ? { id: active.id, version: active.version, modelProfile: active.modelProfile } : null,
         totalRuns: runStats?.runs ?? 0,
         openWorkItems: openItems?.open ?? 0,
+        month: { period, ...month },
       });
     }
     return result;
@@ -124,7 +148,59 @@ export function agentRoutes(app: FastifyInstance): void {
       `)
     ).rows as { n: number }[];
     const latestEval = evalRuns.find((e) => e.status === "passed" || e.status === "failed");
+
+    // Performance over time (D14): run aggregates priced by the rate card,
+    // joined with eval pass rates — eval_summary survives history flushes,
+    // so live eval_run rows are unioned in only when not yet summarised.
+    const { estimateCostCents } = await import("../services/rateCard.js");
+    const runHistory = (
+      await db.execute(sql`
+        select to_char(r.started_at, 'YYYY-MM') as period, rel.model_profile,
+               count(*)::int as items,
+               coalesce(sum(r.input_tokens),0)::bigint as tin,
+               coalesce(sum(r.output_tokens),0)::bigint as tout
+        from agent.agent_run r
+        join agent.agent_release rel on rel.id = r.release_id
+        where r.agent_id = ${a.id} and r.finished_at is not null
+        group by 1, 2 order by 1 desc limit 24
+      `)
+    ).rows as { period: string; model_profile: string; items: number; tin: string; tout: string }[];
+    const evalHistory = (
+      await db.execute(sql`
+        select period_code as period, sum(passed)::int as passed, sum(failed)::int as failed
+        from (
+          select period_code, passed, failed from agent.eval_summary where agent_id = ${a.id}
+          union all
+          select to_char(er.started_at, 'YYYY-MM'), er.passed, er.failed
+          from agent.eval_run er
+          where er.agent_id = ${a.id} and er.status in ('passed', 'failed')
+            and not exists (
+              select 1 from agent.eval_summary s
+              where s.agent_id = er.agent_id
+                and s.period_code = to_char(er.started_at, 'YYYY-MM')
+                and s.finished_at = er.finished_at
+            )
+        ) u group by 1
+      `)
+    ).rows as { period: string; passed: number; failed: number }[];
+    const byPeriod = new Map<string, { period: string; items: number; tokens: number; costCents: number; evalPassed: number | null; evalFailed: number | null }>();
+    for (const r of runHistory) {
+      const row = byPeriod.get(r.period) ?? { period: r.period, items: 0, tokens: 0, costCents: 0, evalPassed: null, evalFailed: null };
+      row.items += r.items;
+      row.tokens += Number(r.tin) + Number(r.tout);
+      row.costCents += estimateCostCents(r.model_profile, Number(r.tin), Number(r.tout));
+      byPeriod.set(r.period, row);
+    }
+    for (const e of evalHistory) {
+      const row = byPeriod.get(e.period) ?? { period: e.period, items: 0, tokens: 0, costCents: 0, evalPassed: null, evalFailed: null };
+      row.evalPassed = e.passed;
+      row.evalFailed = e.failed;
+      byPeriod.set(e.period, row);
+    }
+    const history = [...byPeriod.values()].sort((x, y) => y.period.localeCompare(x.period)).slice(0, 6);
+
     return {
+      history,
       agent: a,
       releases,
       skills,

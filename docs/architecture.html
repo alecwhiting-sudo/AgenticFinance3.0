@@ -71,7 +71,7 @@
 <div class="wrap">
   <h1>AgenticFinance — architecture</h1>
   <p class="sub">Modules clients recognise, agents as the workforce, one event-native finance data platform underneath (D13).</p>
-  <p class="meta">Maintained alongside <code>docs/ARCHITECTURE.md</code> — update both in the same commit. Last updated 2026-10-02 (post O2C, Phase 4).</p>
+  <p class="meta">Maintained alongside <code>docs/ARCHITECTURE.md</code> — update both in the same commit. Last updated 2026-10-02 (post Phase 6 + D14 telemetry).</p>
 
   <h2>System view — from business activity to certified numbers</h2>
 
@@ -98,7 +98,7 @@
     <div class="boxes c3">
       <div class="box"><b>Agent runtime</b><span>work queue (Postgres FOR UPDATE SKIP LOCKED) → agent loop (Anthropic SDK, model routed by task shape) → step-by-step transcripts; deterministic keyless fallbacks for every task</span></div>
       <div class="box"><b>Command gateway</b><span>typed commands, schema + permission + idempotency checks; standing authority auto-executes, everything that moves money or leaves the building waits for a human</span></div>
-      <div class="box"><b>Releases &amp; evals</b><span>versioned skills, immutable releases (draft → evaluated → active), eval suites gate promotion; behaviour change = new release</span></div>
+      <div class="box"><b>Releases &amp; evals</b><span>versioned skills, immutable releases (draft → evaluated → active), eval suites gate promotion; behaviour change = new release. Telemetry (D14): per-period tokens/items/cost via the rate card; eval_summary rollups survive history flushes, raw transcripts and old eval runs are prunable</span></div>
     </div>
   </div>
   <div class="arrow">every economic change becomes a business event — two entry postures, one pipe</div>

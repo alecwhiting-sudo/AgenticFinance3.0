@@ -150,6 +150,25 @@ export default function AdminData() {
               </select>
             </label>
           </span>
+          <button
+            onClick={async () => {
+              setErr(null);
+              try {
+                const res = await fetch(`${apiUrl}/admin/flush-history`, { method: "POST" });
+                const d = await res.json();
+                setErr(null);
+                alert(`Flushed: ${d.transcripts} transcripts stripped, ${d.evalRuns} old eval runs pruned (summaries kept), ${d.activity} activity events pruned.`);
+              } catch {
+                setErr(`Cannot reach the API at ${apiUrl}.`);
+              }
+              await load();
+            }}
+            className="whitespace-nowrap rounded-lg border px-3 py-1.5 text-sm"
+            style={{ borderColor: "var(--border)", color: "var(--muted)" }}
+            title="Strip run transcripts >30d, prune eval runs >90d (summaries survive), prune old activity"
+          >
+            Flush history
+          </button>
           {s?.job.error && <span className="text-xs" style={{ color: "var(--bad)" }}>last job failed: {s.job.error.slice(0, 120)}</span>}
           {!s?.job.running && s?.job.message && !s.job.error && (
             <span className="text-xs" style={{ color: "var(--muted)" }}>{s.job.message}</span>
