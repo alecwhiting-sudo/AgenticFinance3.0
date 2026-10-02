@@ -111,14 +111,22 @@ export async function postApInvoice(
   if (inv.status !== "matched" && inv.status !== "approved")
     throw new Error(`cannot post invoice in status ${inv.status}`);
 
-  const j = await postJournal(db, {
-    journalDate: inv.invoiceDate,
+  // D13: the module pushes the business event WITH its accounting attached
+  // (the agent/intake coded the lines); the platform validates and posts.
+  const { postEvent } = await import("./fdpPost.js");
+  const posted = await postEvent(db, {
+    eventType: "ap.invoice.posted",
+    occurredAt: inv.invoiceDate,
+    sourceSystem: "api",
+    sourceEventKey: `ap.invoice.posted:${inv.id}`,
+    objectType: "ap_invoice",
+    objectId: inv.id,
+    details: { supplierInvoiceNumber: inv.supplierInvoiceNumber, grossMinor: inv.grossMinor },
+    deltas: apInvoiceJournalLines(inv),
     memo: `AP invoice ${inv.supplierInvoiceNumber}`,
-    sourceType: "ap_invoice",
-    sourceId: inv.id,
     postedBy,
-    lines: apInvoiceJournalLines(inv),
   });
+  const j = { id: posted.journalId };
   await db.update(apInvoice).set({ status: "posted", journalId: j.id }).where(eq(apInvoice.id, inv.id));
 
   // committed -> actual per line account/period
@@ -146,17 +154,23 @@ export async function executeApPayment(
   if (pay.status !== "proposed" && pay.status !== "approved")
     throw new Error(`cannot execute payment in status ${pay.status}`);
 
-  const j = await postJournal(db, {
-    journalDate: pay.runDate,
-    memo: `Payment run ${pay.paymentRef}`,
-    sourceType: "ap_payment",
-    sourceId: pay.id,
-    postedBy,
-    lines: [
+  const { postEvent } = await import("./fdpPost.js");
+  const posted = await postEvent(db, {
+    eventType: "ap.payment.executed",
+    occurredAt: pay.runDate,
+    sourceSystem: "api",
+    sourceEventKey: `ap.payment.executed:${pay.id}`,
+    objectType: "ap_payment",
+    objectId: pay.id,
+    details: { paymentRef: pay.paymentRef, invoiceCount: pay.invoiceIds.length },
+    deltas: [
       { accountCode: ACCOUNTS.tradePayables, amountMinor: pay.totalMinor, memo: "Settle payables" },
       { accountCode: ACCOUNTS.bank, amountMinor: -pay.totalMinor, memo: "Bank out" },
     ],
+    memo: `Payment run ${pay.paymentRef}`,
+    postedBy,
   });
+  const j = { id: posted.journalId };
   await db
     .update(apPayment)
     .set({ status: "executed", executedAt: new Date(), journalId: j.id })

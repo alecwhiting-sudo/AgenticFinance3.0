@@ -29,6 +29,13 @@
       "when": 1790929008348,
       "tag": "0003_clean_wind_dancer",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790935786390,
+      "tag": "0004_flowery_golden_guardian",
+      "breakpoints": true
     }
   ]
 }

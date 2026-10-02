@@ -488,3 +488,61 @@ export const categoryBudget = erp.table("category_budget", {
   committedMinor: integer("committed_minor").notNull().default(0),
   actualMinor: integer("actual_minor").notNull().default(0),
 }, (t) => [unique("category_budget_unique").on(t.accountCode, t.periodCode)]);
+
+/* ================= Finance Data Platform (D13, analysis/finance-data-platform.md) =================
+ * Event-native economic substrate under the module surface. One pipe:
+ * event (with account-coded deltas attached, or derived later by an engine)
+ * → immutable movement rows + balanced journal, atomically. Modules stay
+ * the client-facing surface; these tables are the store+ledger combined. */
+
+export const fdp = pgSchema("fdp");
+
+export const fdpEventStatus = fdp.enum("fdp_event_status", ["pending", "processed", "failed"]);
+
+/** Append-only event store — the sole root of economic truth. Idempotency
+ * via unique (source_system, source_event_key). Immutable except status
+ * (enforced by trigger in the migration). */
+export const fdpEvent = fdp.table("event", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  eventType: text("event_type").notNull(), // e.g. ap.invoice.posted, ap.payment.executed
+  occurredAt: timestamp("occurred_at_utc", { withTimezone: true }).notNull(),
+  ingestedAt: timestamp("ingested_at_utc", { withTimezone: true }).notNull().defaultNow(),
+  sourceSystem: text("source_system").notNull(), // loader | api | worker | drip …
+  sourceEventKey: text("source_event_key").notNull(),
+  /** The economic object this event is about (invoice, payment run, …). */
+  objectType: text("object_type").notNull(),
+  objectId: text("object_id").notNull(),
+  details: jsonb("details").$type<Record<string, unknown>>().notNull().default({}),
+  /** Finance-initiated flows attach proposed account-coded deltas (D13's
+   * "two entry postures, one pipe"); business-initiated flows leave this
+   * null and an engine derives the deltas. Minor units; must sum to 0. */
+  deltas: jsonb("deltas").$type<{ accountCode: string; amountMinor: number; memo?: string }[] | null>(),
+  status: fdpEventStatus("status").notNull().default("pending"),
+  error: text("error"),
+}, (t) => [unique("fdp_event_idempotency").on(t.sourceSystem, t.sourceEventKey)]);
+
+/** Immutable movement ledger: one row per (event, account). Account-coded
+ * deltas ARE the grain; live balances (LES) are sums over this table.
+ * Invariant: per event, sum(amount_minor) = 0 and rows mirror the journal. */
+export const fdpMovement = fdp.table("movement", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  eventId: uuid("event_id").notNull().references(() => fdpEvent.id),
+  objectType: text("object_type").notNull(),
+  objectId: text("object_id").notNull(),
+  accountCode: text("account_code").notNull(),
+  amountMinor: integer("amount_minor").notNull(), // debit positive, credit negative
+  memo: text("memo"),
+  journalId: uuid("journal_id").notNull(), // the SDJ/GOJ this delta is represented by
+  engineVersion: text("engine_version").notNull(),
+  processedAt: timestamp("processed_at_utc", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Versioned parameter sets for future measurement transformations (accrual
+ * patterns, recognition schedules — R2R). Immutable once approved. */
+export const fdpParameterSet = fdp.table("parameter_set", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  status: text("status").notNull().default("draft"), // draft | approved | active | retired
+  parameters: jsonb("parameters").$type<Record<string, unknown>>().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});

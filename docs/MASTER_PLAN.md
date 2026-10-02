@@ -126,7 +126,7 @@ ANTHROPIC_API_KEY is configured; daily drip wires in with P2P M5.)*
   pipeline → match exception branches to the agent → human approves the
   resolution → posted and visibly in the trial balance.
 
-### Phase 2b — FDP substrate (strangler step 1–2, D13)
+### Phase 2b — FDP substrate (strangler step 1–2, D13) ✅ built 2026-10-02
 - Add the platform tables (event store with idempotency, movement ledger,
   engine/config versions, parameter sets) and the validated posting pipeline
   (event → account-coded deltas → movement + journal + live balances, one

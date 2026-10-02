@@ -4,6 +4,7 @@ import { isDuplicate, threeWayMatch } from "./match.js";
 import { apInvoiceJournalLines, validateJournalLines } from "./posting.js";
 import { bankTxnMatchesPayment, selectDueInvoices } from "./payments.js";
 import { parseUblInvoice } from "./ubl.js";
+import { validateDeltas } from "./fdpPost.js";
 import type { PurchaseLine } from "@af/db";
 
 const line = (over: Partial<PurchaseLine> = {}): PurchaseLine => ({
@@ -216,5 +217,29 @@ describe("UBL e-invoice parser (format mix)", () => {
   it("refuses non-UBL and incomplete documents", () => {
     expect(parseUblInvoice("<html>not an invoice</html>")).toBeNull();
     expect(parseUblInvoice(xml.replace("<cbc:DueDate>2026-08-23</cbc:DueDate>", ""))).toBeNull();
+  });
+});
+
+describe("FDP posting pipeline (D13)", () => {
+  it("accepts balanced account-coded deltas", () => {
+    expect(validateDeltas([
+      { accountCode: "6200", amountMinor: 10_000 },
+      { accountCode: "2000", amountMinor: -10_000 },
+    ])).toBeNull();
+  });
+  it("rejects unbalanced, zero, single and badly coded deltas", () => {
+    expect(validateDeltas([
+      { accountCode: "6200", amountMinor: 10_000 },
+      { accountCode: "2000", amountMinor: -9_999 },
+    ])).toMatch(/balance/);
+    expect(validateDeltas([
+      { accountCode: "6200", amountMinor: 0 },
+      { accountCode: "2000", amountMinor: 0 },
+    ])).toMatch(/zero/);
+    expect(validateDeltas([{ accountCode: "6200", amountMinor: 5 }])).toMatch(/two deltas/);
+    expect(validateDeltas([
+      { accountCode: "62", amountMinor: 5 },
+      { accountCode: "2000", amountMinor: -5 },
+    ])).toMatch(/account code/);
   });
 });
