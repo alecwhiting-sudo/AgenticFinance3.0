@@ -125,6 +125,12 @@ export async function captureInvoice(
       grossMinor: data.grossMinor,
       documentPath: data.documentPath,
       emailPath: data.emailPath,
+      // format derives from the document itself — callers never assert it
+      format: data.documentPath?.endsWith(".xml")
+        ? "ubl_xml"
+        : data.documentPath?.includes("scan")
+          ? "scan_pdf"
+          : "text_pdf",
     })
     .onConflictDoNothing({ target: [apInvoice.supplierId, apInvoice.supplierInvoiceNumber] })
     .returning();

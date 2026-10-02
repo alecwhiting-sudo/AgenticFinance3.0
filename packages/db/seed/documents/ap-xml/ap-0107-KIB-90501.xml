@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
+  xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
+  xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
+  <cbc:CustomizationID>urn:cen.eu:en16931:2017</cbc:CustomizationID>
+  <cbc:ID>KIB-90501</cbc:ID>
+  <cbc:IssueDate>2026-06-13</cbc:IssueDate>
+  <cbc:DueDate>2026-06-27</cbc:DueDate>
+  <cbc:InvoiceTypeCode>380</cbc:InvoiceTypeCode>
+  <cbc:DocumentCurrencyCode>GBP</cbc:DocumentCurrencyCode>
+  <cac:OrderReference><cbc:ID>PO-261106</cbc:ID></cac:OrderReference>
+  <cac:AccountingSupplierParty>
+    <cac:Party>
+      <cac:PartyIdentification><cbc:ID>SUP-016</cbc:ID></cac:PartyIdentification>
+      <cac:PartyName><cbc:Name>Kestrel Insurance Brokers</cbc:Name></cac:PartyName>
+    </cac:Party>
+  </cac:AccountingSupplierParty>
+  <cac:AccountingCustomerParty>
+    <cac:Party><cac:PartyName><cbc:Name>Brightline Interiors Ltd</cbc:Name></cac:PartyName></cac:Party>
+  </cac:AccountingCustomerParty>
+  <cac:TaxTotal><cbc:TaxAmount currencyID="GBP">2546.60</cbc:TaxAmount></cac:TaxTotal>
+  <cac:LegalMonetaryTotal>
+    <cbc:LineExtensionAmount currencyID="GBP">12733.00</cbc:LineExtensionAmount>
+    <cbc:TaxExclusiveAmount currencyID="GBP">12733.00</cbc:TaxExclusiveAmount>
+    <cbc:TaxInclusiveAmount currencyID="GBP">15279.60</cbc:TaxInclusiveAmount>
+    <cbc:PayableAmount currencyID="GBP">15279.60</cbc:PayableAmount>
+  </cac:LegalMonetaryTotal>
+  <cac:InvoiceLine>
+    <cbc:ID>1</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="EA">11</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="GBP">6534.00</cbc:LineExtensionAmount>
+    <cac:Item>
+      <cbc:Name>Employment law advice</cbc:Name>
+      <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
+    </cac:Item>
+    <cac:Price><cbc:PriceAmount currencyID="GBP">594.00</cbc:PriceAmount></cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>2</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="GBP">3191.00</cbc:LineExtensionAmount>
+    <cac:Item>
+      <cbc:Name>Insurance premium</cbc:Name>
+      <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
+    </cac:Item>
+    <cac:Price><cbc:PriceAmount currencyID="GBP">3191.00</cbc:PriceAmount></cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>3</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="GBP">3008.00</cbc:LineExtensionAmount>
+    <cac:Item>
+      <cbc:Name>Employment law advice</cbc:Name>
+      <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
+    </cac:Item>
+    <cac:Price><cbc:PriceAmount currencyID="GBP">3008.00</cbc:PriceAmount></cac:Price>
+  </cac:InvoiceLine>
+</Invoice>

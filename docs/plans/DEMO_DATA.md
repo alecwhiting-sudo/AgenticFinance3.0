@@ -77,5 +77,14 @@ complete.
 On top of the existing 300 PDF invoices, a later Studio run ADDS:
 - ~110 **Peppol/UBL XML e-invoices** (tiny files; flow through intake
   deterministically — the demo contrast to PDF extraction).
-- ~15–20 **scan-style image PDFs** (rasterised, no text layer) — bigger files,
-  worth it: they force the vision/LLM extraction path. Illustrative volumes.
+- 50 **scan-style image PDFs** (rasterised, no text layer) — they force the
+  vision/LLM extraction path on the extraction (Haiku) tier.
+- 6 reserved **drip scans** (`documents/drip-scan/` + manifest): unseen
+  invoices for the live `scan_document` drip — no purchase reference, so they
+  exercise vision extraction and then the no_purchase exception lane. Keyless
+  sessions fall back to the manifest data (never shown to the model).
+
+Built 2026-10-02 via `pnpm --filter @af/studio formats`: a deterministic,
+additive stage — original text PDFs untouched; selected chains gain
+`invoice.format` + `invoice.altFile`, the loader points `document_path` at the
+alternate file and cross-checks every UBL XML by re-parsing it.

@@ -15,6 +15,7 @@ type Invoice = {
   grossMinor: number;
   status: string;
   exceptionCode: string | null;
+  format: string;
 };
 
 const STAGES = ["all", "captured", "matched", "exception", "approved", "posted", "scheduled", "paid", "rejected"];
@@ -75,7 +76,9 @@ export default async function InvoicesPage({
                 <td className="py-2">{i.supplierName}</td>
                 <td className="py-2">
                   <Badge tone={toneForStatus(i.status)}>{i.status}</Badge>{" "}
-                  {i.exceptionCode && <Badge tone="warn">{i.exceptionCode}</Badge>}
+                  {i.exceptionCode && <Badge tone="warn">{i.exceptionCode}</Badge>}{" "}
+                  {i.format === "ubl_xml" && <Badge>xml</Badge>}
+                  {i.format === "scan_pdf" && <Badge>scan</Badge>}
                 </td>
                 <td className="py-2 text-right tabular-nums">{formatDate(i.invoiceDate)}</td>
                 <td className="py-2 text-right tabular-nums">{money(i.grossMinor)}</td>

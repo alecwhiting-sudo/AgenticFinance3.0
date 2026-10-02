@@ -18,6 +18,7 @@ type Detail = {
     exceptionCode: string | null;
     documentPath: string | null;
     emailPath: string | null;
+    format: string;
   };
   supplier: { code: string; name: string } | null;
   purchase: { id: string; number: string; status: string } | null;
@@ -44,7 +45,9 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
         <div>
           <h2 className="text-2xl font-semibold tracking-tight">
             {inv.supplierInvoiceNumber} <Badge tone={toneForStatus(inv.status)}>{inv.status}</Badge>{" "}
-            {inv.exceptionCode && <Badge tone="warn">{inv.exceptionCode}</Badge>}
+            {inv.exceptionCode && <Badge tone="warn">{inv.exceptionCode}</Badge>}{" "}
+            {inv.format === "ubl_xml" && <Badge>e-invoice</Badge>}
+            {inv.format === "scan_pdf" && <Badge>scanned</Badge>}
           </h2>
           <p className="mt-1 text-sm" style={{ color: "var(--muted)" }}>
             {d.supplier ? (
@@ -66,7 +69,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
         <span className="flex gap-2">
           {inv.documentPath && (
             <a href={`${PUBLIC_API_URL}/${inv.documentPath}`} target="_blank" className="rounded-lg border px-3 py-1.5 text-sm" style={{ borderColor: "var(--border)" }}>
-              Invoice PDF ↗
+              {inv.format === "ubl_xml" ? "Invoice XML ↗" : inv.format === "scan_pdf" ? "Scanned PDF ↗" : "Invoice PDF ↗"}
             </a>
           )}
           {inv.emailPath && (

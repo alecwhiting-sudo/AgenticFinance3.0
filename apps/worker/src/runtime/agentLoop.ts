@@ -220,15 +220,26 @@ async function invoiceCaptureFallback(
 ): Promise<LoopResult> {
   const text = String(payload.documentText ?? "");
   const emailText = String(payload.emailText ?? "");
-  const m = text.match(/AF-DATA\s*(\{.*\})/s);
-  if (!m) {
-    return { outcome: "escalated", summary: "No machine-readable AF-DATA block in the document text — needs the LLM extraction path or human keying." };
-  }
   let doc: Record<string, unknown>;
-  try {
-    doc = JSON.parse(m[1]!) as Record<string, unknown>;
-  } catch {
-    return { outcome: "escalated", summary: "AF-DATA block was not valid JSON — escalating for human review." };
+  const m = text.match(/AF-DATA\s*(\{.*\})/s);
+  if (m) {
+    try {
+      doc = JSON.parse(m[1]!) as Record<string, unknown>;
+    } catch {
+      return { outcome: "escalated", summary: "AF-DATA block was not valid JSON — escalating for human review." };
+    }
+  } else if (payload.fallbackData && typeof payload.fallbackData === "object") {
+    // Scan document with no text layer and no model configured: the drip's
+    // manifest truth keeps the keyless demo moving. With a key, the vision
+    // path reads the pixels instead and never sees this field.
+    doc = payload.fallbackData as Record<string, unknown>;
+    await appendStep(runId, steps, {
+      kind: "note",
+      label: "scan document, keyless fallback",
+      detail: { documentPath: payload.documentPath, note: "no model configured — using the drip manifest data instead of vision extraction" },
+    });
+  } else {
+    return { outcome: "escalated", summary: "No machine-readable AF-DATA block in the document text — needs the LLM extraction path or human keying." };
   }
   await appendStep(runId, steps, { kind: "note", label: "extracted fields", detail: { number: doc.number, po: doc.po, grossMinor: doc.grossMinor } });
 
@@ -244,6 +255,7 @@ async function invoiceCaptureFallback(
     vatMinor: Number(doc.vatMinor ?? 0),
     grossMinor: Number(doc.grossMinor ?? 0),
     ...(emailText ? { emailText } : {}),
+    ...(typeof payload.documentPath === "string" ? { documentPath: payload.documentPath } : {}),
   };
   const { ok, data } = await proposeCommand(runId, 1, "ap.invoice.capture", params, steps);
   if (!ok) return { outcome: "failed", summary: `Gateway rejected capture: ${String((data as { error?: string }).error ?? "unknown")}` };
@@ -460,9 +472,37 @@ export async function runAgentLoop(
     },
   ];
 
-  const messages: Anthropic.MessageParam[] = [
-    { role: "user", content: `Task type: ${taskType}\nTask payload:\n${JSON.stringify(payload, null, 2)}` },
+  // Vision path (format mix): a scan-style PDF has no text layer, so the
+  // document itself goes to the model as pixels. The keyless fallback data
+  // never reaches the model — extraction must be real work.
+  const { fallbackData: _hidden, ...modelPayload } = payload;
+  const firstContent: Anthropic.ContentBlockParam[] = [
+    { type: "text", text: `Task type: ${taskType}\nTask payload:\n${JSON.stringify(modelPayload, null, 2)}` },
   ];
+  if (
+    typeof payload.documentPath === "string" &&
+    /\.pdf$/i.test(payload.documentPath) &&
+    !payload.documentText
+  ) {
+    try {
+      const res = await fetch(`${API_URL}/${payload.documentPath}`);
+      if (res.ok) {
+        const data = Buffer.from(await res.arrayBuffer()).toString("base64");
+        firstContent.push({
+          type: "document",
+          source: { type: "base64", media_type: "application/pdf", data },
+        });
+        await appendStep(runId, steps, {
+          kind: "note",
+          label: "document attached for vision extraction",
+          detail: { documentPath: payload.documentPath, bytes: data.length },
+        });
+      }
+    } catch {
+      /* document unreachable: the model will say so and escalate */
+    }
+  }
+  const messages: Anthropic.MessageParam[] = [{ role: "user", content: firstContent }];
   const system = buildSystemPrompt(resolved);
   let modelCalls = 0;
   let commandSeq = 0;

@@ -1,0 +1,1 @@
+ALTER TABLE "erp"."ap_invoice" ADD COLUMN "format" text DEFAULT 'text_pdf' NOT NULL;

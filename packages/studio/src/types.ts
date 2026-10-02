@@ -29,6 +29,12 @@ export type ApChain = {
     grossMinor: number;
     file: string;
     template: number;
+    /** Additive format mix (plans/DEMO_DATA.md): how this invoice arrives.
+     * Absent/text_pdf = the original rendered PDF with a text layer. */
+    format?: "text_pdf" | "scan_pdf" | "ubl_xml";
+    /** The alternate-format file (scan PDF or UBL XML); `file` keeps the
+     * original text PDF so existing documents stay untouched. */
+    altFile?: string;
   };
   email: { file: string; subject: string; body: string; from: string; date: string };
   exception: string | null;

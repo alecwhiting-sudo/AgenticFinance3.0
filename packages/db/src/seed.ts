@@ -10,7 +10,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { sql } from "drizzle-orm";
-import type { Db } from "./index.js";
+import type { Db } from "./client.js";
 import {
   account,
   agent,
@@ -23,7 +23,7 @@ import {
   skill,
   skillVersion,
   supplier,
-} from "./index.js";
+} from "./schema.js";
 
 type SeedFile = {
   company: { code: string; name: string; currency: string };
@@ -216,7 +216,7 @@ console.log(
 
 // CLI entry: tsx src/seed.ts [--reset]
 if (process.argv[1] && /seed\.(ts|js)$/.test(process.argv[1])) {
-  const { createDb } = await import("./index.js");
+  const { createDb } = await import("./client.js");
   const { db, pool } = createDb();
   await seedCore(db, process.argv.includes("--reset"));
   await pool.end();

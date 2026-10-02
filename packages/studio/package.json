@@ -8,6 +8,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "generate": "tsx src/cli.ts generate",
     "render": "tsx src/cli.ts render",
+    "formats": "tsx src/cli.ts formats",
     "validate": "tsx src/cli.ts validate",
     "drip": "tsx src/cli.ts drip"
   },

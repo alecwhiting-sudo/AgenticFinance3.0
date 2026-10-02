@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { generate } from "./generate.js";
 import { render } from "./render.js";
+import { formats } from "./formats.js";
 import { validate } from "./validate.js";
 
 const seedDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../db/seed");
@@ -19,6 +20,8 @@ if (cmd === "generate") {
   console.log("generated dataset:", JSON.stringify(dataset.stats));
 } else if (cmd === "render") {
   await render(seedDir);
+} else if (cmd === "formats") {
+  await formats(seedDir);
 } else if (cmd === "validate") {
   const errors = validate(seedDir, process.argv[3] !== "--no-files");
   for (const e of errors) console.error(" ✗", e);
@@ -28,6 +31,6 @@ if (cmd === "generate") {
   // and queue capture work items. Stub until the ERP intake exists.
   console.log("drip: not yet wired — lands with P2P milestone M5");
 } else {
-  console.error("usage: cli.ts <generate [seed] | render | validate [--no-files] | drip>");
+  console.error("usage: cli.ts <generate [seed] | render | formats | validate [--no-files] | drip>");
   process.exit(1);
 }

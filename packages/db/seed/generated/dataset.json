@@ -946,7 +946,9 @@
     "vatMinor": 327200,
     "grossMinor": 1963200,
     "file": "documents/ap/ap-0002-FMS-91311.pdf",
-    "template": 0
+    "template": 0,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0002-FMS-91311.xml"
    },
    "email": {
     "file": "documents/emails/ap-0002.eml",
@@ -1094,7 +1096,9 @@
     "vatMinor": 25840,
     "grossMinor": 155040,
     "file": "documents/ap/ap-0004-NOS-16530.pdf",
-    "template": 1
+    "template": 1,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0004-NOS-16530.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0004.eml",
@@ -1168,7 +1172,9 @@
     "vatMinor": 143920,
     "grossMinor": 863520,
     "file": "documents/ap/ap-0005-PSS-81109.pdf",
-    "template": 0
+    "template": 0,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0005-PSS-81109.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0005.eml",
@@ -1229,7 +1235,9 @@
     "vatMinor": 11320,
     "grossMinor": 67920,
     "file": "documents/ap/ap-0006-DSL-61985.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0006-DSL-61985.xml"
    },
    "email": {
     "file": "documents/emails/ap-0006.eml",
@@ -1447,7 +1455,9 @@
     "vatMinor": 52300,
     "grossMinor": 313800,
     "file": "documents/ap/ap-0010-LTA-75997.pdf",
-    "template": 0
+    "template": 0,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0010-LTA-75997.xml"
    },
    "email": {
     "file": "documents/emails/ap-0010.eml",
@@ -1534,7 +1544,9 @@
     "vatMinor": 685040,
     "grossMinor": 4110240,
     "file": "documents/ap/ap-0011-KIB-26660.pdf",
-    "template": 1
+    "template": 1,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0011-KIB-26660.xml"
    },
    "email": {
     "file": "documents/emails/ap-0011.eml",
@@ -1717,7 +1729,9 @@
     "vatMinor": 81480,
     "grossMinor": 488880,
     "file": "documents/ap/ap-0014-CCC-42581.pdf",
-    "template": 2
+    "template": 2,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0014-CCC-42581.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0014.eml",
@@ -1939,7 +1953,9 @@
     "vatMinor": 79840,
     "grossMinor": 479040,
     "file": "documents/ap/ap-0017-IOP-78549.pdf",
-    "template": 0
+    "template": 0,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0017-IOP-78549.xml"
    },
    "email": {
     "file": "documents/emails/ap-0017.eml",
@@ -2318,7 +2334,9 @@
     "vatMinor": 68700,
     "grossMinor": 412200,
     "file": "documents/ap/ap-0023-EES-72286.pdf",
-    "template": 1
+    "template": 1,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0023-EES-72286.xml"
    },
    "email": {
     "file": "documents/emails/ap-0023.eml",
@@ -2466,7 +2484,9 @@
     "vatMinor": 2187860,
     "grossMinor": 13127160,
     "file": "documents/ap/ap-0025-ICL-88009.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0025-ICL-88009.xml"
    },
    "email": {
     "file": "documents/emails/ap-0025.eml",
@@ -2527,7 +2547,9 @@
     "vatMinor": 154660,
     "grossMinor": 927960,
     "file": "documents/ap/ap-0026-NOS-94274.pdf",
-    "template": 1
+    "template": 1,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0026-NOS-94274.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0026.eml",
@@ -2601,7 +2623,9 @@
     "vatMinor": 149000,
     "grossMinor": 894000,
     "file": "documents/ap/ap-0027-RCS-58166.pdf",
-    "template": 1
+    "template": 1,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0027-RCS-58166.xml"
    },
    "email": {
     "file": "documents/emails/ap-0027.eml",
@@ -2662,7 +2686,9 @@
     "vatMinor": 102020,
     "grossMinor": 612120,
     "file": "documents/ap/ap-0028-MWL-35374.pdf",
-    "template": 1
+    "template": 1,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0028-MWL-35374.xml"
    },
    "email": {
     "file": "documents/emails/ap-0028.eml",
@@ -2784,7 +2810,9 @@
     "vatMinor": 34840,
     "grossMinor": 209040,
     "file": "documents/ap/ap-0030-EES-72791.pdf",
-    "template": 2
+    "template": 2,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0030-EES-72791.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0030.eml",
@@ -2845,7 +2873,9 @@
     "vatMinor": 13040,
     "grossMinor": 78240,
     "file": "documents/ap/ap-0031-NDS-79356.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0031-NDS-79356.xml"
    },
    "email": {
     "file": "documents/emails/ap-0031.eml",
@@ -3163,7 +3193,9 @@
     "vatMinor": 25300,
     "grossMinor": 151800,
     "file": "documents/ap/ap-0036-WMR-60041.pdf",
-    "template": 1
+    "template": 1,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0036-WMR-60041.xml"
    },
    "email": {
     "file": "documents/emails/ap-0036.eml",
@@ -3224,7 +3256,9 @@
     "vatMinor": 54760,
     "grossMinor": 328560,
     "file": "documents/ap/ap-0037-FMA-60056.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0037-FMA-60056.xml"
    },
    "email": {
     "file": "documents/emails/ap-0037.eml",
@@ -3346,7 +3380,9 @@
     "vatMinor": 12300,
     "grossMinor": 73800,
     "file": "documents/ap/ap-0039-VOI-80995.pdf",
-    "template": 0
+    "template": 0,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0039-VOI-80995.xml"
    },
    "email": {
     "file": "documents/emails/ap-0039.eml",
@@ -3731,7 +3767,9 @@
     "vatMinor": 101140,
     "grossMinor": 606840,
     "file": "documents/ap/ap-0045-DAS-78354.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0045-DAS-78354.xml"
    },
    "email": {
     "file": "documents/emails/ap-0045.eml",
@@ -3866,7 +3904,9 @@
     "vatMinor": 70700,
     "grossMinor": 424200,
     "file": "documents/ap/ap-0047-RCS-73540.pdf",
-    "template": 2
+    "template": 2,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0047-RCS-73540.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0047.eml",
@@ -3953,7 +3993,9 @@
     "vatMinor": 248840,
     "grossMinor": 1493040,
     "file": "documents/ap/ap-0048-RCS-31887.pdf",
-    "template": 0
+    "template": 0,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0048-RCS-31887.xml"
    },
    "email": {
     "file": "documents/emails/ap-0048.eml",
@@ -4197,7 +4239,9 @@
     "vatMinor": 13000,
     "grossMinor": 78000,
     "file": "documents/ap/ap-0052-UL-78671.pdf",
-    "template": 0
+    "template": 0,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0052-UL-78671.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0052.eml",
@@ -4258,7 +4302,9 @@
     "vatMinor": 71000,
     "grossMinor": 426000,
     "file": "documents/ap/ap-0053-BFG-71811.pdf",
-    "template": 0
+    "template": 0,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0053-BFG-71811.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0053.eml",
@@ -4528,7 +4574,9 @@
     "vatMinor": 145620,
     "grossMinor": 873720,
     "file": "documents/ap/ap-0057-EES-45972.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0057-EES-45972.xml"
    },
    "email": {
     "file": "documents/emails/ap-0057.eml",
@@ -4650,7 +4698,9 @@
     "vatMinor": 14940,
     "grossMinor": 89640,
     "file": "documents/ap/ap-0059-JCC-48784.pdf",
-    "template": 1
+    "template": 1,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0059-JCC-48784.xml"
    },
    "email": {
     "file": "documents/emails/ap-0059.eml",
@@ -4772,7 +4822,9 @@
     "vatMinor": 5580,
     "grossMinor": 33480,
     "file": "documents/ap/ap-0061-TWD-67884.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0061-TWD-67884.xml"
    },
    "email": {
     "file": "documents/emails/ap-0061.eml",
@@ -4868,7 +4920,9 @@
     "vatMinor": 37320,
     "grossMinor": 223920,
     "file": "documents/ap/ap-0063-NDS-46016.pdf",
-    "template": 0
+    "template": 0,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0063-NDS-46016.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0063.eml",
@@ -5051,7 +5105,9 @@
     "vatMinor": 54960,
     "grossMinor": 329760,
     "file": "documents/ap/ap-0066-FSM-45319.pdf",
-    "template": 1
+    "template": 1,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0066-FSM-45319.xml"
    },
    "email": {
     "file": "documents/emails/ap-0066.eml",
@@ -5173,7 +5229,9 @@
     "vatMinor": 15120,
     "grossMinor": 90720,
     "file": "documents/ap/ap-0068-UL-89507.pdf",
-    "template": 0
+    "template": 0,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0068-UL-89507.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0068.eml",
@@ -5295,7 +5353,9 @@
     "vatMinor": 2680,
     "grossMinor": 16080,
     "file": "documents/ap/ap-0070-ZPF-65808.pdf",
-    "template": 1
+    "template": 1,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0070-ZPF-65808.xml"
    },
    "email": {
     "file": "documents/emails/ap-0070.eml",
@@ -5369,7 +5429,9 @@
     "vatMinor": 141380,
     "grossMinor": 848280,
     "file": "documents/ap/ap-0071-BE-23407.pdf",
-    "template": 0
+    "template": 0,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0071-BE-23407.xml"
    },
    "email": {
     "file": "documents/emails/ap-0071.eml",
@@ -5430,7 +5492,9 @@
     "vatMinor": 37400,
     "grossMinor": 224400,
     "file": "documents/ap/ap-0072-LTA-29173.pdf",
-    "template": 0
+    "template": 0,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0072-LTA-29173.xml"
    },
    "email": {
     "file": "documents/emails/ap-0072.eml",
@@ -5465,7 +5529,9 @@
     "vatMinor": 21280,
     "grossMinor": 127680,
     "file": "documents/ap/ap-0073-UL-99335.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0073-UL-99335.xml"
    },
    "email": {
     "file": "documents/emails/ap-0073.eml",
@@ -5526,7 +5592,9 @@
     "vatMinor": 13460,
     "grossMinor": 80760,
     "file": "documents/ap/ap-0074-OVL-59472.pdf",
-    "template": 1
+    "template": 1,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0074-OVL-59472.xml"
    },
    "email": {
     "file": "documents/emails/ap-0074.eml",
@@ -5613,7 +5681,9 @@
     "vatMinor": 31260,
     "grossMinor": 187560,
     "file": "documents/ap/ap-0075-OVL-91730.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0075-OVL-91730.xml"
    },
    "email": {
     "file": "documents/emails/ap-0075.eml",
@@ -5700,7 +5770,9 @@
     "vatMinor": 152380,
     "grossMinor": 914280,
     "file": "documents/ap/ap-0076-WMR-10853.pdf",
-    "template": 1
+    "template": 1,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0076-WMR-10853.xml"
    },
    "email": {
     "file": "documents/emails/ap-0076.eml",
@@ -5835,7 +5907,9 @@
     "vatMinor": 32280,
     "grossMinor": 193680,
     "file": "documents/ap/ap-0078-GLP-20159.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0078-GLP-20159.xml"
    },
    "email": {
     "file": "documents/emails/ap-0078.eml",
@@ -5896,7 +5970,9 @@
     "vatMinor": 797600,
     "grossMinor": 4785600,
     "file": "documents/ap/ap-0079-FSM-14515.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0079-FSM-14515.xml"
    },
    "email": {
     "file": "documents/emails/ap-0079.eml",
@@ -5983,7 +6059,9 @@
     "vatMinor": 675440,
     "grossMinor": 4052640,
     "file": "documents/ap/ap-0080-BFG-20388.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0080-BFG-20388.xml"
    },
    "email": {
     "file": "documents/emails/ap-0080.eml",
@@ -6179,7 +6257,9 @@
     "vatMinor": 101260,
     "grossMinor": 607560,
     "file": "documents/ap/ap-0083-GLP-29445.pdf",
-    "template": 1
+    "template": 1,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0083-GLP-29445.xml"
    },
    "email": {
     "file": "documents/emails/ap-0083.eml",
@@ -6253,7 +6333,9 @@
     "vatMinor": 24200,
     "grossMinor": 145200,
     "file": "documents/ap/ap-0084-CAV-97194.pdf",
-    "template": 1
+    "template": 1,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0084-CAV-97194.xml"
    },
    "email": {
     "file": "documents/emails/ap-0084.eml",
@@ -6571,7 +6653,9 @@
     "vatMinor": 26180,
     "grossMinor": 157080,
     "file": "documents/ap/ap-0089-BFG-20373.pdf",
-    "template": 1
+    "template": 1,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0089-BFG-20373.xml"
    },
    "email": {
     "file": "documents/emails/ap-0089.eml",
@@ -6700,7 +6784,9 @@
     "vatMinor": 97620,
     "grossMinor": 585720,
     "file": "documents/ap/ap-0091-EES-71774.pdf",
-    "template": 1
+    "template": 1,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0091-EES-71774.xml"
    },
    "email": {
     "file": "documents/emails/ap-0091.eml",
@@ -6761,7 +6847,9 @@
     "vatMinor": 17080,
     "grossMinor": 102480,
     "file": "documents/ap/ap-0092-SS-70479.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0092-SS-70479.xml"
    },
    "email": {
     "file": "documents/emails/ap-0092.eml",
@@ -7031,7 +7119,9 @@
     "vatMinor": 69800,
     "grossMinor": 418800,
     "file": "documents/ap/ap-0096-NOS-93802.pdf",
-    "template": 0
+    "template": 0,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0096-NOS-93802.xml"
    },
    "email": {
     "file": "documents/emails/ap-0096.eml",
@@ -7092,7 +7182,9 @@
     "vatMinor": 46680,
     "grossMinor": 280080,
     "file": "documents/ap/ap-0097-YHS-45829.pdf",
-    "template": 1
+    "template": 1,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0097-YHS-45829.xml"
    },
    "email": {
     "file": "documents/emails/ap-0097.eml",
@@ -7240,7 +7332,9 @@
     "vatMinor": 49240,
     "grossMinor": 295440,
     "file": "documents/ap/ap-0099-YHS-62449.pdf",
-    "template": 0
+    "template": 0,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0099-YHS-62449.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0099.eml",
@@ -7275,7 +7369,9 @@
     "vatMinor": 70020,
     "grossMinor": 420120,
     "file": "documents/ap/ap-0100-LTA-29352.pdf",
-    "template": 1
+    "template": 1,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0100-LTA-29352.xml"
    },
    "email": {
     "file": "documents/emails/ap-0100.eml",
@@ -7681,7 +7777,9 @@
     "vatMinor": 280840,
     "grossMinor": 1685040,
     "file": "documents/ap/ap-0106-HBM-57700.pdf",
-    "template": 0
+    "template": 0,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0106-HBM-57700.xml"
    },
    "email": {
     "file": "documents/emails/ap-0106.eml",
@@ -7768,7 +7866,9 @@
     "vatMinor": 254660,
     "grossMinor": 1527960,
     "file": "documents/ap/ap-0107-KIB-90501.pdf",
-    "template": 1
+    "template": 1,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0107-KIB-90501.xml"
    },
    "email": {
     "file": "documents/emails/ap-0107.eml",
@@ -7916,7 +8016,9 @@
     "vatMinor": 41700,
     "grossMinor": 250200,
     "file": "documents/ap/ap-0109-MTL-42035.pdf",
-    "template": 0
+    "template": 0,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0109-MTL-42035.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0109.eml",
@@ -7977,7 +8079,9 @@
     "vatMinor": 51660,
     "grossMinor": 309960,
     "file": "documents/ap/ap-0110-TWD-62978.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0110-TWD-62978.xml"
    },
    "email": {
     "file": "documents/emails/ap-0110.eml",
@@ -8038,7 +8142,9 @@
     "vatMinor": 62740,
     "grossMinor": 376440,
     "file": "documents/ap/ap-0111-JEH-11503.pdf",
-    "template": 1
+    "template": 1,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0111-JEH-11503.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0111.eml",
@@ -8160,7 +8266,9 @@
     "vatMinor": 1560,
     "grossMinor": 9360,
     "file": "documents/ap/ap-0113-CCC-16076.pdf",
-    "template": 1
+    "template": 1,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0113-CCC-16076.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0113.eml",
@@ -8221,7 +8329,9 @@
     "vatMinor": 6160,
     "grossMinor": 36960,
     "file": "documents/ap/ap-0114-HPP-21279.pdf",
-    "template": 2
+    "template": 2,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0114-HPP-21279.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0114.eml",
@@ -8295,7 +8405,9 @@
     "vatMinor": 269300,
     "grossMinor": 1615800,
     "file": "documents/ap/ap-0115-CPH-54316.pdf",
-    "template": 0
+    "template": 0,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0115-CPH-54316.xml"
    },
    "email": {
     "file": "documents/emails/ap-0115.eml",
@@ -8417,7 +8529,9 @@
     "vatMinor": 27420,
     "grossMinor": 164520,
     "file": "documents/ap/ap-0117-FMS-50530.pdf",
-    "template": 0
+    "template": 0,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0117-FMS-50530.xml"
    },
    "email": {
     "file": "documents/emails/ap-0117.eml",
@@ -8478,7 +8592,9 @@
     "vatMinor": 531860,
     "grossMinor": 3191160,
     "file": "documents/ap/ap-0118-QR-39724.pdf",
-    "template": 1
+    "template": 1,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0118-QR-39724.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0118.eml",
@@ -8539,7 +8655,9 @@
     "vatMinor": 79820,
     "grossMinor": 478920,
     "file": "documents/ap/ap-0119-MWL-94690.pdf",
-    "template": 0
+    "template": 0,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0119-MWL-94690.xml"
    },
    "email": {
     "file": "documents/emails/ap-0119.eml",
@@ -8761,7 +8879,9 @@
     "vatMinor": 300960,
     "grossMinor": 1805760,
     "file": "documents/ap/ap-0122-FMS-20104.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0122-FMS-20104.xml"
    },
    "email": {
     "file": "documents/emails/ap-0122.eml",
@@ -8822,7 +8942,9 @@
     "vatMinor": 75680,
     "grossMinor": 454080,
     "file": "documents/ap/ap-0123-MWL-30175.pdf",
-    "template": 1
+    "template": 1,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0123-MWL-30175.xml"
    },
    "email": {
     "file": "documents/emails/ap-0123.eml",
@@ -8883,7 +9005,9 @@
     "vatMinor": 115500,
     "grossMinor": 693000,
     "file": "documents/ap/ap-0124-DSL-44188.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0124-DSL-44188.xml"
    },
    "email": {
     "file": "documents/emails/ap-0124.eml",
@@ -9092,7 +9216,9 @@
     "vatMinor": 28800,
     "grossMinor": 172800,
     "file": "documents/ap/ap-0127-AIT-73600.pdf",
-    "template": 0
+    "template": 0,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0127-AIT-73600.xml"
    },
    "email": {
     "file": "documents/emails/ap-0127.eml",
@@ -9288,7 +9414,9 @@
     "vatMinor": 6220,
     "grossMinor": 37320,
     "file": "documents/ap/ap-0130-NDS-14266.pdf",
-    "template": 0
+    "template": 0,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0130-NDS-14266.xml"
    },
    "email": {
     "file": "documents/emails/ap-0130.eml",
@@ -9545,7 +9673,9 @@
     "vatMinor": 15280,
     "grossMinor": 91680,
     "file": "documents/ap/ap-0134-EPB-53543.pdf",
-    "template": 1
+    "template": 1,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0134-EPB-53543.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0134.eml",
@@ -9606,7 +9736,9 @@
     "vatMinor": 3800,
     "grossMinor": 22800,
     "file": "documents/ap/ap-0135-HPP-62898.pdf",
-    "template": 1
+    "template": 1,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0135-HPP-62898.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0135.eml",
@@ -9661,7 +9793,9 @@
     "vatMinor": 34960,
     "grossMinor": 209760,
     "file": "documents/ap/ap-0136-FMA-67647.pdf",
-    "template": 0
+    "template": 0,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0136-FMA-67647.xml"
    },
    "email": {
     "file": "documents/emails/ap-0136.eml",
@@ -9722,7 +9856,9 @@
     "vatMinor": 196560,
     "grossMinor": 1179360,
     "file": "documents/ap/ap-0137-CPH-27459.pdf",
-    "template": 0
+    "template": 0,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0137-CPH-27459.xml"
    },
    "email": {
     "file": "documents/emails/ap-0137.eml",
@@ -9783,7 +9919,9 @@
     "vatMinor": 388800,
     "grossMinor": 2332800,
     "file": "documents/ap/ap-0138-AIT-27262.pdf",
-    "template": 0
+    "template": 0,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0138-AIT-27262.xml"
    },
    "email": {
     "file": "documents/emails/ap-0138.eml",
@@ -9857,7 +9995,9 @@
     "vatMinor": 147760,
     "grossMinor": 886560,
     "file": "documents/ap/ap-0139-IOP-90255.pdf",
-    "template": 0
+    "template": 0,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0139-IOP-90255.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0139.eml",
@@ -10114,7 +10254,9 @@
     "vatMinor": 118920,
     "grossMinor": 713520,
     "file": "documents/ap/ap-0143-JEH-67841.pdf",
-    "template": 0
+    "template": 0,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0143-JEH-67841.xml"
    },
    "email": {
     "file": "documents/emails/ap-0143.eml",
@@ -10201,7 +10343,9 @@
     "vatMinor": 175040,
     "grossMinor": 1050240,
     "file": "documents/ap/ap-0144-MWL-25863.pdf",
-    "template": 2
+    "template": 2,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0144-MWL-25863.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0144.eml",
@@ -10262,7 +10406,9 @@
     "vatMinor": 728800,
     "grossMinor": 4372800,
     "file": "documents/ap/ap-0145-EES-99804.pdf",
-    "template": 1
+    "template": 1,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0145-EES-99804.xml"
    },
    "email": {
     "file": "documents/emails/ap-0145.eml",
@@ -10323,7 +10469,9 @@
     "vatMinor": 41060,
     "grossMinor": 246360,
     "file": "documents/ap/ap-0146-DSL-75839.pdf",
-    "template": 1
+    "template": 1,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0146-DSL-75839.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0146.eml",
@@ -10458,7 +10606,9 @@
     "vatMinor": 2940,
     "grossMinor": 17640,
     "file": "documents/ap/ap-0148-SS-31046.pdf",
-    "template": 1
+    "template": 1,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0148-SS-31046.xml"
    },
    "email": {
     "file": "documents/emails/ap-0148.eml",
@@ -10532,7 +10682,9 @@
     "vatMinor": 156680,
     "grossMinor": 940080,
     "file": "documents/ap/ap-0149-EES-73828.pdf",
-    "template": 1
+    "template": 1,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0149-EES-73828.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0149.eml",
@@ -10654,7 +10806,9 @@
     "vatMinor": 8180,
     "grossMinor": 49080,
     "file": "documents/ap/ap-0151-JCC-79515.pdf",
-    "template": 1
+    "template": 1,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0151-JCC-79515.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0151.eml",
@@ -10750,7 +10904,9 @@
     "vatMinor": 99740,
     "grossMinor": 598440,
     "file": "documents/ap/ap-0153-PSS-69151.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0153-PSS-69151.xml"
    },
    "email": {
     "file": "documents/emails/ap-0153.eml",
@@ -11275,7 +11431,9 @@
     "vatMinor": 34220,
     "grossMinor": 205320,
     "file": "documents/ap/ap-0160-DAS-63093.pdf",
-    "template": 1
+    "template": 1,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0160-DAS-63093.xml"
    },
    "email": {
     "file": "documents/emails/ap-0160.eml",
@@ -11336,7 +11494,9 @@
     "vatMinor": 370320,
     "grossMinor": 2221920,
     "file": "documents/ap/ap-0161-FSM-70082.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0161-FSM-70082.xml"
    },
    "email": {
     "file": "documents/emails/ap-0161.eml",
@@ -11423,7 +11583,9 @@
     "vatMinor": 73200,
     "grossMinor": 439200,
     "file": "documents/ap/ap-0162-EPB-33401.pdf",
-    "template": 1
+    "template": 1,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0162-EPB-33401.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0162.eml",
@@ -11545,7 +11707,9 @@
     "vatMinor": 22420,
     "grossMinor": 134520,
     "file": "documents/ap/ap-0164-IOP-22993.pdf",
-    "template": 1
+    "template": 1,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0164-IOP-22993.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0164.eml",
@@ -11693,7 +11857,9 @@
     "vatMinor": 338600,
     "grossMinor": 2031600,
     "file": "documents/ap/ap-0166-CPH-60818.pdf",
-    "template": 1
+    "template": 1,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0166-CPH-60818.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0166.eml",
@@ -12133,7 +12299,9 @@
     "vatMinor": 428260,
     "grossMinor": 2569560,
     "file": "documents/ap/ap-0173-IOP-49242.pdf",
-    "template": 0
+    "template": 0,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0173-IOP-49242.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0173.eml",
@@ -12316,7 +12484,9 @@
     "vatMinor": 27200,
     "grossMinor": 163200,
     "file": "documents/ap/ap-0176-HTM-12216.pdf",
-    "template": 0
+    "template": 0,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0176-HTM-12216.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0176.eml",
@@ -12377,7 +12547,9 @@
     "vatMinor": 124300,
     "grossMinor": 745800,
     "file": "documents/ap/ap-0177-FSM-96949.pdf",
-    "template": 0
+    "template": 0,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0177-FSM-96949.xml"
    },
    "email": {
     "file": "documents/emails/ap-0177.eml",
@@ -12438,7 +12610,9 @@
     "vatMinor": 11860,
     "grossMinor": 71160,
     "file": "documents/ap/ap-0178-CCC-65076.pdf",
-    "template": 2
+    "template": 2,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0178-CCC-65076.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0178.eml",
@@ -12512,7 +12686,9 @@
     "vatMinor": 123500,
     "grossMinor": 741000,
     "file": "documents/ap/ap-0179-CAV-61359.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0179-CAV-61359.xml"
    },
    "email": {
     "file": "documents/emails/ap-0179.eml",
@@ -12673,7 +12849,9 @@
     "vatMinor": 669560,
     "grossMinor": 4017360,
     "file": "documents/ap/ap-0181-VOI-61720.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0181-VOI-61720.xml"
    },
    "email": {
     "file": "documents/emails/ap-0181.eml",
@@ -12821,7 +12999,9 @@
     "vatMinor": 56160,
     "grossMinor": 336960,
     "file": "documents/ap/ap-0183-HTM-70561.pdf",
-    "template": 1
+    "template": 1,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0183-HTM-70561.xml"
    },
    "email": {
     "file": "documents/emails/ap-0183.eml",
@@ -12943,7 +13123,9 @@
     "vatMinor": 104020,
     "grossMinor": 624120,
     "file": "documents/ap/ap-0185-ICL-88703.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0185-ICL-88703.xml"
    },
    "email": {
     "file": "documents/emails/ap-0185.eml",
@@ -13051,7 +13233,9 @@
     "vatMinor": 72040,
     "grossMinor": 432240,
     "file": "documents/ap/ap-0187-RCS-32906.pdf",
-    "template": 1
+    "template": 1,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0187-RCS-32906.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0187.eml",
@@ -13260,7 +13444,9 @@
     "vatMinor": 49780,
     "grossMinor": 298680,
     "file": "documents/ap/ap-0190-FMS-95127.pdf",
-    "template": 1
+    "template": 1,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0190-FMS-95127.xml"
    },
    "email": {
     "file": "documents/emails/ap-0190.eml",
@@ -13382,7 +13568,9 @@
     "vatMinor": 255720,
     "grossMinor": 1534320,
     "file": "documents/ap/ap-0192-VOI-59722.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0192-VOI-59722.xml"
    },
    "email": {
     "file": "documents/emails/ap-0192.eml",
@@ -13443,7 +13631,9 @@
     "vatMinor": 65460,
     "grossMinor": 392760,
     "file": "documents/ap/ap-0193-VOI-10795.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0193-VOI-10795.xml"
    },
    "email": {
     "file": "documents/emails/ap-0193.eml",
@@ -13626,7 +13816,9 @@
     "vatMinor": 629600,
     "grossMinor": 3777600,
     "file": "documents/ap/ap-0196-JEH-31105.pdf",
-    "template": 1
+    "template": 1,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0196-JEH-31105.xml"
    },
    "email": {
     "file": "documents/emails/ap-0196.eml",
@@ -13687,7 +13879,9 @@
     "vatMinor": 41800,
     "grossMinor": 250800,
     "file": "documents/ap/ap-0197-ICL-58692.pdf",
-    "template": 1
+    "template": 1,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0197-ICL-58692.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0197.eml",
@@ -13809,7 +14003,9 @@
     "vatMinor": 518880,
     "grossMinor": 3113280,
     "file": "documents/ap/ap-0199-QR-41107.pdf",
-    "template": 0
+    "template": 0,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0199-QR-41107.xml"
    },
    "email": {
     "file": "documents/emails/ap-0199.eml",
@@ -14114,7 +14310,9 @@
     "vatMinor": 10080,
     "grossMinor": 60480,
     "file": "documents/ap/ap-0204-ZPF-20477.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0204-ZPF-20477.xml"
    },
    "email": {
     "file": "documents/emails/ap-0204.eml",
@@ -14175,7 +14373,9 @@
     "vatMinor": 25080,
     "grossMinor": 150480,
     "file": "documents/ap/ap-0205-QR-39933.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0205-QR-39933.xml"
    },
    "email": {
     "file": "documents/emails/ap-0205.eml",
@@ -14236,7 +14436,9 @@
     "vatMinor": 80800,
     "grossMinor": 484800,
     "file": "documents/ap/ap-0206-BE-45730.pdf",
-    "template": 0
+    "template": 0,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0206-BE-45730.xml"
    },
    "email": {
     "file": "documents/emails/ap-0206.eml",
@@ -14310,7 +14512,9 @@
     "vatMinor": 132880,
     "grossMinor": 797280,
     "file": "documents/ap/ap-0207-FSM-20867.pdf",
-    "template": 2
+    "template": 2,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0207-FSM-20867.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0207.eml",
@@ -14397,7 +14601,9 @@
     "vatMinor": 64180,
     "grossMinor": 385080,
     "file": "documents/ap/ap-0208-HBM-38195.pdf",
-    "template": 1
+    "template": 1,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0208-HBM-38195.xml"
    },
    "email": {
     "file": "documents/emails/ap-0208.eml",
@@ -14545,7 +14751,9 @@
     "vatMinor": 75660,
     "grossMinor": 453960,
     "file": "documents/ap/ap-0210-FMS-93785.pdf",
-    "template": 0
+    "template": 0,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0210-FMS-93785.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0210.eml",
@@ -14606,7 +14814,9 @@
     "vatMinor": 28180,
     "grossMinor": 169080,
     "file": "documents/ap/ap-0211-AIT-21701.pdf",
-    "template": 0
+    "template": 0,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0211-AIT-21701.xml"
    },
    "email": {
     "file": "documents/emails/ap-0211.eml",
@@ -14741,7 +14951,9 @@
     "vatMinor": 590240,
     "grossMinor": 3541440,
     "file": "documents/ap/ap-0213-VOI-18774.pdf",
-    "template": 2
+    "template": 2,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0213-VOI-18774.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0213.eml",
@@ -14828,7 +15040,9 @@
     "vatMinor": 1055360,
     "grossMinor": 6332160,
     "file": "documents/ap/ap-0214-PSS-82142.pdf",
-    "template": 2
+    "template": 2,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0214-PSS-82142.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0214.eml",
@@ -14902,7 +15116,9 @@
     "vatMinor": 27840,
     "grossMinor": 167040,
     "file": "documents/ap/ap-0215-NOS-13892.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0215-NOS-13892.xml"
    },
    "email": {
     "file": "documents/emails/ap-0215.eml",
@@ -14976,7 +15192,9 @@
     "vatMinor": 66780,
     "grossMinor": 400680,
     "file": "documents/ap/ap-0216-FSM-30751.pdf",
-    "template": 2
+    "template": 2,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0216-FSM-30751.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0216.eml",
@@ -15172,7 +15390,9 @@
     "vatMinor": 1652580,
     "grossMinor": 9915480,
     "file": "documents/ap/ap-0219-IOP-69958.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0219-IOP-69958.xml"
    },
    "email": {
     "file": "documents/emails/ap-0219.eml",
@@ -15233,7 +15453,9 @@
     "vatMinor": 78140,
     "grossMinor": 468840,
     "file": "documents/ap/ap-0220-PSS-99322.pdf",
-    "template": 1
+    "template": 1,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0220-PSS-99322.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0220.eml",
@@ -15355,7 +15577,9 @@
     "vatMinor": 54140,
     "grossMinor": 324840,
     "file": "documents/ap/ap-0222-KIB-20540.pdf",
-    "template": 0
+    "template": 0,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0222-KIB-20540.xml"
    },
    "email": {
     "file": "documents/emails/ap-0222.eml",
@@ -15416,7 +15640,9 @@
     "vatMinor": 92100,
     "grossMinor": 552600,
     "file": "documents/ap/ap-0223-JEH-45174.pdf",
-    "template": 1
+    "template": 1,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0223-JEH-45174.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0223.eml",
@@ -15490,7 +15716,9 @@
     "vatMinor": 17420,
     "grossMinor": 104520,
     "file": "documents/ap/ap-0224-HPP-56874.pdf",
-    "template": 1
+    "template": 1,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0224-HPP-56874.xml"
    },
    "email": {
     "file": "documents/emails/ap-0224.eml",
@@ -15564,7 +15792,9 @@
     "vatMinor": 106560,
     "grossMinor": 639360,
     "file": "documents/ap/ap-0225-GLP-49675.pdf",
-    "template": 0
+    "template": 0,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0225-GLP-49675.xml"
    },
    "email": {
     "file": "documents/emails/ap-0225.eml",
@@ -15808,7 +16038,9 @@
     "vatMinor": 840,
     "grossMinor": 5040,
     "file": "documents/ap/ap-0229-CAV-69186.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0229-CAV-69186.xml"
    },
    "email": {
     "file": "documents/emails/ap-0229.eml",
@@ -15943,7 +16175,9 @@
     "vatMinor": 303000,
     "grossMinor": 1818000,
     "file": "documents/ap/ap-0231-FMS-56540.pdf",
-    "template": 1
+    "template": 1,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0231-FMS-56540.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0231.eml",
@@ -16004,7 +16238,9 @@
     "vatMinor": 14800,
     "grossMinor": 88800,
     "file": "documents/ap/ap-0232-OVL-52164.pdf",
-    "template": 1
+    "template": 1,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0232-OVL-52164.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0232.eml",
@@ -16126,7 +16362,9 @@
     "vatMinor": 19420,
     "grossMinor": 116520,
     "file": "documents/ap/ap-0234-DSL-31459.pdf",
-    "template": 0
+    "template": 0,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0234-DSL-31459.xml"
    },
    "email": {
     "file": "documents/emails/ap-0234.eml",
@@ -16187,7 +16425,9 @@
     "vatMinor": 16060,
     "grossMinor": 96360,
     "file": "documents/ap/ap-0235-CAV-21671.pdf",
-    "template": 2
+    "template": 2,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0235-CAV-21671.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0235.eml",
@@ -16248,7 +16488,9 @@
     "vatMinor": 66520,
     "grossMinor": 399120,
     "file": "documents/ap/ap-0236-BFG-56749.pdf",
-    "template": 0
+    "template": 0,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0236-BFG-56749.xml"
    },
    "email": {
     "file": "documents/emails/ap-0236.eml",
@@ -16417,7 +16659,9 @@
     "vatMinor": 12160,
     "grossMinor": 72960,
     "file": "documents/ap/ap-0239-AIT-25942.pdf",
-    "template": 0
+    "template": 0,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0239-AIT-25942.xml"
    },
    "email": {
     "file": "documents/emails/ap-0239.eml",
@@ -16665,7 +16909,9 @@
     "vatMinor": 470440,
     "grossMinor": 2822640,
     "file": "documents/ap/ap-0242-MTL-80331.pdf",
-    "template": 1
+    "template": 1,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0242-MTL-80331.xml"
    },
    "email": {
     "file": "documents/emails/ap-0242.eml",
@@ -16726,7 +16972,9 @@
     "vatMinor": 12740,
     "grossMinor": 76440,
     "file": "documents/ap/ap-0243-OVL-96485.pdf",
-    "template": 0
+    "template": 0,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0243-OVL-96485.xml"
    },
    "email": {
     "file": "documents/emails/ap-0243.eml",
@@ -16996,7 +17244,9 @@
     "vatMinor": 371560,
     "grossMinor": 2229360,
     "file": "documents/ap/ap-0247-WMR-11947.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0247-WMR-11947.xml"
    },
    "email": {
     "file": "documents/emails/ap-0247.eml",
@@ -17057,7 +17307,9 @@
     "vatMinor": 10860,
     "grossMinor": 65160,
     "file": "documents/ap/ap-0248-JCC-65515.pdf",
-    "template": 0
+    "template": 0,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0248-JCC-65515.xml"
    },
    "email": {
     "file": "documents/emails/ap-0248.eml",
@@ -17179,7 +17431,9 @@
     "vatMinor": 24600,
     "grossMinor": 147600,
     "file": "documents/ap/ap-0250-TWD-46117.pdf",
-    "template": 1
+    "template": 1,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0250-TWD-46117.xml"
    },
    "email": {
     "file": "documents/emails/ap-0250.eml",
@@ -17301,7 +17555,9 @@
     "vatMinor": 80800,
     "grossMinor": 484800,
     "file": "documents/ap/ap-0252-BE-24216.pdf",
-    "template": 1
+    "template": 1,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0252-BE-24216.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0252.eml",
@@ -17362,7 +17618,9 @@
     "vatMinor": 3380,
     "grossMinor": 20280,
     "file": "documents/ap/ap-0253-ZPF-69911.pdf",
-    "template": 0
+    "template": 0,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0253-ZPF-69911.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0253.eml",
@@ -17484,7 +17742,9 @@
     "vatMinor": 73260,
     "grossMinor": 439560,
     "file": "documents/ap/ap-0255-EPB-58204.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0255-EPB-58204.xml"
    },
    "email": {
     "file": "documents/emails/ap-0255.eml",
@@ -17539,7 +17799,9 @@
     "vatMinor": 191520,
     "grossMinor": 1149120,
     "file": "documents/ap/ap-0256-RCS-26055.pdf",
-    "template": 1
+    "template": 1,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0256-RCS-26055.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0256.eml",
@@ -17661,7 +17923,9 @@
     "vatMinor": 47380,
     "grossMinor": 284280,
     "file": "documents/ap/ap-0258-KIB-63498.pdf",
-    "template": 0
+    "template": 0,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0258-KIB-63498.xml"
    },
    "email": {
     "file": "documents/emails/ap-0258.eml",
@@ -17722,7 +17986,9 @@
     "vatMinor": 46880,
     "grossMinor": 281280,
     "file": "documents/ap/ap-0259-EPB-25254.pdf",
-    "template": 1
+    "template": 1,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0259-EPB-25254.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0259.eml",
@@ -17783,7 +18049,9 @@
     "vatMinor": 7000,
     "grossMinor": 42000,
     "file": "documents/ap/ap-0260-NOS-12453.pdf",
-    "template": 0
+    "template": 0,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0260-NOS-12453.xml"
    },
    "email": {
     "file": "documents/emails/ap-0260.eml",
@@ -17905,7 +18173,9 @@
     "vatMinor": 80160,
     "grossMinor": 480960,
     "file": "documents/ap/ap-0262-TWD-79318.pdf",
-    "template": 1
+    "template": 1,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0262-TWD-79318.xml"
    },
    "email": {
     "file": "documents/emails/ap-0262.eml",
@@ -18027,7 +18297,9 @@
     "vatMinor": 92160,
     "grossMinor": 552960,
     "file": "documents/ap/ap-0264-VOI-74318.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0264-VOI-74318.xml"
    },
    "email": {
     "file": "documents/emails/ap-0264.eml",
@@ -18114,7 +18386,9 @@
     "vatMinor": 20360,
     "grossMinor": 122160,
     "file": "documents/ap/ap-0265-CCC-61547.pdf",
-    "template": 1
+    "template": 1,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0265-CCC-61547.xml"
    },
    "email": {
     "file": "documents/emails/ap-0265.eml",
@@ -18249,7 +18523,9 @@
     "vatMinor": 119900,
     "grossMinor": 719400,
     "file": "documents/ap/ap-0267-UL-21638.pdf",
-    "template": 2
+    "template": 2,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0267-UL-21638.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0267.eml",
@@ -18323,7 +18599,9 @@
     "vatMinor": 257880,
     "grossMinor": 1547280,
     "file": "documents/ap/ap-0268-VOI-19285.pdf",
-    "template": 0
+    "template": 0,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0268-VOI-19285.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0268.eml",
@@ -18410,7 +18688,9 @@
     "vatMinor": 919620,
     "grossMinor": 5517720,
     "file": "documents/ap/ap-0269-IOP-72014.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0269-IOP-72014.xml"
    },
    "email": {
     "file": "documents/emails/ap-0269.eml",
@@ -18497,7 +18777,9 @@
     "vatMinor": 142320,
     "grossMinor": 853920,
     "file": "documents/ap/ap-0270-GLP-44732.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0270-GLP-44732.xml"
    },
    "email": {
     "file": "documents/emails/ap-0270.eml",
@@ -18571,7 +18853,9 @@
     "vatMinor": 38300,
     "grossMinor": 229800,
     "file": "documents/ap/ap-0271-CAV-81697.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0271-CAV-81697.xml"
    },
    "email": {
     "file": "documents/emails/ap-0271.eml",
@@ -18632,7 +18916,9 @@
     "vatMinor": 22060,
     "grossMinor": 132360,
     "file": "documents/ap/ap-0272-IOP-68470.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0272-IOP-68470.xml"
    },
    "email": {
     "file": "documents/emails/ap-0272.eml",
@@ -18754,7 +19040,9 @@
     "vatMinor": 489940,
     "grossMinor": 2939640,
     "file": "documents/ap/ap-0274-BE-23981.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0274-BE-23981.xml"
    },
    "email": {
     "file": "documents/emails/ap-0274.eml",
@@ -18828,7 +19116,9 @@
     "vatMinor": 21020,
     "grossMinor": 126120,
     "file": "documents/ap/ap-0275-SS-17106.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0275-SS-17106.xml"
    },
    "email": {
     "file": "documents/emails/ap-0275.eml",
@@ -18889,7 +19179,9 @@
     "vatMinor": 12540,
     "grossMinor": 75240,
     "file": "documents/ap/ap-0276-UL-28127.pdf",
-    "template": 1
+    "template": 1,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0276-UL-28127.xml"
    },
    "email": {
     "file": "documents/emails/ap-0276.eml",
@@ -18950,7 +19242,9 @@
     "vatMinor": 77920,
     "grossMinor": 467520,
     "file": "documents/ap/ap-0277-MTL-99758.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0277-MTL-99758.xml"
    },
    "email": {
     "file": "documents/emails/ap-0277.eml",
@@ -19011,7 +19305,9 @@
     "vatMinor": 4280,
     "grossMinor": 25680,
     "file": "documents/ap/ap-0278-HPP-77421.pdf",
-    "template": 1
+    "template": 1,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0278-HPP-77421.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0278.eml",
@@ -19072,7 +19368,9 @@
     "vatMinor": 50940,
     "grossMinor": 305640,
     "file": "documents/ap/ap-0279-QR-29965.pdf",
-    "template": 0
+    "template": 0,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0279-QR-29965.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0279.eml",
@@ -19133,7 +19431,9 @@
     "vatMinor": 15260,
     "grossMinor": 91560,
     "file": "documents/ap/ap-0280-OVL-24775.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0280-OVL-24775.xml"
    },
    "email": {
     "file": "documents/emails/ap-0280.eml",
@@ -19268,7 +19568,9 @@
     "vatMinor": 6920,
     "grossMinor": 41520,
     "file": "documents/ap/ap-0282-WMR-69556.pdf",
-    "template": 1
+    "template": 1,
+    "format": "scan_pdf",
+    "altFile": "documents/ap-scan/ap-0282-WMR-69556.pdf"
    },
    "email": {
     "file": "documents/emails/ap-0282.eml",
@@ -19329,7 +19631,9 @@
     "vatMinor": 58020,
     "grossMinor": 348120,
     "file": "documents/ap/ap-0283-FMA-62996.pdf",
-    "template": 1
+    "template": 1,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0283-FMA-62996.xml"
    },
    "email": {
     "file": "documents/emails/ap-0283.eml",
@@ -19747,7 +20051,9 @@
     "vatMinor": 487340,
     "grossMinor": 2924040,
     "file": "documents/ap/ap-0289-KIB-28184.pdf",
-    "template": 1
+    "template": 1,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0289-KIB-28184.xml"
    },
    "email": {
     "file": "documents/emails/ap-0289.eml",
@@ -19808,7 +20114,9 @@
     "vatMinor": 60540,
     "grossMinor": 363240,
     "file": "documents/ap/ap-0290-EPB-67469.pdf",
-    "template": 1
+    "template": 1,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0290-EPB-67469.xml"
    },
    "email": {
     "file": "documents/emails/ap-0290.eml",
@@ -20004,7 +20312,9 @@
     "vatMinor": 42780,
     "grossMinor": 256680,
     "file": "documents/ap/ap-0293-EPB-96001.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0293-EPB-96001.xml"
    },
    "email": {
     "file": "documents/emails/ap-0293.eml",
@@ -20065,7 +20375,9 @@
     "vatMinor": 3340,
     "grossMinor": 20040,
     "file": "documents/ap/ap-0294-JCC-46347.pdf",
-    "template": 0
+    "template": 0,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0294-JCC-46347.xml"
    },
    "email": {
     "file": "documents/emails/ap-0294.eml",
@@ -20126,7 +20438,9 @@
     "vatMinor": 253440,
     "grossMinor": 1520640,
     "file": "documents/ap/ap-0295-TWD-73225.pdf",
-    "template": 1
+    "template": 1,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0295-TWD-73225.xml"
    },
    "email": {
     "file": "documents/emails/ap-0295.eml",
@@ -20187,7 +20501,9 @@
     "vatMinor": 62640,
     "grossMinor": 375840,
     "file": "documents/ap/ap-0296-OVL-82354.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0296-OVL-82354.xml"
    },
    "email": {
     "file": "documents/emails/ap-0296.eml",
@@ -20335,7 +20651,9 @@
     "vatMinor": 2142860,
     "grossMinor": 12857160,
     "file": "documents/ap/ap-0298-EES-31119.pdf",
-    "template": 2
+    "template": 2,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0298-EES-31119.xml"
    },
    "email": {
     "file": "documents/emails/ap-0298.eml",
@@ -20457,7 +20775,9 @@
     "vatMinor": 431640,
     "grossMinor": 2589840,
     "file": "documents/ap/ap-0300-NDS-94214.pdf",
-    "template": 0
+    "template": 0,
+    "format": "ubl_xml",
+    "altFile": "documents/ap-xml/ap-0300-NDS-94214.xml"
    },
    "email": {
     "file": "documents/emails/ap-0300.eml",

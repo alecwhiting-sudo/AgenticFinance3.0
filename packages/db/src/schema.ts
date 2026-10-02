@@ -438,6 +438,8 @@ export const apInvoice = erp.table("ap_invoice", {
   caseId: uuid("case_id"),
   documentPath: text("document_path"),
   emailPath: text("email_path"),
+  /** How the invoice arrived: text_pdf | scan_pdf (image only) | ubl_xml. */
+  format: text("format").notNull().default("text_pdf"),
   journalId: uuid("journal_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [unique("ap_invoice_supplier_number").on(t.supplierId, t.supplierInvoiceNumber)]);

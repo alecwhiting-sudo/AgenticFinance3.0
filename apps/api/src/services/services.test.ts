@@ -3,6 +3,7 @@ import { approvalBandFor, priceWithinTolerance } from "./policy.js";
 import { isDuplicate, threeWayMatch } from "./match.js";
 import { apInvoiceJournalLines, validateJournalLines } from "./posting.js";
 import { bankTxnMatchesPayment, selectDueInvoices } from "./payments.js";
+import { parseUblInvoice } from "./ubl.js";
 import type { PurchaseLine } from "@af/db";
 
 const line = (over: Partial<PurchaseLine> = {}): PurchaseLine => ({
@@ -172,5 +173,48 @@ describe("payment scheduler + reconciliation (M4)", () => {
         { paymentRef: "PAY-AC-51380", totalMinor: 50_000 },
       ),
     ).toBe(true);
+  });
+});
+
+describe("UBL e-invoice parser (format mix)", () => {
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
+  xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
+  xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
+  <cbc:ID>FMS-91311</cbc:ID>
+  <cbc:IssueDate>2026-07-24</cbc:IssueDate>
+  <cbc:DueDate>2026-08-23</cbc:DueDate>
+  <cac:OrderReference><cbc:ID>PO-261001</cbc:ID></cac:OrderReference>
+  <cac:AccountingSupplierParty><cac:Party>
+    <cac:PartyIdentification><cbc:ID>SUP-011</cbc:ID></cac:PartyIdentification>
+    <cac:PartyName><cbc:Name>Foxglove &amp; Co</cbc:Name></cac:PartyName>
+  </cac:Party></cac:AccountingSupplierParty>
+  <cac:TaxTotal><cbc:TaxAmount currencyID="GBP">47.04</cbc:TaxAmount></cac:TaxTotal>
+  <cac:LegalMonetaryTotal>
+    <cbc:LineExtensionAmount currencyID="GBP">235.20</cbc:LineExtensionAmount>
+    <cbc:PayableAmount currencyID="GBP">282.24</cbc:PayableAmount>
+  </cac:LegalMonetaryTotal>
+  <cac:InvoiceLine>
+    <cbc:ID>1</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="EA">4</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="GBP">235.20</cbc:LineExtensionAmount>
+    <cac:Item><cbc:Name>Design &amp; print</cbc:Name></cac:Item>
+    <cac:Price><cbc:PriceAmount currencyID="GBP">58.80</cbc:PriceAmount></cac:Price>
+  </cac:InvoiceLine>
+</Invoice>`;
+  it("parses number, dates, PO, supplier and pence amounts", () => {
+    const p = parseUblInvoice(xml)!;
+    expect(p.number).toBe("FMS-91311");
+    expect(p.poNumber).toBe("PO-261001");
+    expect(p.supplierCode).toBe("SUP-011");
+    expect(p.supplierName).toBe("Foxglove & Co");
+    expect(p.netMinor).toBe(23520);
+    expect(p.vatMinor).toBe(4704);
+    expect(p.grossMinor).toBe(28224);
+    expect(p.lines).toEqual([{ description: "Design & print", qty: 4, unitPriceMinor: 5880 }]);
+  });
+  it("refuses non-UBL and incomplete documents", () => {
+    expect(parseUblInvoice("<html>not an invoice</html>")).toBeNull();
+    expect(parseUblInvoice(xml.replace("<cbc:DueDate>2026-08-23</cbc:DueDate>", ""))).toBeNull();
   });
 });

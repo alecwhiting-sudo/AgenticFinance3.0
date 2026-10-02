@@ -28,6 +28,7 @@ import {
   type PurchaseLine,
 } from "@af/db";
 import { threeWayMatch, isDuplicate } from "../services/match.js";
+import { parseUblInvoice } from "../services/ubl.js";
 import {
   commitPurchaseBudget,
   executeApPayment,
@@ -57,6 +58,7 @@ type StudioChain = {
   invoice: {
     number: string; invoiceDate: string; dueDate: string; lines: StudioLine[];
     netMinor: number; vatMinor: number; grossMinor: number; file: string;
+    format?: "text_pdf" | "scan_pdf" | "ubl_xml"; altFile?: string;
   };
   email: { file: string; body: string };
   exception: string | null;
@@ -138,7 +140,7 @@ const supplierByCode = new Map(suppliers.map((s) => [s.code, s]));
   }
 }
 
-let stats = { purchases: 0, receipts: 0, invoices: 0, posted: 0, paid: 0, exceptions: 0, mismatches: 0 };
+let stats: Record<string, number> = { purchases: 0, receipts: 0, invoices: 0, posted: 0, paid: 0, exceptions: 0, mismatches: 0, ublParsed: 0 };
 const seenInvoices = new Map<string, { supplierInvoiceNumber: string; grossMinor: number; invoiceDate: string }[]>();
 
 for (const chain of dataset.ap) {
@@ -198,12 +200,26 @@ for (const chain of dataset.ap) {
       netMinor: chain.invoice.netMinor,
       vatMinor: chain.invoice.vatMinor,
       grossMinor: chain.invoice.grossMinor,
-      documentPath: chain.invoice.file,
+      // Format mix: when the invoice arrived as XML or a scan, that alternate
+      // file IS the primary document; the text PDF original stays on disk.
+      documentPath: chain.invoice.altFile ?? chain.invoice.file,
       emailPath: chain.email.file,
+      format: chain.invoice.format ?? "text_pdf",
     })
     .onConflictDoNothing({ target: [apInvoice.supplierId, apInvoice.supplierInvoiceNumber] })
     .returning();
   stats.invoices++;
+
+  // e-invoices are structured data: parse the UBL and cross-check the chain
+  if (chain.invoice.format === "ubl_xml" && chain.invoice.altFile) {
+    const parsed = parseUblInvoice(readFileSync(path.join(seedDir, chain.invoice.altFile), "utf8"));
+    if (!parsed || parsed.number !== chain.invoice.number || parsed.grossMinor !== chain.invoice.grossMinor) {
+      stats.mismatches++;
+      console.warn(`  UBL mismatch ${chain.id}: parsed=${parsed?.number}/${parsed?.grossMinor}`);
+    } else {
+      stats.ublParsed = (stats.ublParsed ?? 0) + 1;
+    }
+  }
 
   let derived: string | null = null;
   if (!inv) {

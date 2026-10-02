@@ -2,6 +2,9 @@
  * it for the Invoice Extraction Agent, exactly as inbound mail would be. The
  * document arrives as its text layer (the AF-DATA block the Studio embeds in
  * every rendered PDF), so extraction is real work, keyless or live. */
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import type { FastifyInstance } from "fastify";
 import { eq, sql } from "drizzle-orm";
 import { agent, goodsReceipt, workItem } from "@af/db";
@@ -9,8 +12,13 @@ import { requireDb } from "../lib/db.js";
 import { emitActivity } from "../lib/activity.js";
 import { createPurchase } from "../services/purchaseIntake.js";
 
-const SCENARIOS = ["clean", "price_variance", "qty_short_receipt", "missing_receipt", "no_purchase", "bank_detail_change"] as const;
+const SCENARIOS = ["clean", "price_variance", "qty_short_receipt", "missing_receipt", "no_purchase", "bank_detail_change", "scan_document"] as const;
 type Scenario = (typeof SCENARIOS)[number];
+
+const seedDir = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../../../../packages/db/seed",
+);
 
 const ITEMS = [
   { description: "Cloud hosting — monthly", accountCode: "6200", unit: 18000 },
@@ -25,6 +33,63 @@ export function dripRoutes(app: FastifyInstance): void {
     const scenario = (req.body?.scenario ?? "clean") as Scenario;
     if (!SCENARIOS.includes(scenario))
       return reply.code(400).send({ error: `scenario must be one of ${SCENARIOS.join(", ")}` });
+
+    // Scan drip: a pre-rendered image-only PDF (no text layer, no purchase
+    // reference) — the vision extraction path, Haiku-tier. The manifest's
+    // structured truth rides along ONLY as the keyless fallback.
+    if (scenario === "scan_document") {
+      const manifest = JSON.parse(
+        readFileSync(path.join(seedDir, "documents/drip-scan/manifest.json"), "utf8"),
+      ) as {
+        supplierCode: string; number: string; invoiceDate: string; dueDate: string;
+        lines: { description: string; qty: number; unitPriceMinor: number; account: string }[];
+        netMinor: number; vatMinor: number; grossMinor: number; file: string;
+      }[];
+      const used = new Set(
+        (await db.query.apInvoice.findMany({ columns: { supplierInvoiceNumber: true } })).map(
+          (i) => i.supplierInvoiceNumber,
+        ),
+      );
+      const entry = manifest.find((m) => !used.has(m.number));
+      if (!entry)
+        return reply.code(409).send({ error: "all reserved scan invoices already captured — reload the dataset" });
+      const scanSup = await db.query.supplier.findFirst({ where: (t) => eq(t.code, entry.supplierCode) });
+      if (!scanSup) return reply.code(409).send({ error: `supplier ${entry.supplierCode} not loaded` });
+      const extractionAgent = await db.query.agent.findFirst({ where: (t) => eq(t.slug, "invoice-extraction") });
+      if (!extractionAgent) return reply.code(409).send({ error: "invoice-extraction agent not seeded" });
+      const [wi] = await db
+        .insert(workItem)
+        .values({
+          type: "invoice.capture",
+          agentId: extractionAgent.id,
+          payload: {
+            documentPath: entry.file,
+            format: "scan_pdf",
+            supplierCode: entry.supplierCode,
+            emailText: `Please find attached our invoice ${entry.number} (scanned copy). Regards, ${scanSup.name}`,
+            fallbackData: {
+              number: entry.number,
+              invoiceDate: entry.invoiceDate,
+              dueDate: entry.dueDate,
+              lines: entry.lines,
+              netMinor: entry.netMinor,
+              vatMinor: entry.vatMinor,
+              grossMinor: entry.grossMinor,
+            },
+          },
+          priority: 4,
+        })
+        .returning();
+      await emitActivity({
+        actorType: "human",
+        actorId: "demo-drip",
+        verb: "dripped_invoice",
+        objectType: "work_item",
+        objectId: wi!.id,
+        summary: `Scanned invoice from ${scanSup.name} landed — no text layer, extraction must read the pixels`,
+      });
+      return { workItemId: wi!.id, scenario, supplier: scanSup.name, invoiceNumber: entry.number };
+    }
 
     const suppliers = await db.query.supplier.findMany({ limit: 40 });
     const sup = suppliers[Math.floor(Math.random() * suppliers.length)]!;

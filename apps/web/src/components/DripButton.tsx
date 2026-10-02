@@ -6,7 +6,7 @@ import { useState } from "react";
 import { PUBLIC_API_URL as apiUrl } from "@/lib/api";
 
 
-const SCENARIOS = ["clean", "price_variance", "qty_short_receipt", "missing_receipt", "no_purchase", "bank_detail_change"];
+const SCENARIOS = ["clean", "price_variance", "qty_short_receipt", "missing_receipt", "no_purchase", "bank_detail_change", "scan_document"];
 
 export default function DripButton() {
   const router = useRouter();

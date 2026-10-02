@@ -1,0 +1,110 @@
+[
+ {
+  "supplierCode": "SUP-005",
+  "number": "DS005-90524",
+  "invoiceDate": "2026-10-02",
+  "dueDate": "2026-11-01",
+  "lines": [
+   {
+    "description": "Office refurbishment materials",
+    "qty": 3,
+    "unitPriceMinor": 12739,
+    "account": "6100"
+   }
+  ],
+  "netMinor": 38217,
+  "vatMinor": 7643,
+  "grossMinor": 45860,
+  "file": "documents/drip-scan/DS005-90524.pdf"
+ },
+ {
+  "supplierCode": "SUP-014",
+  "number": "DS014-23191",
+  "invoiceDate": "2026-10-02",
+  "dueDate": "2026-11-01",
+  "lines": [
+   {
+    "description": "Project consumables",
+    "qty": 3,
+    "unitPriceMinor": 49340,
+    "account": "5000"
+   }
+  ],
+  "netMinor": 148020,
+  "vatMinor": 29604,
+  "grossMinor": 177624,
+  "file": "documents/drip-scan/DS014-23191.pdf"
+ },
+ {
+  "supplierCode": "SUP-018",
+  "number": "DS018-88583",
+  "invoiceDate": "2026-10-02",
+  "dueDate": "2026-11-01",
+  "lines": [
+   {
+    "description": "Project consumables",
+    "qty": 1,
+    "unitPriceMinor": 6289,
+    "account": "6200"
+   }
+  ],
+  "netMinor": 6289,
+  "vatMinor": 1258,
+  "grossMinor": 7547,
+  "file": "documents/drip-scan/DS018-88583.pdf"
+ },
+ {
+  "supplierCode": "SUP-003",
+  "number": "DS003-64348",
+  "invoiceDate": "2026-10-02",
+  "dueDate": "2026-11-01",
+  "lines": [
+   {
+    "description": "Monthly service retainer",
+    "qty": 3,
+    "unitPriceMinor": 8099,
+    "account": "6500"
+   }
+  ],
+  "netMinor": 24297,
+  "vatMinor": 4859,
+  "grossMinor": 29156,
+  "file": "documents/drip-scan/DS003-64348.pdf"
+ },
+ {
+  "supplierCode": "SUP-029",
+  "number": "DS029-87330",
+  "invoiceDate": "2026-10-02",
+  "dueDate": "2026-11-01",
+  "lines": [
+   {
+    "description": "Office refurbishment materials",
+    "qty": 1,
+    "unitPriceMinor": 57874,
+    "account": "6500"
+   }
+  ],
+  "netMinor": 57874,
+  "vatMinor": 11575,
+  "grossMinor": 69449,
+  "file": "documents/drip-scan/DS029-87330.pdf"
+ },
+ {
+  "supplierCode": "SUP-025",
+  "number": "DS025-54576",
+  "invoiceDate": "2026-10-02",
+  "dueDate": "2026-11-01",
+  "lines": [
+   {
+    "description": "Monthly service retainer",
+    "qty": 4,
+    "unitPriceMinor": 40212,
+    "account": "6200"
+   }
+  ],
+  "netMinor": 160848,
+  "vatMinor": 32170,
+  "grossMinor": 193018,
+  "file": "documents/drip-scan/DS025-54576.pdf"
+ }
+]
