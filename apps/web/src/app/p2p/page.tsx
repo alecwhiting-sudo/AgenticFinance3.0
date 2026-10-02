@@ -65,6 +65,13 @@ export default async function P2PPage() {
             Live flow
           </Link>
           <Link
+            href="/p2p/purchases"
+            className="rounded-lg border px-3 py-1.5 text-sm"
+            style={{ borderColor: "var(--border)" }}
+          >
+            Purchases &amp; receipts
+          </Link>
+          <Link
             href="/p2p/invoices"
             className="rounded-lg border px-3 py-1.5 text-sm"
             style={{ borderColor: "var(--border)" }}
@@ -122,7 +129,12 @@ export default async function P2PPage() {
           </ul>
         </Card>
         <Card>
-          <SectionTitle>Recent purchases</SectionTitle>
+          <div className="flex items-center justify-between">
+            <SectionTitle>Recent purchases</SectionTitle>
+            <Link href="/p2p/purchases" className="text-xs hover:underline" style={{ color: "var(--accent)" }}>
+              all purchases &amp; receipts →
+            </Link>
+          </div>
           <ul className="space-y-2">
             {(purchases ?? []).map((p) => (
               <li key={p.id} className="text-sm">

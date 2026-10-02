@@ -39,7 +39,38 @@ export function p2pRoutes(app: FastifyInstance): void {
     });
     const suppliers = await db.query.supplier.findMany();
     const byId = new Map(suppliers.map((s) => [s.id, s.name]));
-    return rows.map((p) => ({ ...p, supplierName: byId.get(p.supplierId) ?? "?" }));
+    // receipt + invoice rollups so the list can show the 3-way-match state at a glance
+    const receipts = (
+      await db.execute(sql`
+        select purchase_id, count(*)::int as n,
+               coalesce(sum((q.value->>'qtyReceived')::numeric), 0)::int as qty
+        from erp.goods_receipt gr, jsonb_array_elements(gr.quantities) q
+        group by purchase_id
+      `)
+    ).rows as { purchase_id: string; n: number; qty: number }[];
+    const recBy = new Map(receipts.map((r) => [r.purchase_id, r]));
+    const invs = (
+      await db.execute(sql`
+        select purchase_id, count(*)::int as n,
+               count(*) filter (where status = 'exception')::int as exceptions
+        from erp.ap_invoice where purchase_id is not null group by purchase_id
+      `)
+    ).rows as { purchase_id: string; n: number; exceptions: number }[];
+    const invBy = new Map(invs.map((i) => [i.purchase_id, i]));
+    return rows.map((p) => {
+      const ordered = p.lines.reduce((s, l) => s + l.qty, 0);
+      const r = recBy.get(p.id);
+      const i = invBy.get(p.id);
+      return {
+        ...p,
+        supplierName: byId.get(p.supplierId) ?? "?",
+        qtyOrdered: ordered,
+        qtyReceived: r?.qty ?? 0,
+        receiptCount: r?.n ?? 0,
+        invoiceCount: i?.n ?? 0,
+        invoiceExceptions: i?.exceptions ?? 0,
+      };
+    });
   });
 
   app.get<{ Querystring: { status?: string; format?: string; limit?: string } }>("/p2p/invoices", async (req) => {
