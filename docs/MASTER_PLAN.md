@@ -102,10 +102,16 @@ ANTHROPIC_API_KEY is configured; daily drip wires in with P2P M5.)*
 ### Phase 2 — Mini ERP core + P2P (first real process)
 - ERP core: entities/periods, chart of accounts, GL journal + trial balance,
   supplier master, document store.
-- P2P per its own plan (`docs/plans/P2P.md`): purchase orders, goods receipts,
-  invoice capture (agent extraction from dummy PDFs), 3-way match
-  (deterministic), **Invoice Exception Agent**, approval workflow, payment
-  proposal → human approval → simulated payment, AP subledger posting to GL.
+- P2P per its own plan (`docs/plans/P2P.md` v2 — the **unified Purchase
+  model**, D12): purchases created at the moment of intent (requisition and
+  PO are one record; the supplier "PO" is a rendered view), policy-banded
+  approval (auto / standard / director — approve once, no re-approval at
+  invoice time), goods receipts, invoice capture (agent extraction from dummy
+  PDFs), deterministic 3-way match against the approved Purchase with
+  straight-through posting + payment scheduling for clean matches,
+  **Purchase Request Agent** (conversational intake), **Invoice Exception
+  Agent**, human-approved exception resolutions, simulated settlement, AP
+  posting to GL.
 - Seeded exception scenarios (price variance, qty mismatch, missing receipt,
   duplicate invoice) so the agent always has interesting work in a demo —
   supplied by the Demo Data Studio.

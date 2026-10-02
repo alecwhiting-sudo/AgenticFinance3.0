@@ -302,3 +302,5 @@ approval on money movement, evidence timelines, evals before promote.
 | D8 | Fictional company "Brightline Ltd" (UK, GBP) | Agreed by default (rename welcome) |
 | D9 | Live activity stream (SSE + `activity_event` table) powers all visual feedback | Agreed (Alec, 2026-10-01) |
 | D10 | Demo documents generated once, committed to the repo, served from the container's filesystem — no paid object storage in demo | Agreed (Alec, 2026-10-01) |
+| D11 | Agent granularity: several agents per process, split by authority/capability profile, never by step — see `decisions/001-agent-granularity.md` | Agreed (Alec, 2026-10-02) |
+| D12 | Unified Purchase model: requisition + PO are one record; approve once at intent via policy bands; clean matches post and pay with no second approval (plans/P2P.md §0) | Agreed (Alec, 2026-10-02) |
