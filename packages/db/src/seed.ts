@@ -10,12 +10,12 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { sql } from "drizzle-orm";
+import type { Db } from "./index.js";
 import {
   account,
   agent,
   agentRelease,
   company,
-  createDb,
   customer,
   evalCase,
   fiscalPeriod,
@@ -38,11 +38,9 @@ const seedPath = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "../seed/brightline.json",
 );
+
+export async function seedCore(db: Db, reset = false): Promise<void> {
 const data: SeedFile = JSON.parse(readFileSync(seedPath, "utf8"));
-const reset = process.argv.includes("--reset");
-
-const { db, pool } = createDb();
-
 if (reset) {
   await db.execute(sql`
     truncate table erp.item, erp.customer, erp.supplier, erp.account,
@@ -213,4 +211,13 @@ for (const a of agentData.agents) {
 console.log(
   `seeded agent framework: ${agentData.skills.length} skills, ${agentData.agents.length} agents`,
 );
-await pool.end();
+}
+
+
+// CLI entry: tsx src/seed.ts [--reset]
+if (process.argv[1] && /seed\.(ts|js)$/.test(process.argv[1])) {
+  const { createDb } = await import("./index.js");
+  const { db, pool } = createDb();
+  await seedCore(db, process.argv.includes("--reset"));
+  await pool.end();
+}

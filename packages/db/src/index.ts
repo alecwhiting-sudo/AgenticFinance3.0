@@ -15,3 +15,5 @@ export function createDb(databaseUrl = process.env.DATABASE_URL): {
   const pool = new pg.Pool({ connectionString: databaseUrl, max: 10 });
   return { db: drizzle(pool, { schema }), pool };
 }
+
+export { seedCore } from "./seed.js";

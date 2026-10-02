@@ -15,6 +15,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { eq, sql } from "drizzle-orm";
 import {
+  seedCore,
   apInvoice,
   apPayment,
   bankTransaction,
@@ -84,6 +85,16 @@ const MONTHLY_BUDGETS: Record<string, number> = {
 const dataset: StudioDataset = JSON.parse(readFileSync(path.join(seedDir, "generated/dataset.json"), "utf8"));
 const { db, pool } = createDb();
 const reset = process.argv.includes("--reset");
+
+// Core seed is a hard prerequisite (company, periods, accounts, agents).
+// Run it ourselves — idempotent — instead of trusting the pre-deploy step.
+await seedCore(db);
+const companyRow = await db.query.company.findFirst();
+if (!companyRow) {
+  console.error("core seed did not produce a company row — aborting P2P load");
+  await pool.end();
+  process.exit(1);
+}
 
 const existing = await db.select({ n: sql<number>`count(*)` }).from(purchase);
 if (Number(existing[0]!.n) > 0) {
