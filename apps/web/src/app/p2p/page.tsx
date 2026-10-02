@@ -66,6 +66,13 @@ export default async function P2PPage() {
             Live flow
           </Link>
           <Link
+            href="/p2p/invoices"
+            className="rounded-lg border px-3 py-1.5 text-sm"
+            style={{ borderColor: "var(--border)" }}
+          >
+            Invoices
+          </Link>
+          <Link
             href="/p2p/payments"
             className="rounded-lg border px-3 py-1.5 text-sm"
             style={{ borderColor: "var(--border)" }}
