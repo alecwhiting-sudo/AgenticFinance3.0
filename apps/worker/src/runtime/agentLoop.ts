@@ -30,6 +30,27 @@ import { emitActivity } from "../lib/activity.js";
 const API_URL = process.env.API_URL ?? "http://localhost:3001";
 const STEP_DELAY_MS = Number(process.env.WORKER_STEP_DELAY_MS ?? 0);
 
+/** Cost-tiered model routing (CLAUDE.md "Model routing & cost"): a release's
+ * modelProfile resolves ANTHROPIC_MODEL_<PROFILE>, else ANTHROPIC_MODEL, else
+ * the tier default. Route by task shape, not agent prestige: extraction and
+ * classification run on the small model; judgement work on the mid tier;
+ * reserve the top tier for profiles that demonstrably need it (eval first). */
+const MODEL_TIER_DEFAULTS: Record<string, string> = {
+  extraction: "claude-haiku-4-5", // high-volume, schema-tight work
+  default: "claude-sonnet-5-5", // the agent workhorse
+  reasoning: "claude-opus-5-5", // hard investigation/architecture only
+};
+
+export function resolveModel(profile: string): string {
+  const envKey = `ANTHROPIC_MODEL_${profile.toUpperCase().replace(/[^A-Z0-9]/g, "_")}`;
+  return (
+    process.env[envKey] ??
+    process.env.ANTHROPIC_MODEL ??
+    MODEL_TIER_DEFAULTS[profile] ??
+    MODEL_TIER_DEFAULTS.default!
+  );
+}
+
 export type ResolvedRelease = {
   agent: typeof agentTable.$inferSelect;
   release: typeof agentRelease.$inferSelect;
@@ -172,6 +193,125 @@ async function purchaseRequestFallback(
   };
 }
 
+async function proposeCommand(
+  runId: string,
+  seq: number,
+  type: string,
+  params: Record<string, unknown>,
+  steps: TranscriptStep[],
+): Promise<{ ok: boolean; data: Record<string, unknown> }> {
+  const res = await fetch(`${API_URL}/commands/propose`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ type, params, idempotencyKey: `${runId}:${seq}`, runId }),
+  });
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  await appendStep(runId, steps, { kind: "command", label: `propose ${type}`, detail: { status: res.status, response: data } });
+  return { ok: res.ok, data };
+}
+
+/** Keyless invoice extraction: parse the document's AF-DATA text layer (the
+ * Studio embeds it in every PDF) and propose ap.invoice.capture. */
+async function invoiceCaptureFallback(
+  resolved: ResolvedRelease,
+  runId: string,
+  payload: Record<string, unknown>,
+  steps: TranscriptStep[],
+): Promise<LoopResult> {
+  const text = String(payload.documentText ?? "");
+  const emailText = String(payload.emailText ?? "");
+  const m = text.match(/AF-DATA\s*(\{.*\})/s);
+  if (!m) {
+    return { outcome: "escalated", summary: "No machine-readable AF-DATA block in the document text — needs the LLM extraction path or human keying." };
+  }
+  let doc: Record<string, unknown>;
+  try {
+    doc = JSON.parse(m[1]!) as Record<string, unknown>;
+  } catch {
+    return { outcome: "escalated", summary: "AF-DATA block was not valid JSON — escalating for human review." };
+  }
+  await appendStep(runId, steps, { kind: "note", label: "extracted fields", detail: { number: doc.number, po: doc.po, grossMinor: doc.grossMinor } });
+
+  const lines = (doc.lines as { description: string; qty: number; unitPriceMinor: number; account: string }[] | undefined) ?? [];
+  const params = {
+    supplierCode: String(payload.supplierCode ?? ""),
+    supplierInvoiceNumber: String(doc.number ?? ""),
+    ...(doc.po ? { purchaseNumber: String(doc.po) } : {}),
+    invoiceDate: String(doc.invoiceDate ?? ""),
+    dueDate: String(doc.dueDate ?? doc.invoiceDate ?? ""),
+    lines: lines.map((l) => ({ description: l.description, qty: l.qty, unitPriceMinor: l.unitPriceMinor, accountCode: l.account })),
+    netMinor: Number(doc.netMinor ?? 0),
+    vatMinor: Number(doc.vatMinor ?? 0),
+    grossMinor: Number(doc.grossMinor ?? 0),
+    ...(emailText ? { emailText } : {}),
+  };
+  const { ok, data } = await proposeCommand(runId, 1, "ap.invoice.capture", params, steps);
+  if (!ok) return { outcome: "failed", summary: `Gateway rejected capture: ${String((data as { error?: string }).error ?? "unknown")}` };
+  const result = (data as { result?: { status?: string; exceptionCode?: string } }).result ?? {};
+  const flagged = emailText && /bank|sort code|account number/i.test(emailText) ? " Covering email mentions bank details — screened by intake." : "";
+  return {
+    outcome: "completed",
+    summary:
+      result.status === "posted"
+        ? `Captured invoice ${String(doc.number)} — matched its purchase and posted straight through.${flagged}`
+        : `Captured invoice ${String(doc.number)} — ${String(result.exceptionCode ?? "exception")} raised; case opened for investigation.${flagged}`,
+  };
+}
+
+/** Keyless exception playbook (plans/P2P.md §5): propose the taxonomy's
+ * canonical resolution — which still requires HUMAN approval at the gateway —
+ * or escalate where only a human can know (missing receipt, fraud risk). */
+async function invoiceExceptionFallback(
+  resolved: ResolvedRelease,
+  runId: string,
+  payload: Record<string, unknown>,
+  steps: TranscriptStep[],
+): Promise<LoopResult> {
+  const code = String(payload.exceptionCode ?? "");
+  const detail = String(payload.detail ?? "");
+  const invoiceId = String(payload.invoiceId ?? "");
+  await appendStep(runId, steps, { kind: "note", label: `playbook: ${code}`, detail: { detail } });
+
+  const propose = async (resolution: string, rationale: string, extra: Record<string, unknown> = {}) => {
+    const { ok, data } = await proposeCommand(runId, 1, "ap.invoice.resolve", { invoiceId, resolution, rationale, ...extra }, steps);
+    if (!ok) return { outcome: "failed" as const, summary: `Gateway rejected resolution: ${String((data as { error?: string }).error ?? "unknown")}` };
+    return {
+      outcome: "completed" as const,
+      summary: `Investigated ${code}: proposed ${resolution} — awaiting human approval in the inbox. Rationale: ${rationale}`,
+    };
+  };
+
+  switch (code) {
+    case "price_variance":
+      return propose("approve_adjusted", `Invoiced price exceeds the approved purchase beyond tolerance (${detail}). No agreed increase found on file; recommending acceptance at invoiced amounts this once — flag the supplier for a rate review.`);
+    case "duplicate_suspect":
+      return propose("reject", `Duplicate billing detected (${detail}). The original invoice stands; this copy should be rejected and the supplier notified.`);
+    case "qty_short_receipt": {
+      const m = detail.match(/Line (\d+).*received (\d+)/);
+      if (!m) return { outcome: "escalated", summary: `Could not read received quantity from the case detail ("${detail}") — a human should set the part-approval quantity.` };
+      return propose(
+        "part_approve",
+        `Invoiced quantity exceeds goods received (${detail}). Recommending part-approval for the received quantity; the shortfall should be re-billed on delivery.`,
+        { adjustedQuantities: [{ lineNo: Number(m[1]), qty: Number(m[2]) }] },
+      );
+    }
+    case "no_purchase":
+      return propose("retro_purchase", `Invoice arrived without a purchase record (${detail}). Spend classifies as routine; recommending a retro purchase so the commitment is on the books — director approval applies automatically if it exceeds the auto band.`);
+    case "missing_receipt":
+      return {
+        outcome: "escalated",
+        summary: `Invoice references its purchase but no goods receipt exists (${detail}). Only a human can confirm the goods actually arrived — once confirmed, resolve with record_receipt.`,
+      };
+    case "bank_detail_change":
+      return {
+        outcome: "abstained",
+        summary: "Fraud-risk case: the covering email requests a bank detail change. I will not action or recommend any resolution — verify with the supplier via a known channel, out of band. The invoice stays held.",
+      };
+    default:
+      return { outcome: "escalated", summary: `No playbook for exception code "${code}" — human triage needed.` };
+  }
+}
+
 /** Deterministic fallback so the framework runs end-to-end without a model. */
 async function deterministicHandler(
   resolved: ResolvedRelease,
@@ -185,9 +325,15 @@ async function deterministicHandler(
     label: "deterministic mode",
     detail: { reason: "no model configured for this run" },
   });
-  // Purchase intake (plans/P2P.md M2): any task carrying free text.
+  // Route by task type, with eval.case routed by payload shape.
   if (taskType === "purchase.request" || (taskType === "eval.case" && typeof payload.text === "string")) {
     return purchaseRequestFallback(resolved, runId, String(payload.text ?? ""), steps);
+  }
+  if (taskType === "invoice.capture" || (taskType === "eval.case" && typeof payload.documentText === "string")) {
+    return invoiceCaptureFallback(resolved, runId, payload, steps);
+  }
+  if (taskType === "invoice.exception" || (taskType === "eval.case" && typeof payload.exceptionCode === "string")) {
+    return invoiceExceptionFallback(resolved, runId, payload, steps);
   }
   if (taskType === "hello.greet" || taskType === "eval.case") {
     const topic = String(payload.topic ?? "the business");
@@ -239,7 +385,7 @@ export async function runAgentLoop(
   }
 
   const client = new Anthropic();
-  const model = process.env.ANTHROPIC_MODEL ?? "claude-opus-5-5";
+  const model = resolveModel(resolved.release.modelProfile);
   const tools: Anthropic.Tool[] = [
     {
       name: "get_company_overview",
@@ -269,6 +415,17 @@ export async function runAgentLoop(
           periodCode: { type: "string" },
         },
         required: ["accountCode", "periodCode"],
+        additionalProperties: false,
+      },
+      strict: true,
+    },
+    {
+      name: "get_invoice_context",
+      description: "Full context for an AP invoice: the invoice, its purchase (the approved ask), goods receipts, and case history. Use for exception investigations.",
+      input_schema: {
+        type: "object",
+        properties: { invoiceId: { type: "string" } },
+        required: ["invoiceId"],
         additionalProperties: false,
       },
       strict: true,
@@ -385,6 +542,29 @@ export async function runAgentLoop(
         };
         await appendStep(runId, steps, { kind: "outcome", label: result.outcome, detail: { summary: result.summary } });
         return result;
+      }
+      if (tu.name === "get_invoice_context") {
+        let result: unknown = { error: "database unavailable" };
+        if (db) {
+          const q = input as { invoiceId: string };
+          const inv = await db.query.apInvoice.findFirst({ where: (t, { eq: e }) => e(t.id, q.invoiceId) });
+          if (!inv) result = { error: "invoice not found" };
+          else {
+            const p = inv.purchaseId
+              ? await db.query.purchase.findFirst({ where: (t, { eq: e }) => e(t.id, inv.purchaseId!) })
+              : null;
+            const receipts = p
+              ? await db.query.goodsReceipt.findMany({ where: (t, { eq: e }) => e(t.purchaseId, p.id) })
+              : [];
+            const events = inv.caseId
+              ? await db.query.caseEvent.findMany({ where: (t, { eq: e }) => e(t.caseId, inv.caseId!) })
+              : [];
+            result = { invoice: inv, purchase: p, receipts, caseEvents: events };
+          }
+        }
+        await appendStep(runId, steps, { kind: "tool_call", label: "get_invoice_context", detail: { input } });
+        toolResults.push({ type: "tool_result", tool_use_id: tu.id, content: JSON.stringify(result) });
+        continue;
       }
       if (tu.name === "get_suppliers" || tu.name === "get_accounts" || tu.name === "get_category_budget") {
         let result: unknown = { error: "database unavailable" };

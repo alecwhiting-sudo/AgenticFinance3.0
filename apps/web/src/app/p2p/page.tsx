@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getJson } from "@/lib/api";
 import { Badge, Card, SectionTitle, Stat, toneForStatus } from "@/components/ui";
+import DripButton from "@/components/DripButton";
 
 type Pipeline = {
   invoiceStages: { status: string; n: number }[];
@@ -42,12 +43,15 @@ export default async function P2PPage() {
 
   return (
     <main className="space-y-6">
-      <section>
-        <h2 className="text-2xl font-semibold tracking-tight">Procure to Pay</h2>
-        <p className="mt-1 text-sm" style={{ color: "var(--muted)" }}>
-          One Purchase from intent to payment — approved once, straight through unless an
-          exception fires.
-        </p>
+      <section className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 className="text-2xl font-semibold tracking-tight">Procure to Pay</h2>
+          <p className="mt-1 text-sm" style={{ color: "var(--muted)" }}>
+            One Purchase from intent to payment — approved once, straight through unless an
+            exception fires.
+          </p>
+        </div>
+        <DripButton />
       </section>
 
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-7">

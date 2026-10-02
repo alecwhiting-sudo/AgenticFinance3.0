@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { desc, eq } from "drizzle-orm";
 import { caseEvent, command } from "@af/db";
 import { createPurchase, type CreatePurchaseParams } from "../services/purchaseIntake.js";
+import { captureInvoice, resolveInvoiceException, type CaptureInvoiceData, type ResolveParams } from "../services/invoiceIntake.js";
 import { commandDefs, proposeCommandSchema, type CommandType } from "@af/shared";
 import { requireDb } from "../lib/db.js";
 import { emitActivity } from "../lib/activity.js";
@@ -10,6 +11,7 @@ import { emitActivity } from "../lib/activity.js";
 async function executeCommand(
   type: CommandType,
   params: Record<string, unknown>,
+  actor = "standing-authority",
 ): Promise<Record<string, unknown>> {
   const db = requireDb();
   switch (type) {
@@ -29,6 +31,12 @@ async function executeCommand(
         });
       }
       return { noted: true };
+    }
+    case "ap.invoice.capture": {
+      return captureInvoice(db, params as CaptureInvoiceData) as Promise<Record<string, unknown>>;
+    }
+    case "ap.invoice.resolve": {
+      return resolveInvoiceException(db, params as ResolveParams, actor);
     }
     case "purchase.create": {
       const created = await createPurchase(db, params as CreatePurchaseParams);
@@ -168,7 +176,7 @@ export function commandRoutes(app: FastifyInstance): void {
         return { ok: true };
       }
 
-      const result = await executeCommand(cmd.type as CommandType, cmd.params);
+      const result = await executeCommand(cmd.type as CommandType, cmd.params, decidedBy);
       await db
         .update(command)
         .set({ status: "executed", decidedBy, decisionReason: reason, decidedAt: new Date(), result })

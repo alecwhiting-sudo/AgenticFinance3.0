@@ -40,7 +40,32 @@ pnpm workspace monorepo, TypeScript throughout (Node 22, ESM):
 - New API surface: define the Zod schema in `packages/shared` first; web and
   worker consume the inferred types.
 - Secrets/config via env vars only (`.env.example` documents them). Model from
-  `ANTHROPIC_MODEL*` env vars; never hardcode model IDs.
+  `ANTHROPIC_MODEL*` env vars; never hardcode model IDs in agent logic.
+
+## Model routing & cost
+
+Route models by **task shape**, never by agent prestige. Each agent release
+declares a `modelProfile`; the worker resolves `ANTHROPIC_MODEL_<PROFILE>` →
+`ANTHROPIC_MODEL` → the tier default (`apps/worker/src/runtime/agentLoop.ts`):
+
+| Profile | Default tier | Use for |
+|---|---|---|
+| `extraction` | Haiku 4.5 | high-volume, schema-tight work: document extraction, classification, cash matching |
+| `default` | Sonnet 5.5 | the agent workhorse: intake, investigation, drafting, commentary |
+| `reasoning` | Opus 5.5 | only where judgement demonstrably needs it — promote a profile here on eval evidence, not vibes |
+| `none` | no model | deterministic handlers only |
+
+Rules: changing an agent's model is a release change (eval before promote);
+downgrades need the eval suite green on the cheaper model; judge cost per
+*completed case*, not per request (a cheap model that escalates everything is
+expensive). Deterministic services are always the cheapest model — if code can
+decide it, no model call at all.
+
+For **Claude Code dev sessions on this repo** (human guidance, not enforced):
+Sonnet 5.5 for routine implementation and fixes; Opus 5.5 (default) for
+feature building; reserve Fable-class sessions for architecture/planning
+decisions; `/code-review` at medium effort for routine diffs, high for
+schema/gateway/posting changes.
 - Finance safety rule: anything that moves money, posts material journals, or
   sends external communications requires an explicit human-approval checkpoint
   through the command gateway. Agents propose; humans approve.

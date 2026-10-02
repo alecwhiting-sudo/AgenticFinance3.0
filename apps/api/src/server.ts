@@ -10,6 +10,7 @@ import { workRoutes } from "./routes/work.js";
 import { commandRoutes } from "./routes/commands.js";
 import { activityRoutes } from "./routes/activity.js";
 import { p2pRoutes } from "./routes/p2p.js";
+import { dripRoutes } from "./routes/drip.js";
 
 const VERSION = "0.2.0";
 const SERVICE = "api";
@@ -81,6 +82,7 @@ workRoutes(app);
 commandRoutes(app);
 activityRoutes(app);
 p2pRoutes(app);
+dripRoutes(app);
 
 const port = Number(process.env.PORT ?? 3001);
 await app.listen({ port, host: "0.0.0.0" });

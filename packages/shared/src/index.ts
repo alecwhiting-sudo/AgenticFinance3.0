@@ -64,6 +64,47 @@ export const commandDefs = {
         .max(10),
     }),
   },
+  /** Capture an extracted supplier invoice (standing: a draft moves no money).
+   * The intake service then screens, matches, and posts or opens a case. */
+  "ap.invoice.capture": {
+    requiresApproval: false,
+    params: z.object({
+      supplierCode: z.string().min(1),
+      supplierInvoiceNumber: z.string().min(1),
+      purchaseNumber: z.string().optional(),
+      invoiceDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      lines: z
+        .array(
+          z.object({
+            description: z.string().min(1),
+            qty: z.number().int().positive(),
+            unitPriceMinor: z.number().int().positive(),
+            accountCode: z.string().regex(/^\d{4}$/),
+          }),
+        )
+        .min(1)
+        .max(20),
+      netMinor: z.number().int().positive(),
+      vatMinor: z.number().int().min(0),
+      grossMinor: z.number().int().positive(),
+      emailText: z.string().max(8000).optional(),
+      documentPath: z.string().optional(),
+      emailPath: z.string().optional(),
+    }),
+  },
+  /** Resolve an invoice exception — ALWAYS a human approval (plans/P2P.md §6). */
+  "ap.invoice.resolve": {
+    requiresApproval: true,
+    params: z.object({
+      invoiceId: z.string().uuid(),
+      resolution: z.enum(["approve_adjusted", "part_approve", "record_receipt", "reject", "retro_purchase"]),
+      rationale: z.string().min(10).max(2000),
+      adjustedQuantities: z
+        .array(z.object({ lineNo: z.number().int().positive(), qty: z.number().int().min(0) }))
+        .optional(),
+    }),
+  },
 } as const;
 export type CommandType = keyof typeof commandDefs;
 export const commandTypeSchema = z.enum(
