@@ -5,6 +5,7 @@
  * stream and renders each event as one calm line with a subtle fade-in.
  */
 import { useEffect, useRef, useState } from "react";
+import { PUBLIC_API_URL as apiUrl } from "@/lib/api";
 
 type Activity = {
   id: string;
@@ -18,7 +19,7 @@ type Activity = {
   objectId: string | null;
 };
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+
 
 export default function LiveFeed({ limit = 12 }: { limit?: number }) {
   const [events, setEvents] = useState<Activity[]>([]);

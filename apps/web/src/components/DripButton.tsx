@@ -3,8 +3,9 @@
 /** The demo drip: lands a fresh invoice in the capture queue (ARCH §6b). */
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { PUBLIC_API_URL as apiUrl } from "@/lib/api";
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+
 const SCENARIOS = ["clean", "price_variance", "qty_short_receipt", "missing_receipt", "no_purchase", "bank_detail_change"];
 
 export default function DripButton() {

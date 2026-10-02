@@ -1,7 +1,9 @@
-/** Server-side fetch helper. Client components use NEXT_PUBLIC_API_URL. */
-export const API_URL = process.env.API_URL ?? "http://localhost:3001";
-export const PUBLIC_API_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+/** Server-side fetch helper. Client components use PUBLIC_API_URL. */
+const sanitize = (u: string) => u.trim().replace(/[,;\s/]+$/, "");
+export const API_URL = sanitize(process.env.API_URL ?? "http://localhost:3001");
+export const PUBLIC_API_URL = sanitize(
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001",
+);
 
 export async function getJson<T>(path: string): Promise<T | null> {
   try {

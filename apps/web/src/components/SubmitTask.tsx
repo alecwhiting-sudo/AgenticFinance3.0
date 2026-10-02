@@ -2,8 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { PUBLIC_API_URL as apiUrl } from "@/lib/api";
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+
 
 export default function SubmitTask({ agents }: { agents: { slug: string; name: string }[] }) {
   const router = useRouter();

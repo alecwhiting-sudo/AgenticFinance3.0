@@ -4,8 +4,9 @@
  * as it lands — the "look inside the agent's head" view (ARCHITECTURE.md §6a). */
 import { useEffect, useState } from "react";
 import { Badge, toneForStatus } from "@/components/ui";
+import { PUBLIC_API_URL as apiUrl } from "@/lib/api";
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+
 
 type Step = { at: string; kind: string; label: string; detail: Record<string, unknown> };
 type RunDetail = {

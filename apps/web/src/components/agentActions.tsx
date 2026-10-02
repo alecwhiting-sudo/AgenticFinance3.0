@@ -4,8 +4,9 @@
  * draft + promote releases, and run the eval suite. Single demo user. */
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { PUBLIC_API_URL as apiUrl } from "@/lib/api";
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+
 const USER = "alec";
 
 async function post(path: string, body: unknown): Promise<{ ok: boolean; data: unknown }> {
