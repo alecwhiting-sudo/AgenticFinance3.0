@@ -1,6 +1,7 @@
 # Analysis: replacing the "mini ERP" with a Finance Data Platform (FDP)
 
-**Status:** analysis only — no plans amended, nothing implemented.
+**Status:** direction agreed 2026-10-02 (see §10); reflected in
+ARCHITECTURE.md D13 and MASTER_PLAN; nothing implemented yet.
 **Source material:** the OpenFinance POC (PRD v2.0, schema `db/001_schema.sql`,
 engine + persistence code, Feb-2025 enhancement log), read in full.
 **Decision pending:** adopt, adapt, or decline; then update MASTER_PLAN /
@@ -145,6 +146,28 @@ over time), `GovernanceAdjustment`. Today these exist as activity-feed
 entries and service calls; the change is making them the **inputs** instead
 of the narration.
 
+**Two entry postures, one pipe.** OpenFinance's direct-mapping /
+measurement-transformation split generalises into how events *enter*:
+
+- **Finance-initiated flows (P2P, O2C):** the module knows the accounting at
+  the moment of posting — the agent coded the invoice lines in P2P, the
+  contract schedule in O2C. The module submits the business event **with
+  proposed account-coded deltas attached**. The platform validates
+  (balanced, accounts exist, period open, idempotent) and posts.
+- **Business-initiated flows (future: insurance-style events):** the event
+  arrives without accounting; the engine derives the deltas from the event
+  plus versioned parameters, then posts through the same pipe.
+
+The only variable is *who computed the deltas*. Both go through the single
+write path (event → validated deltas → movement + journal + LES), so replay
+reproduces journals in both cases (deltas ride on the event payload), and a
+future smarter engine version can re-validate historical coding without the
+modules changing. Division of labour: the platform guarantees **integrity**
+(balanced, traceable, immutable); coding **quality** stays with the modules
+and their agents, policed by evals and the exception lane. This also delivers
+the no-duplication goal: one transaction flow serves both postures — no
+separate warehouse feeding a separate ERP.
+
 **Deliberate divergence from OpenFinance:** it has no operational workflow —
 events arrive from outside. We keep our operational layer (purchases,
 matching, cases, approvals, agents) **in front of** the event store: a
@@ -197,11 +220,13 @@ economic state."
   event; no journal without movement; movements = balances; certified is
   immutable; replay must reproduce state).
 - **MASTER_PLAN reshaping:** "Mini ERP core" reframes as "FDP core".
-  **R2R largely stops being a module and becomes the close lifecycle**
-  (lock, certify, restate, reconciliation gates) plus accrual/prepayment
-  patterns as the first measurement transformation. O2C and Performance
-  Management land on the platform as new event types + views, not new
-  schemas.
+  **Modules stay** — P2P, R2R, O2C, Performance Management remain the
+  client-facing functional areas and the agent families (clients get
+  modules; Workday-like posture: functional areas over one deep object
+  store). R2R keeps its module identity; its substance is the close
+  lifecycle (lock, certify, restate, reconciliation gates) plus
+  accrual/prepayment patterns as the first measurement transformation.
+  O2C mirrors P2P's posture: events + accounting pushed together.
 - **Migration is strangler, not rewrite** (keeps every demo working):
   - *Step 1 — substrate:* add `fdp` schema (events, movements, engine
     versions, parameter sets) and the EngineResult contract; posting
@@ -246,3 +271,24 @@ state) and the live demo experience (LES **is** a live-flow data source;
 certification is a new demo beat). Cost is real but bounded: one substrate
 step before further process phases, no rewrite of what's shipped, and every
 existing P2P demo keeps working throughout.
+
+## 10. Decisions taken (2026-10-02)
+
+1. **Adopt** the FDP concept via the strangler path.
+2. **Modules stay** (P2P, R2R, O2C, PM) as the familiar client-facing
+   surface and the agent families; the FDP is the shared back end — one set
+   of tables acting as data store + ledger combined (Workday-like posture:
+   functional areas over one deep object store).
+3. **R2R remains a module**; the close/certify lifecycle is its content.
+4. **Two entry postures, one pipe** (§4): finance-initiated flows (P2P, O2C)
+   push the business event *and* its accounting together; business-initiated
+   flows (future insurance etc.) push events and the engine derives the
+   accounting. Future-proofs insurance without redesign; avoids
+   warehouse-then-ERP data duplication.
+5. **Demo posture: understate the platform.** Demos foreground the agents;
+   the UI keeps ERP-familiar language. LES/LRS surfaces only where it makes
+   the agents look transparent (number → event → agent run). The platform
+   must read enterprise-grade, not small-business.
+6. Bank transactions enter as events at ingestion; matching is a downstream
+   event (§8 question closed).
+7. Account-coded deltas, pure (§8 question closed).

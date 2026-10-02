@@ -7,9 +7,15 @@
 An agentic finance function for a small business, built as a demo-quality system
 first and hardened to production later. It consists of:
 
-1. **A mini ERP/EPM** on PostgreSQL — the system of record the business will
-   eventually run on (master data, subledgers, GL, periods, budgets/forecasts).
-   No integration to real ERPs; this *is* the ERP.
+1. **A Finance Data Platform (FDP)** on PostgreSQL — the system of record
+   the business will eventually run on: one set of tables acting as data
+   store + ledger combined (event store, movement ledger, live balances,
+   journals, locked reporting snapshots — ARCHITECTURE.md D13,
+   `analysis/finance-data-platform.md`). Clients experience it through
+   familiar modules and can think of it as the ERP; no integration to real
+   ERPs — this *is* the system of record. (Supersedes the original "mini
+   ERP/EPM" framing; Phase 2 built the GL/subledger surface that the FDP
+   substrate now slides under.)
 2. **An agent framework** — a small, disciplined version of the research
    architecture (`docs/research/Finance-Agent-Framework-Research.html`):
    deterministic services do accounting; agents interpret, investigate and
@@ -120,18 +126,38 @@ ANTHROPIC_API_KEY is configured; daily drip wires in with P2P M5.)*
   pipeline → match exception branches to the agent → human approves the
   resolution → posted and visibly in the trial balance.
 
+### Phase 2b — FDP substrate (strangler step 1–2, D13)
+- Add the platform tables (event store with idempotency, movement ledger,
+  engine/config versions, parameter sets) and the validated posting pipeline
+  (event → account-coded deltas → movement + journal + live balances, one
+  transaction). P2P/O2C services switch to emitting events with their
+  accounting attached instead of posting journals directly; DB-level
+  immutability triggers and a deferred journal-balance constraint; replay
+  command wired into the test suite. Existing API shapes, UI and demos
+  unchanged — clients see no difference.
+- **Demo moment (quiet, for technical buyers only):** drill any TB number →
+  movement → event → the agent run that produced it; replay the full event
+  history and show identical balances.
+
 ### Phase 3 — R2R
-- Per its own plan (`docs/plans/R2R.md`): period close checklist, recurring
-  journals, accruals, bank reconciliation (dummy bank feed), **Close Agent**
-  and **Reconciliation Agent**, close dashboard, reporting snapshot (P&L,
-  balance sheet), flux/variance commentary drafted by agent.
+- Per its own plan (`docs/plans/R2R.md`), now sitting on the FDP: the module
+  content is the close lifecycle — lock (LRS snapshot) → certify → supersede
+  (restatement), reconciliation gates that block certification, period close
+  checklist, recurring journals, accruals (first measurement transformation:
+  patterns over versioned parameters), bank reconciliation, **Close Agent**
+  and **Reconciliation Agent**, close dashboard, reporting that always
+  states its basis (live vs certified + version), flux/variance commentary
+  drafted by agent.
 - **Demo moment:** run a month-end close end to end on dummy data; agent
-  drafts the close commentary; human certifies the snapshot.
+  drafts the close commentary; human certifies the snapshot; drip a late
+  invoice and restate to v2 with v1 preserved.
 
 ### Phase 4 — O2C
 - Per its own plan: customer master, sales orders, billing, AR subledger, cash
   application (agent matches dummy remittances), collections agent drafting
-  dunning, credit notes with approval.
+  dunning, credit notes with approval. Same entry posture as P2P (D13):
+  contracts/billing push the business event and its accounting together
+  through the one pipe.
 
 ### Phase 5 — Performance Management
 - Per its own plan: driver-based budget and forecast on the EPM tables,
