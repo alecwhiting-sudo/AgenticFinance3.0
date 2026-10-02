@@ -170,7 +170,7 @@ async function purchaseRequestFallback(
   };
   await appendStep(runId, steps, { kind: "note", label: "parsed request", detail: { qty, unitPriceMinor, accountCode, supplierCode: supplierCode ?? supplierName } });
 
-  const res = await fetch(`${API_URL}/commands/propose`, {
+  const res = await apiFetch(`/commands/propose`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ type: "purchase.create", params, idempotencyKey: `${runId}:1`, runId }),
@@ -193,6 +193,22 @@ async function purchaseRequestFallback(
   };
 }
 
+
+/** Worker→API fetch with retries: a mid-deploy API restart must not kill a
+ * run (command proposals are idempotent by key, so retrying is safe). */
+async function apiFetch(path: string, init: RequestInit, attempts = 3): Promise<Response> {
+  let lastErr: unknown;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await fetch(`${API_URL}${path}`, init);
+    } catch (err) {
+      lastErr = err;
+      await new Promise((r) => setTimeout(r, 1500 * (i + 1)));
+    }
+  }
+  throw new Error(`API unreachable after ${attempts} attempts (${String(lastErr)}) — the platform API may be restarting; the task can be retried`);
+}
+
 async function proposeCommand(
   runId: string,
   seq: number,
@@ -200,7 +216,7 @@ async function proposeCommand(
   params: Record<string, unknown>,
   steps: TranscriptStep[],
 ): Promise<{ ok: boolean; data: Record<string, unknown> }> {
-  const res = await fetch(`${API_URL}/commands/propose`, {
+  const res = await apiFetch(`/commands/propose`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ type, params, idempotencyKey: `${runId}:${seq}`, runId }),
@@ -853,7 +869,7 @@ export async function runAgentLoop(
       }
       if (tu.name === "propose_command") {
         commandSeq++;
-        const res = await fetch(`${API_URL}/commands/propose`, {
+        const res = await apiFetch(`/commands/propose`, {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
