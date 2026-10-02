@@ -86,7 +86,7 @@ const MONTHLY_BUDGETS: Record<string, number> = {
 
 const dataset: StudioDataset = JSON.parse(readFileSync(path.join(seedDir, "generated/dataset.json"), "utf8"));
 const { db, pool } = createDb();
-const reset = process.argv.includes("--reset");
+const reset = process.argv.includes("--reset") || process.env.RESET_DATASET === "true";
 
 // Core seed is a hard prerequisite (company, periods, accounts, agents).
 // Run it ourselves — idempotent — instead of trusting the pre-deploy step.
