@@ -154,7 +154,7 @@ ANTHROPIC_API_KEY is configured; daily drip wires in with P2P M5.)*
 - **Demo moment:** reconcile the bank live; run month-end postings through
   the one pipe; agent drafts the close commentary from the statements.
 
-### Phase 4 — O2C
+### Phase 4 — O2C ✅ built 2026-10-02
 - Per its own plan: customer master, sales orders, billing, AR subledger, cash
   application (agent matches dummy remittances), collections agent drafting
   dunning, credit notes with approval. Same entry posture as P2P (D13):
