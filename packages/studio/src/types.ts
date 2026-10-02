@@ -8,6 +8,15 @@ export type Line = {
 export type ApChain = {
   id: string;
   supplierCode: string;
+  /** Unified Purchase model (plans/P2P.md §0): the ask that became the PO. */
+  requisition: {
+    requestedBy: string;
+    businessNeed: string;
+    requestDate: string;
+    approvalBand: "auto" | "standard" | "director";
+    approvedBy: string;
+    approvedAt: string;
+  } | null;
   po: { number: string; orderDate: string; lines: Line[]; totalMinor: number; file: string } | null;
   grn: { number: string; date: string; qtyReceived: number[] } | null;
   invoice: {

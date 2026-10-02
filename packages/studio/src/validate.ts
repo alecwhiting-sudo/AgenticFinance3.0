@@ -33,7 +33,15 @@ export function validate(seedDir: string, checkFiles: boolean): string[] {
 
   // structural: taxonomy consistency
   for (const c of dataset.ap) {
-    if (c.exception === "no_po" && c.po) err(`${c.id}: no_po but PO present`);
+    if (c.exception === "no_purchase" && c.po) err(`${c.id}: no_purchase but purchase present`);
+    if (c.po && !c.requisition) err(`${c.id}: purchase without requisition context`);
+    if (c.requisition) {
+      const t = c.po!.totalMinor;
+      const expected = t <= 50000 ? "auto" : t <= 500000 ? "standard" : "director";
+      if (c.requisition.approvalBand !== expected)
+        err(`${c.id}: approval band ${c.requisition.approvalBand}, expected ${expected}`);
+      if (c.requisition.requestDate > c.po!.orderDate) err(`${c.id}: requested after ordered`);
+    }
     if (c.exception === "missing_receipt" && c.grn) err(`${c.id}: missing_receipt but GRN present`);
     if (!c.exception && c.po && !c.grn) err(`${c.id}: clean chain missing GRN`);
     if (c.exception && c.paid) err(`${c.id}: exception invoice marked paid`);

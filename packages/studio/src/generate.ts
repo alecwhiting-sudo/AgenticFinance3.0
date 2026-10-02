@@ -45,11 +45,14 @@ const EXCEPTIONS: { code: string; weight: number }[] = [
   { code: "qty_short_receipt", weight: 9 },
   { code: "missing_receipt", weight: 6 },
   { code: "duplicate_suspect", weight: 6 },
-  { code: "no_po", weight: 8 },
+  { code: "no_purchase", weight: 8 },
 ];
 
 export function generate(seed = 20261001, apCount = 300, arCount = 400): Dataset {
   const rng = mulberry32(seed);
+  // Separate stream for requisition metadata: keeps the main stream (and thus
+  // every already-rendered document) identical to earlier versions of the set.
+  const rngReq = mulberry32(seed ^ 0x9e3779b9);
   const person = () => `${pick(rng, firstNames)} ${pick(rng, lastNames)}`;
 
   const suppliers = supplierNames.map((name, i) => ({
@@ -139,7 +142,7 @@ export function generate(seed = 20261001, apCount = 300, arCount = 400): Dataset
       grnQty = lines.map((l2, j) => (j === 0 ? Math.max(1, Math.floor(l2.qty * 0.8)) : l2.qty));
     } else if (exception === "missing_receipt") {
       hasGrn = false;
-    } else if (exception === "no_po") {
+    } else if (exception === "no_purchase") {
       hasPo = false;
       hasGrn = false;
     } else if (exception === "duplicate_suspect" && duplicateOf) {
@@ -149,9 +152,28 @@ export function generate(seed = 20261001, apCount = 300, arCount = 400): Dataset
 
     const netMinor = money(invLines);
     const vatMinor = Math.round(netMinor * VAT_RATE);
+    const poTotal = money(lines);
+    const approvalBand = !hasPo ? null : poTotal <= 50000 ? "auto" : poTotal <= 500000 ? "standard" : "director";
+    const requester = `${pick(rngReq, firstNames)} ${pick(rngReq, lastNames)}`;
+    const requestDate = addDays(orderDate, -int(rngReq, 1, 5));
     const chain: ApChain = {
       id,
       supplierCode: supplier.code,
+      requisition: hasPo
+        ? {
+            requestedBy: requester,
+            businessNeed: `${pick(rngReq, ["Team", "Client project", "Office", "Quarterly", "Replacement", "New starter"])} need: ${lines[0]!.description.toLowerCase()}`,
+            requestDate,
+            approvalBand: approvalBand!,
+            approvedBy:
+              approvalBand === "auto"
+                ? "standing-authority (auto band)"
+                : approvalBand === "standard"
+                  ? `${pick(rngReq, firstNames)} ${pick(rngReq, lastNames)} (manager)`
+                  : "Finance Director",
+            approvedAt: addDays(requestDate, approvalBand === "auto" ? 0 : int(rngReq, 0, 2)),
+          }
+        : null,
       po: hasPo
         ? {
             number: poNumber,

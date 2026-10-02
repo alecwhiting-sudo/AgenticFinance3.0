@@ -1,7 +1,7 @@
 {
  "meta": {
   "seed": 20261001,
-  "generatedAt": "2026-10-01T20:42:46.454Z",
+  "generatedAt": "2026-10-02T04:19:42.776Z",
   "from": "2026-04-01",
   "to": "2026-09-30",
   "version": 1
@@ -840,6 +840,14 @@
   {
    "id": "ap-0001",
    "supplierCode": "SUP-039",
+   "requisition": {
+    "requestedBy": "Marcus Brennan",
+    "businessNeed": "Client project need: office rent — monthly",
+    "requestDate": "2026-07-11",
+    "approvalBand": "standard",
+    "approvedBy": "Elena Shah (manager)",
+    "approvedAt": "2026-07-11"
+   },
    "po": {
     "number": "PO-261000",
     "orderDate": "2026-07-14",
@@ -893,6 +901,14 @@
   {
    "id": "ap-0002",
    "supplierCode": "SUP-011",
+   "requisition": {
+    "requestedBy": "Nadia Whitfield",
+    "businessNeed": "Replacement need: campaign management — monthly",
+    "requestDate": "2026-07-18",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-07-18"
+   },
    "po": {
     "number": "PO-261001",
     "orderDate": "2026-07-21",
@@ -946,6 +962,14 @@
   {
    "id": "ap-0003",
    "supplierCode": "SUP-003",
+   "requisition": {
+    "requestedBy": "Elena Whitfield",
+    "businessNeed": "New starter need: insurance premium",
+    "requestDate": "2026-08-04",
+    "approvalBand": "standard",
+    "approvedBy": "Jordan Okafor (manager)",
+    "approvedAt": "2026-08-06"
+   },
    "po": {
     "number": "PO-261002",
     "orderDate": "2026-08-09",
@@ -999,6 +1023,14 @@
   {
    "id": "ap-0004",
    "supplierCode": "SUP-001",
+   "requisition": {
+    "requestedBy": "Beth Hughes",
+    "businessNeed": "New starter need: courier & postage batch",
+    "requestDate": "2026-05-26",
+    "approvalBand": "standard",
+    "approvedBy": "Olu Udo (manager)",
+    "approvedAt": "2026-05-27"
+   },
    "po": {
     "number": "PO-261003",
     "orderDate": "2026-05-28",
@@ -1078,6 +1110,14 @@
   {
    "id": "ap-0005",
    "supplierCode": "SUP-021",
+   "requisition": {
+    "requestedBy": "Sam Shah",
+    "businessNeed": "Team need: electricity q bill",
+    "requestDate": "2026-07-15",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-07-16"
+   },
    "po": {
     "number": "PO-261004",
     "orderDate": "2026-07-19",
@@ -1144,6 +1184,14 @@
   {
    "id": "ap-0006",
    "supplierCode": "SUP-009",
+   "requisition": {
+    "requestedBy": "Dev Patel",
+    "businessNeed": "Client project need: observability platform",
+    "requestDate": "2026-03-30",
+    "approvalBand": "standard",
+    "approvedBy": "Chris Osei (manager)",
+    "approvedAt": "2026-03-31"
+   },
    "po": {
     "number": "PO-261005",
     "orderDate": "2026-04-04",
@@ -1197,6 +1245,14 @@
   {
    "id": "ap-0007",
    "supplierCode": "SUP-036",
+   "requisition": {
+    "requestedBy": "Jordan Whitfield",
+    "businessNeed": "Office need: meeting room hire",
+    "requestDate": "2026-04-20",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-04-21"
+   },
    "po": {
     "number": "PO-261006",
     "orderDate": "2026-04-23",
@@ -1250,6 +1306,14 @@
   {
    "id": "ap-0008",
    "supplierCode": "SUP-014",
+   "requisition": {
+    "requestedBy": "Hannah Novak",
+    "businessNeed": "Replacement need: associate subcontract — days",
+    "requestDate": "2026-07-25",
+    "approvalBand": "standard",
+    "approvedBy": "Dev Hughes (manager)",
+    "approvedAt": "2026-07-27"
+   },
    "po": {
     "number": "PO-261007",
     "orderDate": "2026-07-28",
@@ -1303,6 +1367,7 @@
   {
    "id": "ap-0009",
    "supplierCode": "SUP-021",
+   "requisition": null,
    "po": null,
    "grn": null,
    "invoice": {
@@ -1330,13 +1395,21 @@
     "from": "accounts@pennine-security-systems.example",
     "date": "2026-04-24"
    },
-   "exception": "no_po",
+   "exception": "no_purchase",
    "paid": false,
    "paidDate": null
   },
   {
    "id": "ap-0010",
    "supplierCode": "SUP-017",
+   "requisition": {
+    "requestedBy": "Tom Udo",
+    "businessNeed": "Quarterly need: insurance premium",
+    "requestDate": "2026-08-10",
+    "approvalBand": "standard",
+    "approvedBy": "Nadia Nakamura (manager)",
+    "approvedAt": "2026-08-11"
+   },
    "po": {
     "number": "PO-261009",
     "orderDate": "2026-08-15",
@@ -1390,6 +1463,14 @@
   {
    "id": "ap-0011",
    "supplierCode": "SUP-016",
+   "requisition": {
+    "requestedBy": "Tom Sousa",
+    "businessNeed": "Office need: employment law advice",
+    "requestDate": "2026-06-05",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-06-06"
+   },
    "po": {
     "number": "PO-261010",
     "orderDate": "2026-06-07",
@@ -1469,6 +1550,14 @@
   {
    "id": "ap-0012",
    "supplierCode": "SUP-029",
+   "requisition": {
+    "requestedBy": "Jack Osei",
+    "businessNeed": "Team need: payroll bureau — monthly",
+    "requestDate": "2026-08-08",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-08-09"
+   },
    "po": {
     "number": "PO-261011",
     "orderDate": "2026-08-09",
@@ -1522,6 +1611,14 @@
   {
    "id": "ap-0013",
    "supplierCode": "SUP-022",
+   "requisition": {
+    "requestedBy": "Callum Kowalski",
+    "businessNeed": "Replacement need: quarterly accounts review",
+    "requestDate": "2026-09-04",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-09-06"
+   },
    "po": {
     "number": "PO-261012",
     "orderDate": "2026-09-08",
@@ -1575,6 +1672,14 @@
   {
    "id": "ap-0014",
    "supplierCode": "SUP-008",
+   "requisition": {
+    "requestedBy": "Nadia Doyle",
+    "businessNeed": "Office need: office chairs x2",
+    "requestDate": "2026-04-08",
+    "approvalBand": "standard",
+    "approvedBy": "Marcus Reid (manager)",
+    "approvedAt": "2026-04-09"
+   },
    "po": {
     "number": "PO-261013",
     "orderDate": "2026-04-10",
@@ -1628,6 +1733,14 @@
   {
    "id": "ap-0015",
    "supplierCode": "SUP-002",
+   "requisition": {
+    "requestedBy": "Stefan Vance",
+    "businessNeed": "Office need: cloud hosting — monthly",
+    "requestDate": "2026-07-31",
+    "approvalBand": "standard",
+    "approvedBy": "Jordan Osei (manager)",
+    "approvedAt": "2026-08-01"
+   },
    "po": {
     "number": "PO-261014",
     "orderDate": "2026-08-03",
@@ -1694,6 +1807,14 @@
   {
    "id": "ap-0016",
    "supplierCode": "SUP-009",
+   "requisition": {
+    "requestedBy": "Beth Novak",
+    "businessNeed": "Team need: design tool seats",
+    "requestDate": "2026-04-07",
+    "approvalBand": "standard",
+    "approvedBy": "Callum Begum (manager)",
+    "approvedAt": "2026-04-08"
+   },
    "po": {
     "number": "PO-261015",
     "orderDate": "2026-04-11",
@@ -1773,6 +1894,14 @@
   {
    "id": "ap-0017",
    "supplierCode": "SUP-039",
+   "requisition": {
+    "requestedBy": "Tom Vance",
+    "businessNeed": "Team need: electricity q bill",
+    "requestDate": "2026-07-30",
+    "approvalBand": "standard",
+    "approvedBy": "Tom Begum (manager)",
+    "approvedAt": "2026-08-01"
+   },
    "po": {
     "number": "PO-261016",
     "orderDate": "2026-08-04",
@@ -1826,6 +1955,14 @@
   {
    "id": "ap-0018",
    "supplierCode": "SUP-027",
+   "requisition": {
+    "requestedBy": "Chris Sousa",
+    "businessNeed": "Team need: office rent — monthly",
+    "requestDate": "2026-06-29",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-07-01"
+   },
    "po": {
     "number": "PO-261017",
     "orderDate": "2026-07-03",
@@ -1892,6 +2029,14 @@
   {
    "id": "ap-0019",
    "supplierCode": "SUP-010",
+   "requisition": {
+    "requestedBy": "Dev Kowalski",
+    "businessNeed": "Quarterly need: desk hire x4",
+    "requestDate": "2026-04-10",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-04-11"
+   },
    "po": {
     "number": "PO-261018",
     "orderDate": "2026-04-15",
@@ -1945,6 +2090,14 @@
   {
    "id": "ap-0020",
    "supplierCode": "SUP-017",
+   "requisition": {
+    "requestedBy": "Marcus Carter",
+    "businessNeed": "Client project need: employment law advice",
+    "requestDate": "2026-04-25",
+    "approvalBand": "standard",
+    "approvedBy": "Aoife Doyle (manager)",
+    "approvedAt": "2026-04-26"
+   },
    "po": {
     "number": "PO-261019",
     "orderDate": "2026-04-26",
@@ -1998,6 +2151,14 @@
   {
    "id": "ap-0021",
    "supplierCode": "SUP-019",
+   "requisition": {
+    "requestedBy": "Mei Begum",
+    "businessNeed": "Client project need: ci runner minutes",
+    "requestDate": "2026-05-15",
+    "approvalBand": "standard",
+    "approvedBy": "Olu Nakamura (manager)",
+    "approvedAt": "2026-05-16"
+   },
    "po": {
     "number": "PO-261020",
     "orderDate": "2026-05-19",
@@ -2051,6 +2212,14 @@
   {
    "id": "ap-0022",
    "supplierCode": "SUP-018",
+   "requisition": {
+    "requestedBy": "Laura Marsh",
+    "businessNeed": "Quarterly need: design tool seats",
+    "requestDate": "2026-07-18",
+    "approvalBand": "standard",
+    "approvedBy": "Jordan Doyle (manager)",
+    "approvedAt": "2026-07-19"
+   },
    "po": {
     "number": "PO-261021",
     "orderDate": "2026-07-20",
@@ -2104,6 +2273,14 @@
   {
    "id": "ap-0023",
    "supplierCode": "SUP-010",
+   "requisition": {
+    "requestedBy": "Sam Hughes",
+    "businessNeed": "Office need: desk hire x4",
+    "requestDate": "2026-07-08",
+    "approvalBand": "standard",
+    "approvedBy": "Tom Shah (manager)",
+    "approvedAt": "2026-07-09"
+   },
    "po": {
     "number": "PO-261022",
     "orderDate": "2026-07-12",
@@ -2157,6 +2334,14 @@
   {
    "id": "ap-0024",
    "supplierCode": "SUP-032",
+   "requisition": {
+    "requestedBy": "Callum Brennan",
+    "businessNeed": "New starter need: office rent — monthly",
+    "requestDate": "2026-08-20",
+    "approvalBand": "standard",
+    "approvedBy": "Beth Whitfield (manager)",
+    "approvedAt": "2026-08-20"
+   },
    "po": {
     "number": "PO-261023",
     "orderDate": "2026-08-21",
@@ -2210,6 +2395,14 @@
   {
    "id": "ap-0025",
    "supplierCode": "SUP-014",
+   "requisition": {
+    "requestedBy": "Marcus Lindqvist",
+    "businessNeed": "Quarterly need: specialist data engineering",
+    "requestDate": "2026-08-11",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-08-13"
+   },
    "po": {
     "number": "PO-261024",
     "orderDate": "2026-08-13",
@@ -2289,6 +2482,14 @@
   {
    "id": "ap-0026",
    "supplierCode": "SUP-001",
+   "requisition": {
+    "requestedBy": "Sam Doyle",
+    "businessNeed": "Replacement need: office plant maintenance — quarterly",
+    "requestDate": "2026-05-03",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-05-03"
+   },
    "po": {
     "number": "PO-261025",
     "orderDate": "2026-05-06",
@@ -2342,6 +2543,14 @@
   {
    "id": "ap-0027",
    "supplierCode": "SUP-023",
+   "requisition": {
+    "requestedBy": "Laura Tanaka",
+    "businessNeed": "Replacement need: office cleaning — monthly",
+    "requestDate": "2026-07-05",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-07-07"
+   },
    "po": {
     "number": "PO-261026",
     "orderDate": "2026-07-06",
@@ -2408,6 +2617,14 @@
   {
    "id": "ap-0028",
    "supplierCode": "SUP-005",
+   "requisition": {
+    "requestedBy": "Stefan Vance",
+    "businessNeed": "New starter need: desk hire x4",
+    "requestDate": "2026-06-09",
+    "approvalBand": "standard",
+    "approvedBy": "Nadia Novak (manager)",
+    "approvedAt": "2026-06-09"
+   },
    "po": {
     "number": "PO-261027",
     "orderDate": "2026-06-13",
@@ -2461,6 +2678,14 @@
   {
    "id": "ap-0029",
    "supplierCode": "SUP-030",
+   "requisition": {
+    "requestedBy": "Tom Shah",
+    "businessNeed": "Replacement need: office plant maintenance — quarterly",
+    "requestDate": "2026-05-05",
+    "approvalBand": "standard",
+    "approvedBy": "Ruth Osei (manager)",
+    "approvedAt": "2026-05-07"
+   },
    "po": {
     "number": "PO-261028",
     "orderDate": "2026-05-07",
@@ -2514,6 +2739,14 @@
   {
    "id": "ap-0030",
    "supplierCode": "SUP-010",
+   "requisition": {
+    "requestedBy": "Tom Shah",
+    "businessNeed": "Replacement need: office rent — monthly",
+    "requestDate": "2026-08-25",
+    "approvalBand": "standard",
+    "approvedBy": "Callum Lindqvist (manager)",
+    "approvedAt": "2026-08-25"
+   },
    "po": {
     "number": "PO-261029",
     "orderDate": "2026-08-29",
@@ -2567,6 +2800,14 @@
   {
    "id": "ap-0031",
    "supplierCode": "SUP-019",
+   "requisition": {
+    "requestedBy": "Hannah Marsh",
+    "businessNeed": "Office need: design tool seats",
+    "requestDate": "2026-08-04",
+    "approvalBand": "standard",
+    "approvedBy": "Hannah Reid (manager)",
+    "approvedAt": "2026-08-06"
+   },
    "po": {
     "number": "PO-261030",
     "orderDate": "2026-08-07",
@@ -2620,6 +2861,14 @@
   {
    "id": "ap-0032",
    "supplierCode": "SUP-029",
+   "requisition": {
+    "requestedBy": "Callum Novak",
+    "businessNeed": "New starter need: insurance premium",
+    "requestDate": "2026-08-05",
+    "approvalBand": "standard",
+    "approvedBy": "Yusuf Okafor (manager)",
+    "approvedAt": "2026-08-07"
+   },
    "po": {
     "number": "PO-261031",
     "orderDate": "2026-08-09",
@@ -2686,6 +2935,14 @@
   {
    "id": "ap-0033",
    "supplierCode": "SUP-036",
+   "requisition": {
+    "requestedBy": "Sam Brennan",
+    "businessNeed": "Client project need: desk hire x4",
+    "requestDate": "2026-04-30",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-05-01"
+   },
    "po": {
     "number": "PO-261032",
     "orderDate": "2026-05-02",
@@ -2765,6 +3022,14 @@
   {
    "id": "ap-0034",
    "supplierCode": "SUP-007",
+   "requisition": {
+    "requestedBy": "Olu Tanaka",
+    "businessNeed": "Replacement need: desk hire x4",
+    "requestDate": "2026-05-26",
+    "approvalBand": "standard",
+    "approvedBy": "Mei Patel (manager)",
+    "approvedAt": "2026-05-27"
+   },
    "po": {
     "number": "PO-261033",
     "orderDate": "2026-05-30",
@@ -2818,6 +3083,14 @@
   {
    "id": "ap-0035",
    "supplierCode": "SUP-008",
+   "requisition": {
+    "requestedBy": "Yusuf Osei",
+    "businessNeed": "Replacement need: coffee & kitchen supplies",
+    "requestDate": "2026-04-28",
+    "approvalBand": "auto",
+    "approvedBy": "standing-authority (auto band)",
+    "approvedAt": "2026-04-28"
+   },
    "po": {
     "number": "PO-261034",
     "orderDate": "2026-04-29",
@@ -2871,6 +3144,7 @@
   {
    "id": "ap-0036",
    "supplierCode": "SUP-028",
+   "requisition": null,
    "po": null,
    "grn": null,
    "invoice": {
@@ -2898,13 +3172,21 @@
     "from": "accounts@wrenfield-market-researc.example",
     "date": "2026-09-10"
    },
-   "exception": "no_po",
+   "exception": "no_purchase",
    "paid": false,
    "paidDate": null
   },
   {
    "id": "ap-0037",
    "supplierCode": "SUP-003",
+   "requisition": {
+    "requestedBy": "Dev Doyle",
+    "businessNeed": "Team need: insurance premium",
+    "requestDate": "2026-04-26",
+    "approvalBand": "standard",
+    "approvedBy": "Laura Carter (manager)",
+    "approvedAt": "2026-04-26"
+   },
    "po": {
     "number": "PO-261036",
     "orderDate": "2026-04-29",
@@ -2958,6 +3240,14 @@
   {
    "id": "ap-0038",
    "supplierCode": "SUP-033",
+   "requisition": {
+    "requestedBy": "Laura Nakamura",
+    "businessNeed": "Office need: stationery order",
+    "requestDate": "2026-04-05",
+    "approvalBand": "auto",
+    "approvedBy": "standing-authority (auto band)",
+    "approvedAt": "2026-04-05"
+   },
    "po": {
     "number": "PO-261037",
     "orderDate": "2026-04-10",
@@ -3011,6 +3301,14 @@
   {
    "id": "ap-0039",
    "supplierCode": "SUP-027",
+   "requisition": {
+    "requestedBy": "Dev Carter",
+    "businessNeed": "Team need: office cleaning — monthly",
+    "requestDate": "2026-05-02",
+    "approvalBand": "standard",
+    "approvedBy": "Stefan Hughes (manager)",
+    "approvedAt": "2026-05-04"
+   },
    "po": {
     "number": "PO-261038",
     "orderDate": "2026-05-04",
@@ -3064,6 +3362,14 @@
   {
    "id": "ap-0040",
    "supplierCode": "SUP-004",
+   "requisition": {
+    "requestedBy": "Sam Okafor",
+    "businessNeed": "Quarterly need: first aid restock",
+    "requestDate": "2026-06-21",
+    "approvalBand": "standard",
+    "approvedBy": "Stefan Tanaka (manager)",
+    "approvedAt": "2026-06-23"
+   },
    "po": {
     "number": "PO-261039",
     "orderDate": "2026-06-23",
@@ -3143,6 +3449,14 @@
   {
    "id": "ap-0041",
    "supplierCode": "SUP-029",
+   "requisition": {
+    "requestedBy": "Olu Okafor",
+    "businessNeed": "Replacement need: employment law advice",
+    "requestDate": "2026-05-30",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-05-31"
+   },
    "po": {
     "number": "PO-261040",
     "orderDate": "2026-06-02",
@@ -3209,6 +3523,14 @@
   {
    "id": "ap-0042",
    "supplierCode": "SUP-035",
+   "requisition": {
+    "requestedBy": "Beth Osei",
+    "businessNeed": "Office need: employment law advice",
+    "requestDate": "2026-05-12",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-05-14"
+   },
    "po": {
     "number": "PO-261041",
     "orderDate": "2026-05-14",
@@ -3262,6 +3584,14 @@
   {
    "id": "ap-0043",
    "supplierCode": "SUP-027",
+   "requisition": {
+    "requestedBy": "Hannah Hughes",
+    "businessNeed": "Replacement need: office rent — monthly",
+    "requestDate": "2026-06-29",
+    "approvalBand": "standard",
+    "approvedBy": "Callum Brennan (manager)",
+    "approvedAt": "2026-06-29"
+   },
    "po": {
     "number": "PO-261042",
     "orderDate": "2026-07-03",
@@ -3315,6 +3645,7 @@
   {
    "id": "ap-0044",
    "supplierCode": "SUP-008",
+   "requisition": null,
    "po": null,
    "grn": null,
    "invoice": {
@@ -3348,13 +3679,21 @@
     "from": "accounts@calder-courier-co.example",
     "date": "2026-09-14"
    },
-   "exception": "no_po",
+   "exception": "no_purchase",
    "paid": false,
    "paidDate": null
   },
   {
    "id": "ap-0045",
    "supplierCode": "SUP-034",
+   "requisition": {
+    "requestedBy": "Tom Lindqvist",
+    "businessNeed": "Team need: office rent — monthly",
+    "requestDate": "2026-04-15",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-04-15"
+   },
    "po": {
     "number": "PO-261044",
     "orderDate": "2026-04-19",
@@ -3408,6 +3747,14 @@
   {
    "id": "ap-0046",
    "supplierCode": "SUP-005",
+   "requisition": {
+    "requestedBy": "Dev Kowalski",
+    "businessNeed": "Office need: desk hire x4",
+    "requestDate": "2026-07-21",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-07-23"
+   },
    "po": {
     "number": "PO-261045",
     "orderDate": "2026-07-24",
@@ -3474,6 +3821,14 @@
   {
    "id": "ap-0047",
    "supplierCode": "SUP-023",
+   "requisition": {
+    "requestedBy": "Tom Whitfield",
+    "businessNeed": "New starter need: meeting room hire",
+    "requestDate": "2026-07-09",
+    "approvalBand": "standard",
+    "approvedBy": "Stefan Shah (manager)",
+    "approvedAt": "2026-07-09"
+   },
    "po": {
     "number": "PO-261046",
     "orderDate": "2026-07-10",
@@ -3527,6 +3882,14 @@
   {
    "id": "ap-0048",
    "supplierCode": "SUP-023",
+   "requisition": {
+    "requestedBy": "Jack Begum",
+    "businessNeed": "Office need: desk hire x4",
+    "requestDate": "2026-06-18",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-06-18"
+   },
    "po": {
     "number": "PO-261047",
     "orderDate": "2026-06-19",
@@ -3606,6 +3969,14 @@
   {
    "id": "ap-0049",
    "supplierCode": "SUP-024",
+   "requisition": {
+    "requestedBy": "Callum Udo",
+    "businessNeed": "New starter need: courier & postage batch",
+    "requestDate": "2026-06-05",
+    "approvalBand": "standard",
+    "approvedBy": "Chris Carter (manager)",
+    "approvedAt": "2026-06-06"
+   },
    "po": {
     "number": "PO-261048",
     "orderDate": "2026-06-08",
@@ -3659,6 +4030,14 @@
   {
    "id": "ap-0050",
    "supplierCode": "SUP-038",
+   "requisition": {
+    "requestedBy": "Mei Shah",
+    "businessNeed": "Quarterly need: conference stand",
+    "requestDate": "2026-04-11",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-04-12"
+   },
    "po": {
     "number": "PO-261049",
     "orderDate": "2026-04-16",
@@ -3712,6 +4091,14 @@
   {
    "id": "ap-0051",
    "supplierCode": "SUP-022",
+   "requisition": {
+    "requestedBy": "Hannah Udo",
+    "businessNeed": "Office need: insurance premium",
+    "requestDate": "2026-08-29",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-08-30"
+   },
    "po": {
     "number": "PO-261050",
     "orderDate": "2026-08-30",
@@ -3765,6 +4152,14 @@
   {
    "id": "ap-0052",
    "supplierCode": "SUP-026",
+   "requisition": {
+    "requestedBy": "Dev Osei",
+    "businessNeed": "Replacement need: courier & postage batch",
+    "requestDate": "2026-06-23",
+    "approvalBand": "standard",
+    "approvedBy": "Tom Sousa (manager)",
+    "approvedAt": "2026-06-25"
+   },
    "po": {
     "number": "PO-261051",
     "orderDate": "2026-06-27",
@@ -3818,6 +4213,14 @@
   {
    "id": "ap-0053",
    "supplierCode": "SUP-007",
+   "requisition": {
+    "requestedBy": "Laura Osei",
+    "businessNeed": "Replacement need: electricity q bill",
+    "requestDate": "2026-04-08",
+    "approvalBand": "standard",
+    "approvedBy": "Sam Tanaka (manager)",
+    "approvedAt": "2026-04-08"
+   },
    "po": {
     "number": "PO-261052",
     "orderDate": "2026-04-13",
@@ -3871,6 +4274,14 @@
   {
    "id": "ap-0054",
    "supplierCode": "SUP-036",
+   "requisition": {
+    "requestedBy": "Callum Whitfield",
+    "businessNeed": "New starter need: office rent — monthly",
+    "requestDate": "2026-08-12",
+    "approvalBand": "standard",
+    "approvedBy": "Sam Sousa (manager)",
+    "approvedAt": "2026-08-13"
+   },
    "po": {
     "number": "PO-261053",
     "orderDate": "2026-08-15",
@@ -3924,6 +4335,14 @@
   {
    "id": "ap-0055",
    "supplierCode": "SUP-019",
+   "requisition": {
+    "requestedBy": "Laura Nakamura",
+    "businessNeed": "Office need: password manager — team",
+    "requestDate": "2026-07-31",
+    "approvalBand": "standard",
+    "approvedBy": "Aoife Reid (manager)",
+    "approvedAt": "2026-08-02"
+   },
    "po": {
     "number": "PO-261054",
     "orderDate": "2026-08-03",
@@ -3977,6 +4396,14 @@
   {
    "id": "ap-0056",
    "supplierCode": "SUP-036",
+   "requisition": {
+    "requestedBy": "Marcus Carter",
+    "businessNeed": "Replacement need: meeting room hire",
+    "requestDate": "2026-04-30",
+    "approvalBand": "standard",
+    "approvedBy": "Jack Novak (manager)",
+    "approvedAt": "2026-04-30"
+   },
    "po": {
     "number": "PO-261055",
     "orderDate": "2026-05-05",
@@ -4030,6 +4457,14 @@
   {
    "id": "ap-0057",
    "supplierCode": "SUP-010",
+   "requisition": {
+    "requestedBy": "Mei Tanaka",
+    "businessNeed": "Office need: desk hire x4",
+    "requestDate": "2026-07-13",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-07-14"
+   },
    "po": {
     "number": "PO-261056",
     "orderDate": "2026-07-16",
@@ -4109,6 +4544,14 @@
   {
    "id": "ap-0058",
    "supplierCode": "SUP-025",
+   "requisition": {
+    "requestedBy": "Laura Sousa",
+    "businessNeed": "Team need: cloud hosting — monthly",
+    "requestDate": "2026-04-02",
+    "approvalBand": "standard",
+    "approvedBy": "Marcus Doyle (manager)",
+    "approvedAt": "2026-04-04"
+   },
    "po": {
     "number": "PO-261057",
     "orderDate": "2026-04-03",
@@ -4162,6 +4605,14 @@
   {
    "id": "ap-0059",
    "supplierCode": "SUP-015",
+   "requisition": {
+    "requestedBy": "Callum Brennan",
+    "businessNeed": "New starter need: coffee & kitchen supplies",
+    "requestDate": "2026-07-22",
+    "approvalBand": "standard",
+    "approvedBy": "Mei Doyle (manager)",
+    "approvedAt": "2026-07-22"
+   },
    "po": {
     "number": "PO-261058",
     "orderDate": "2026-07-23",
@@ -4215,6 +4666,14 @@
   {
    "id": "ap-0060",
    "supplierCode": "SUP-032",
+   "requisition": {
+    "requestedBy": "Ruth Tanaka",
+    "businessNeed": "Team need: meeting room hire",
+    "requestDate": "2026-08-08",
+    "approvalBand": "standard",
+    "approvedBy": "Beth Okafor (manager)",
+    "approvedAt": "2026-08-10"
+   },
    "po": {
     "number": "PO-261059",
     "orderDate": "2026-08-10",
@@ -4268,6 +4727,14 @@
   {
    "id": "ap-0061",
    "supplierCode": "SUP-025",
+   "requisition": {
+    "requestedBy": "Jack Marsh",
+    "businessNeed": "Team need: design tool seats",
+    "requestDate": "2026-05-09",
+    "approvalBand": "auto",
+    "approvedBy": "standing-authority (auto band)",
+    "approvedAt": "2026-05-09"
+   },
    "po": {
     "number": "PO-261060",
     "orderDate": "2026-05-13",
@@ -4321,6 +4788,7 @@
   {
    "id": "ap-0062",
    "supplierCode": "SUP-012",
+   "requisition": null,
    "po": null,
    "grn": null,
    "invoice": {
@@ -4348,13 +4816,21 @@
     "from": "accounts@gillingham-legal-partner.example",
     "date": "2026-08-19"
    },
-   "exception": "no_po",
+   "exception": "no_purchase",
    "paid": false,
    "paidDate": null
   },
   {
    "id": "ap-0063",
    "supplierCode": "SUP-019",
+   "requisition": {
+    "requestedBy": "Jordan Udo",
+    "businessNeed": "Team need: password manager — team",
+    "requestDate": "2026-05-07",
+    "approvalBand": "standard",
+    "approvedBy": "Aoife Hughes (manager)",
+    "approvedAt": "2026-05-09"
+   },
    "po": {
     "number": "PO-261062",
     "orderDate": "2026-05-08",
@@ -4408,6 +4884,14 @@
   {
    "id": "ap-0064",
    "supplierCode": "SUP-010",
+   "requisition": {
+    "requestedBy": "Elena Begum",
+    "businessNeed": "Office need: desk hire x4",
+    "requestDate": "2026-08-08",
+    "approvalBand": "standard",
+    "approvedBy": "Jordan Osei (manager)",
+    "approvedAt": "2026-08-10"
+   },
    "po": {
     "number": "PO-261063",
     "orderDate": "2026-08-12",
@@ -4461,6 +4945,14 @@
   {
    "id": "ap-0065",
    "supplierCode": "SUP-037",
+   "requisition": {
+    "requestedBy": "Marcus Nakamura",
+    "businessNeed": "Client project need: ci runner minutes",
+    "requestDate": "2026-05-11",
+    "approvalBand": "standard",
+    "approvedBy": "Jack Doyle (manager)",
+    "approvedAt": "2026-05-13"
+   },
    "po": {
     "number": "PO-261064",
     "orderDate": "2026-05-15",
@@ -4514,6 +5006,14 @@
   {
    "id": "ap-0066",
    "supplierCode": "SUP-036",
+   "requisition": {
+    "requestedBy": "Hannah Whitfield",
+    "businessNeed": "Quarterly need: electricity q bill",
+    "requestDate": "2026-04-16",
+    "approvalBand": "standard",
+    "approvedBy": "Mei Novak (manager)",
+    "approvedAt": "2026-04-17"
+   },
    "po": {
     "number": "PO-261065",
     "orderDate": "2026-04-19",
@@ -4567,6 +5067,14 @@
   {
    "id": "ap-0067",
    "supplierCode": "SUP-025",
+   "requisition": {
+    "requestedBy": "Nadia Nakamura",
+    "businessNeed": "Client project need: cloud hosting — monthly",
+    "requestDate": "2026-08-09",
+    "approvalBand": "standard",
+    "approvedBy": "Aoife Shah (manager)",
+    "approvedAt": "2026-08-11"
+   },
    "po": {
     "number": "PO-261066",
     "orderDate": "2026-08-14",
@@ -4620,6 +5128,14 @@
   {
    "id": "ap-0068",
    "supplierCode": "SUP-026",
+   "requisition": {
+    "requestedBy": "Elena Kowalski",
+    "businessNeed": "Quarterly need: print & finishing order",
+    "requestDate": "2026-06-16",
+    "approvalBand": "standard",
+    "approvedBy": "Nadia Lindqvist (manager)",
+    "approvedAt": "2026-06-16"
+   },
    "po": {
     "number": "PO-261067",
     "orderDate": "2026-06-20",
@@ -4673,6 +5189,14 @@
   {
    "id": "ap-0069",
    "supplierCode": "SUP-015",
+   "requisition": {
+    "requestedBy": "Marcus Carter",
+    "businessNeed": "New starter need: courier & postage batch",
+    "requestDate": "2026-07-31",
+    "approvalBand": "standard",
+    "approvedBy": "Priya Sousa (manager)",
+    "approvedAt": "2026-08-01"
+   },
    "po": {
     "number": "PO-261068",
     "orderDate": "2026-08-04",
@@ -4726,6 +5250,14 @@
   {
    "id": "ap-0070",
    "supplierCode": "SUP-030",
+   "requisition": {
+    "requestedBy": "Jack Udo",
+    "businessNeed": "New starter need: office plant maintenance — quarterly",
+    "requestDate": "2026-05-31",
+    "approvalBand": "auto",
+    "approvedBy": "standing-authority (auto band)",
+    "approvedAt": "2026-05-31"
+   },
    "po": {
     "number": "PO-261069",
     "orderDate": "2026-06-01",
@@ -4779,6 +5311,14 @@
   {
    "id": "ap-0071",
    "supplierCode": "SUP-032",
+   "requisition": {
+    "requestedBy": "Nadia Okafor",
+    "businessNeed": "Office need: office rent — monthly",
+    "requestDate": "2026-05-09",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-05-09"
+   },
    "po": {
     "number": "PO-261070",
     "orderDate": "2026-05-11",
@@ -4845,6 +5385,14 @@
   {
    "id": "ap-0072",
    "supplierCode": "SUP-017",
+   "requisition": {
+    "requestedBy": "Callum Tanaka",
+    "businessNeed": "Office need: insurance premium",
+    "requestDate": "2026-04-28",
+    "approvalBand": "standard",
+    "approvedBy": "Olu Shah (manager)",
+    "approvedAt": "2026-04-29"
+   },
    "po": {
     "number": "PO-261071",
     "orderDate": "2026-05-03",
@@ -4898,6 +5446,7 @@
   {
    "id": "ap-0073",
    "supplierCode": "SUP-026",
+   "requisition": null,
    "po": null,
    "grn": null,
    "invoice": {
@@ -4925,13 +5474,21 @@
     "from": "accounts@ullswater-logistics.example",
     "date": "2026-08-02"
    },
-   "exception": "no_po",
+   "exception": "no_purchase",
    "paid": false,
    "paidDate": null
   },
   {
    "id": "ap-0074",
    "supplierCode": "SUP-020",
+   "requisition": {
+    "requestedBy": "Yusuf Reid",
+    "businessNeed": "Team need: hotel — 2 nights",
+    "requestDate": "2026-05-18",
+    "approvalBand": "standard",
+    "approvedBy": "Nadia Sousa (manager)",
+    "approvedAt": "2026-05-20"
+   },
    "po": {
     "number": "PO-261073",
     "orderDate": "2026-05-22",
@@ -4985,6 +5542,14 @@
   {
    "id": "ap-0075",
    "supplierCode": "SUP-020",
+   "requisition": {
+    "requestedBy": "Yusuf Tanaka",
+    "businessNeed": "New starter need: mileage reimbursement batch",
+    "requestDate": "2026-05-24",
+    "approvalBand": "standard",
+    "approvedBy": "Stefan Brennan (manager)",
+    "approvedAt": "2026-05-25"
+   },
    "po": {
     "number": "PO-261074",
     "orderDate": "2026-05-29",
@@ -5064,6 +5629,14 @@
   {
    "id": "ap-0076",
    "supplierCode": "SUP-028",
+   "requisition": {
+    "requestedBy": "Yusuf Vance",
+    "businessNeed": "Replacement need: print run — brochures",
+    "requestDate": "2026-06-15",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-06-15"
+   },
    "po": {
     "number": "PO-261075",
     "orderDate": "2026-06-20",
@@ -5143,6 +5716,14 @@
   {
    "id": "ap-0077",
    "supplierCode": "SUP-037",
+   "requisition": {
+    "requestedBy": "Jordan Whitfield",
+    "businessNeed": "Client project need: cloud hosting — monthly",
+    "requestDate": "2026-06-30",
+    "approvalBand": "standard",
+    "approvedBy": "Priya Marsh (manager)",
+    "approvedAt": "2026-07-02"
+   },
    "po": {
     "number": "PO-261076",
     "orderDate": "2026-07-01",
@@ -5209,6 +5790,14 @@
   {
    "id": "ap-0078",
    "supplierCode": "SUP-012",
+   "requisition": {
+    "requestedBy": "Jack Carter",
+    "businessNeed": "Client project need: payroll bureau — monthly",
+    "requestDate": "2026-04-25",
+    "approvalBand": "standard",
+    "approvedBy": "Laura Udo (manager)",
+    "approvedAt": "2026-04-25"
+   },
    "po": {
     "number": "PO-261077",
     "orderDate": "2026-04-28",
@@ -5262,6 +5851,14 @@
   {
    "id": "ap-0079",
    "supplierCode": "SUP-036",
+   "requisition": {
+    "requestedBy": "Chris Okafor",
+    "businessNeed": "New starter need: office rent — monthly",
+    "requestDate": "2026-04-09",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-04-09"
+   },
    "po": {
     "number": "PO-261078",
     "orderDate": "2026-04-10",
@@ -5315,6 +5912,14 @@
   {
    "id": "ap-0080",
    "supplierCode": "SUP-007",
+   "requisition": {
+    "requestedBy": "Yusuf Vance",
+    "businessNeed": "Office need: office cleaning — monthly",
+    "requestDate": "2026-06-14",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-06-16"
+   },
    "po": {
     "number": "PO-261079",
     "orderDate": "2026-06-15",
@@ -5394,6 +5999,14 @@
   {
    "id": "ap-0081",
    "supplierCode": "SUP-006",
+   "requisition": {
+    "requestedBy": "Aoife Kowalski",
+    "businessNeed": "Client project need: crm licences x10",
+    "requestDate": "2026-06-18",
+    "approvalBand": "standard",
+    "approvedBy": "Stefan Okafor (manager)",
+    "approvedAt": "2026-06-18"
+   },
    "po": {
     "number": "PO-261080",
     "orderDate": "2026-06-22",
@@ -5447,6 +6060,14 @@
   {
    "id": "ap-0082",
    "supplierCode": "SUP-025",
+   "requisition": {
+    "requestedBy": "Marcus Udo",
+    "businessNeed": "Replacement need: crm licences x10",
+    "requestDate": "2026-05-06",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-05-08"
+   },
    "po": {
     "number": "PO-261081",
     "orderDate": "2026-05-11",
@@ -5500,6 +6121,14 @@
   {
    "id": "ap-0083",
    "supplierCode": "SUP-012",
+   "requisition": {
+    "requestedBy": "Callum Shah",
+    "businessNeed": "New starter need: insurance premium",
+    "requestDate": "2026-05-20",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-05-22"
+   },
    "po": {
     "number": "PO-261082",
     "orderDate": "2026-05-21",
@@ -5566,6 +6195,14 @@
   {
    "id": "ap-0084",
    "supplierCode": "SUP-033",
+   "requisition": {
+    "requestedBy": "Callum Udo",
+    "businessNeed": "Quarterly need: office plant maintenance — quarterly",
+    "requestDate": "2026-07-16",
+    "approvalBand": "standard",
+    "approvedBy": "Nadia Whitfield (manager)",
+    "approvedAt": "2026-07-17"
+   },
    "po": {
     "number": "PO-261083",
     "orderDate": "2026-07-20",
@@ -5632,6 +6269,14 @@
   {
    "id": "ap-0085",
    "supplierCode": "SUP-029",
+   "requisition": {
+    "requestedBy": "Olu Reid",
+    "businessNeed": "Replacement need: payroll bureau — monthly",
+    "requestDate": "2026-04-07",
+    "approvalBand": "standard",
+    "approvedBy": "Yusuf Whitfield (manager)",
+    "approvedAt": "2026-04-08"
+   },
    "po": {
     "number": "PO-261084",
     "orderDate": "2026-04-09",
@@ -5685,6 +6330,14 @@
   {
    "id": "ap-0086",
    "supplierCode": "SUP-017",
+   "requisition": {
+    "requestedBy": "Priya Kowalski",
+    "businessNeed": "Client project need: trademark renewal",
+    "requestDate": "2026-07-21",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-07-23"
+   },
    "po": {
     "number": "PO-261085",
     "orderDate": "2026-07-26",
@@ -5751,6 +6404,14 @@
   {
    "id": "ap-0087",
    "supplierCode": "SUP-028",
+   "requisition": {
+    "requestedBy": "Elena Osei",
+    "businessNeed": "Replacement need: conference stand",
+    "requestDate": "2026-06-03",
+    "approvalBand": "standard",
+    "approvedBy": "Mei Hughes (manager)",
+    "approvedAt": "2026-06-05"
+   },
    "po": {
     "number": "PO-261086",
     "orderDate": "2026-06-08",
@@ -5804,6 +6465,14 @@
   {
    "id": "ap-0088",
    "supplierCode": "SUP-024",
+   "requisition": {
+    "requestedBy": "Mei Tanaka",
+    "businessNeed": "Replacement need: monitor arms x4",
+    "requestDate": "2026-07-28",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-07-28"
+   },
    "po": {
     "number": "PO-261087",
     "orderDate": "2026-07-29",
@@ -5857,6 +6526,14 @@
   {
    "id": "ap-0089",
    "supplierCode": "SUP-007",
+   "requisition": {
+    "requestedBy": "Callum Reid",
+    "businessNeed": "Office need: desk hire x4",
+    "requestDate": "2026-05-12",
+    "approvalBand": "standard",
+    "approvedBy": "Elena Shah (manager)",
+    "approvedAt": "2026-05-12"
+   },
    "po": {
     "number": "PO-261088",
     "orderDate": "2026-05-16",
@@ -5910,6 +6587,14 @@
   {
    "id": "ap-0090",
    "supplierCode": "SUP-011",
+   "requisition": {
+    "requestedBy": "Stefan Shah",
+    "businessNeed": "New starter need: print run — brochures",
+    "requestDate": "2026-07-29",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-07-30"
+   },
    "po": {
     "number": "PO-261089",
     "orderDate": "2026-08-02",
@@ -5976,6 +6661,14 @@
   {
    "id": "ap-0091",
    "supplierCode": "SUP-010",
+   "requisition": {
+    "requestedBy": "Beth Hughes",
+    "businessNeed": "New starter need: electricity q bill",
+    "requestDate": "2026-09-02",
+    "approvalBand": "standard",
+    "approvedBy": "Chris Sousa (manager)",
+    "approvedAt": "2026-09-03"
+   },
    "po": {
     "number": "PO-261090",
     "orderDate": "2026-09-03",
@@ -6023,6 +6716,14 @@
   {
    "id": "ap-0092",
    "supplierCode": "SUP-024",
+   "requisition": {
+    "requestedBy": "Mei Hughes",
+    "businessNeed": "Replacement need: monitor arms x4",
+    "requestDate": "2026-05-07",
+    "approvalBand": "standard",
+    "approvedBy": "Elena Sousa (manager)",
+    "approvedAt": "2026-05-07"
+   },
    "po": {
     "number": "PO-261091",
     "orderDate": "2026-05-08",
@@ -6076,6 +6777,14 @@
   {
    "id": "ap-0093",
    "supplierCode": "SUP-027",
+   "requisition": {
+    "requestedBy": "Tom Osei",
+    "businessNeed": "Office need: desk hire x4",
+    "requestDate": "2026-09-04",
+    "approvalBand": "standard",
+    "approvedBy": "Tom Nakamura (manager)",
+    "approvedAt": "2026-09-05"
+   },
    "po": {
     "number": "PO-261092",
     "orderDate": "2026-09-09",
@@ -6142,6 +6851,14 @@
   {
    "id": "ap-0094",
    "supplierCode": "SUP-001",
+   "requisition": {
+    "requestedBy": "Ruth Sousa",
+    "businessNeed": "New starter need: stationery order",
+    "requestDate": "2026-08-24",
+    "approvalBand": "standard",
+    "approvedBy": "Olu Novak (manager)",
+    "approvedAt": "2026-08-25"
+   },
    "po": {
     "number": "PO-261093",
     "orderDate": "2026-08-27",
@@ -6195,6 +6912,14 @@
   {
    "id": "ap-0095",
    "supplierCode": "SUP-036",
+   "requisition": {
+    "requestedBy": "Tom Shah",
+    "businessNeed": "Office need: office cleaning — monthly",
+    "requestDate": "2026-04-22",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-04-22"
+   },
    "po": {
     "number": "PO-261094",
     "orderDate": "2026-04-23",
@@ -6261,6 +6986,14 @@
   {
    "id": "ap-0096",
    "supplierCode": "SUP-001",
+   "requisition": {
+    "requestedBy": "Laura Novak",
+    "businessNeed": "Client project need: office plant maintenance — quarterly",
+    "requestDate": "2026-08-20",
+    "approvalBand": "standard",
+    "approvedBy": "Stefan Lindqvist (manager)",
+    "approvedAt": "2026-08-21"
+   },
    "po": {
     "number": "PO-261095",
     "orderDate": "2026-08-22",
@@ -6314,6 +7047,14 @@
   {
    "id": "ap-0097",
    "supplierCode": "SUP-029",
+   "requisition": {
+    "requestedBy": "Callum Carter",
+    "businessNeed": "New starter need: payroll bureau — monthly",
+    "requestDate": "2026-06-23",
+    "approvalBand": "standard",
+    "approvedBy": "Yusuf Hughes (manager)",
+    "approvedAt": "2026-06-25"
+   },
    "po": {
     "number": "PO-261096",
     "orderDate": "2026-06-24",
@@ -6367,6 +7108,14 @@
   {
    "id": "ap-0098",
    "supplierCode": "SUP-004",
+   "requisition": {
+    "requestedBy": "Chris Reid",
+    "businessNeed": "New starter need: first aid restock",
+    "requestDate": "2026-08-06",
+    "approvalBand": "auto",
+    "approvedBy": "standing-authority (auto band)",
+    "approvedAt": "2026-08-06"
+   },
    "po": {
     "number": "PO-261097",
     "orderDate": "2026-08-11",
@@ -6446,6 +7195,14 @@
   {
    "id": "ap-0099",
    "supplierCode": "SUP-029",
+   "requisition": {
+    "requestedBy": "Stefan Kowalski",
+    "businessNeed": "Quarterly need: employment law advice",
+    "requestDate": "2026-04-10",
+    "approvalBand": "standard",
+    "approvedBy": "Beth Carter (manager)",
+    "approvedAt": "2026-04-11"
+   },
    "po": {
     "number": "PO-261098",
     "orderDate": "2026-04-11",
@@ -6499,6 +7256,7 @@
   {
    "id": "ap-0100",
    "supplierCode": "SUP-017",
+   "requisition": null,
    "po": null,
    "grn": null,
    "invoice": {
@@ -6526,13 +7284,21 @@
     "from": "accounts@lambourne-training-assoc.example",
     "date": "2026-04-29"
    },
-   "exception": "no_po",
+   "exception": "no_purchase",
    "paid": false,
    "paidDate": null
   },
   {
    "id": "ap-0101",
    "supplierCode": "SUP-018",
+   "requisition": {
+    "requestedBy": "Jack Sousa",
+    "businessNeed": "Replacement need: design tool seats",
+    "requestDate": "2026-04-21",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-04-21"
+   },
    "po": {
     "number": "PO-261100",
     "orderDate": "2026-04-25",
@@ -6599,6 +7365,14 @@
   {
    "id": "ap-0102",
    "supplierCode": "SUP-007",
+   "requisition": {
+    "requestedBy": "Laura Nakamura",
+    "businessNeed": "Replacement need: office cleaning — monthly",
+    "requestDate": "2026-04-14",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-04-15"
+   },
    "po": {
     "number": "PO-261101",
     "orderDate": "2026-04-19",
@@ -6665,6 +7439,14 @@
   {
    "id": "ap-0103",
    "supplierCode": "SUP-031",
+   "requisition": {
+    "requestedBy": "Jordan Tanaka",
+    "businessNeed": "Quarterly need: specialist data engineering",
+    "requestDate": "2026-08-15",
+    "approvalBand": "standard",
+    "approvedBy": "Yusuf Whitfield (manager)",
+    "approvedAt": "2026-08-15"
+   },
    "po": {
     "number": "PO-261102",
     "orderDate": "2026-08-16",
@@ -6718,6 +7500,14 @@
   {
    "id": "ap-0104",
    "supplierCode": "SUP-001",
+   "requisition": {
+    "requestedBy": "Jack Udo",
+    "businessNeed": "New starter need: av equipment hire",
+    "requestDate": "2026-06-03",
+    "approvalBand": "auto",
+    "approvedBy": "standing-authority (auto band)",
+    "approvedAt": "2026-06-03"
+   },
    "po": {
     "number": "PO-261103",
     "orderDate": "2026-06-06",
@@ -6771,6 +7561,14 @@
   {
    "id": "ap-0105",
    "supplierCode": "SUP-021",
+   "requisition": {
+    "requestedBy": "Priya Carter",
+    "businessNeed": "Client project need: electricity q bill",
+    "requestDate": "2026-04-29",
+    "approvalBand": "standard",
+    "approvedBy": "Olu Tanaka (manager)",
+    "approvedAt": "2026-04-30"
+   },
    "po": {
     "number": "PO-261104",
     "orderDate": "2026-05-03",
@@ -6824,6 +7622,14 @@
   {
    "id": "ap-0106",
    "supplierCode": "SUP-014",
+   "requisition": {
+    "requestedBy": "Tom Kowalski",
+    "businessNeed": "Team need: associate subcontract — days",
+    "requestDate": "2026-07-14",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-07-14"
+   },
    "po": {
     "number": "PO-261105",
     "orderDate": "2026-07-19",
@@ -6903,6 +7709,14 @@
   {
    "id": "ap-0107",
    "supplierCode": "SUP-016",
+   "requisition": {
+    "requestedBy": "Sam Okafor",
+    "businessNeed": "Client project need: employment law advice",
+    "requestDate": "2026-05-26",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-05-28"
+   },
    "po": {
     "number": "PO-261106",
     "orderDate": "2026-05-31",
@@ -6982,6 +7796,14 @@
   {
    "id": "ap-0108",
    "supplierCode": "SUP-037",
+   "requisition": {
+    "requestedBy": "Priya Carter",
+    "businessNeed": "Client project need: password manager — team",
+    "requestDate": "2026-05-04",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-05-06"
+   },
    "po": {
     "number": "PO-261107",
     "orderDate": "2026-05-07",
@@ -7061,6 +7883,14 @@
   {
    "id": "ap-0109",
    "supplierCode": "SUP-018",
+   "requisition": {
+    "requestedBy": "Nadia Carter",
+    "businessNeed": "Replacement need: observability platform",
+    "requestDate": "2026-07-14",
+    "approvalBand": "standard",
+    "approvedBy": "Ruth Nakamura (manager)",
+    "approvedAt": "2026-07-15"
+   },
    "po": {
     "number": "PO-261108",
     "orderDate": "2026-07-17",
@@ -7114,6 +7944,14 @@
   {
    "id": "ap-0110",
    "supplierCode": "SUP-025",
+   "requisition": {
+    "requestedBy": "Marcus Udo",
+    "businessNeed": "New starter need: crm licences x10",
+    "requestDate": "2026-08-27",
+    "approvalBand": "standard",
+    "approvedBy": "Priya Sousa (manager)",
+    "approvedAt": "2026-08-29"
+   },
    "po": {
     "number": "PO-261109",
     "orderDate": "2026-08-28",
@@ -7167,6 +8005,14 @@
   {
    "id": "ap-0111",
    "supplierCode": "SUP-040",
+   "requisition": {
+    "requestedBy": "Mei Udo",
+    "businessNeed": "Quarterly need: conference stand",
+    "requestDate": "2026-04-10",
+    "approvalBand": "standard",
+    "approvedBy": "Dev Doyle (manager)",
+    "approvedAt": "2026-04-11"
+   },
    "po": {
     "number": "PO-261110",
     "orderDate": "2026-04-11",
@@ -7220,6 +8066,14 @@
   {
    "id": "ap-0112",
    "supplierCode": "SUP-011",
+   "requisition": {
+    "requestedBy": "Yusuf Hughes",
+    "businessNeed": "Team need: conference stand",
+    "requestDate": "2026-05-31",
+    "approvalBand": "standard",
+    "approvedBy": "Jordan Brennan (manager)",
+    "approvedAt": "2026-06-01"
+   },
    "po": {
     "number": "PO-261111",
     "orderDate": "2026-06-03",
@@ -7273,6 +8127,14 @@
   {
    "id": "ap-0113",
    "supplierCode": "SUP-008",
+   "requisition": {
+    "requestedBy": "Dev Nakamura",
+    "businessNeed": "Office need: print & finishing order",
+    "requestDate": "2026-07-08",
+    "approvalBand": "auto",
+    "approvedBy": "standing-authority (auto band)",
+    "approvedAt": "2026-07-08"
+   },
    "po": {
     "number": "PO-261112",
     "orderDate": "2026-07-13",
@@ -7326,6 +8188,14 @@
   {
    "id": "ap-0114",
    "supplierCode": "SUP-004",
+   "requisition": {
+    "requestedBy": "Elena Tanaka",
+    "businessNeed": "Replacement need: office plant maintenance — quarterly",
+    "requestDate": "2026-04-06",
+    "approvalBand": "auto",
+    "approvedBy": "standing-authority (auto band)",
+    "approvedAt": "2026-04-06"
+   },
    "po": {
     "number": "PO-261113",
     "orderDate": "2026-04-11",
@@ -7379,6 +8249,14 @@
   {
    "id": "ap-0115",
    "supplierCode": "SUP-002",
+   "requisition": {
+    "requestedBy": "Elena Udo",
+    "businessNeed": "Team need: observability platform",
+    "requestDate": "2026-06-17",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-06-19"
+   },
    "po": {
     "number": "PO-261114",
     "orderDate": "2026-06-21",
@@ -7445,6 +8323,14 @@
   {
    "id": "ap-0116",
    "supplierCode": "SUP-014",
+   "requisition": {
+    "requestedBy": "Olu Shah",
+    "businessNeed": "Office need: specialist data engineering",
+    "requestDate": "2026-08-01",
+    "approvalBand": "standard",
+    "approvedBy": "Stefan Vance (manager)",
+    "approvedAt": "2026-08-01"
+   },
    "po": {
     "number": "PO-261115",
     "orderDate": "2026-08-02",
@@ -7498,6 +8384,14 @@
   {
    "id": "ap-0117",
    "supplierCode": "SUP-005",
+   "requisition": {
+    "requestedBy": "Mei Udo",
+    "businessNeed": "Office need: electricity q bill",
+    "requestDate": "2026-07-11",
+    "approvalBand": "standard",
+    "approvedBy": "Tom Whitfield (manager)",
+    "approvedAt": "2026-07-11"
+   },
    "po": {
     "number": "PO-261116",
     "orderDate": "2026-07-15",
@@ -7551,6 +8445,14 @@
   {
    "id": "ap-0118",
    "supplierCode": "SUP-022",
+   "requisition": {
+    "requestedBy": "Chris Begum",
+    "businessNeed": "Quarterly need: employment law advice",
+    "requestDate": "2026-04-16",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-04-16"
+   },
    "po": {
     "number": "PO-261117",
     "orderDate": "2026-04-19",
@@ -7604,6 +8506,14 @@
   {
    "id": "ap-0119",
    "supplierCode": "SUP-005",
+   "requisition": {
+    "requestedBy": "Sam Novak",
+    "businessNeed": "Team need: desk hire x4",
+    "requestDate": "2026-06-14",
+    "approvalBand": "standard",
+    "approvedBy": "Aoife Tanaka (manager)",
+    "approvedAt": "2026-06-15"
+   },
    "po": {
     "number": "PO-261118",
     "orderDate": "2026-06-16",
@@ -7657,6 +8567,14 @@
   {
    "id": "ap-0120",
    "supplierCode": "SUP-021",
+   "requisition": {
+    "requestedBy": "Yusuf Brennan",
+    "businessNeed": "Team need: electricity q bill",
+    "requestDate": "2026-08-25",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-08-27"
+   },
    "po": {
     "number": "PO-261119",
     "orderDate": "2026-08-26",
@@ -7736,6 +8654,14 @@
   {
    "id": "ap-0121",
    "supplierCode": "SUP-002",
+   "requisition": {
+    "requestedBy": "Mei Nakamura",
+    "businessNeed": "New starter need: ci runner minutes",
+    "requestDate": "2026-04-12",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-04-12"
+   },
    "po": {
     "number": "PO-261120",
     "orderDate": "2026-04-16",
@@ -7789,6 +8715,14 @@
   {
    "id": "ap-0122",
    "supplierCode": "SUP-011",
+   "requisition": {
+    "requestedBy": "Priya Nakamura",
+    "businessNeed": "Team need: sponsored newsletter",
+    "requestDate": "2026-07-26",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-07-26"
+   },
    "po": {
     "number": "PO-261121",
     "orderDate": "2026-07-29",
@@ -7855,6 +8789,14 @@
   {
    "id": "ap-0123",
    "supplierCode": "SUP-005",
+   "requisition": {
+    "requestedBy": "Tom Shah",
+    "businessNeed": "Team need: office cleaning — monthly",
+    "requestDate": "2026-07-16",
+    "approvalBand": "standard",
+    "approvedBy": "Yusuf Hughes (manager)",
+    "approvedAt": "2026-07-17"
+   },
    "po": {
     "number": "PO-261122",
     "orderDate": "2026-07-17",
@@ -7908,6 +8850,14 @@
   {
    "id": "ap-0124",
    "supplierCode": "SUP-009",
+   "requisition": {
+    "requestedBy": "Yusuf Sousa",
+    "businessNeed": "Office need: design tool seats",
+    "requestDate": "2026-07-22",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-07-24"
+   },
    "po": {
     "number": "PO-261123",
     "orderDate": "2026-07-26",
@@ -7961,6 +8911,14 @@
   {
    "id": "ap-0125",
    "supplierCode": "SUP-028",
+   "requisition": {
+    "requestedBy": "Aoife Vance",
+    "businessNeed": "New starter need: conference stand",
+    "requestDate": "2026-07-31",
+    "approvalBand": "standard",
+    "approvedBy": "Olu Shah (manager)",
+    "approvedAt": "2026-08-01"
+   },
    "po": {
     "number": "PO-261124",
     "orderDate": "2026-08-04",
@@ -8014,6 +8972,14 @@
   {
    "id": "ap-0126",
    "supplierCode": "SUP-013",
+   "requisition": {
+    "requestedBy": "Tom Carter",
+    "businessNeed": "Replacement need: rail travel — client visits",
+    "requestDate": "2026-07-10",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-07-12"
+   },
    "po": {
     "number": "PO-261125",
     "orderDate": "2026-07-12",
@@ -8093,6 +9059,14 @@
   {
    "id": "ap-0127",
    "supplierCode": "SUP-006",
+   "requisition": {
+    "requestedBy": "Marcus Tanaka",
+    "businessNeed": "Team need: crm licences x10",
+    "requestDate": "2026-05-11",
+    "approvalBand": "standard",
+    "approvedBy": "Stefan Hughes (manager)",
+    "approvedAt": "2026-05-13"
+   },
    "po": {
     "number": "PO-261126",
     "orderDate": "2026-05-14",
@@ -8146,6 +9120,14 @@
   {
    "id": "ap-0128",
    "supplierCode": "SUP-030",
+   "requisition": {
+    "requestedBy": "Mei Okafor",
+    "businessNeed": "Quarterly need: coffee & kitchen supplies",
+    "requestDate": "2026-06-28",
+    "approvalBand": "standard",
+    "approvedBy": "Chris Patel (manager)",
+    "approvedAt": "2026-06-28"
+   },
    "po": {
     "number": "PO-261127",
     "orderDate": "2026-07-03",
@@ -8199,6 +9181,14 @@
   {
    "id": "ap-0129",
    "supplierCode": "SUP-023",
+   "requisition": {
+    "requestedBy": "Jordan Shah",
+    "businessNeed": "Client project need: office rent — monthly",
+    "requestDate": "2026-05-18",
+    "approvalBand": "standard",
+    "approvedBy": "Elena Lindqvist (manager)",
+    "approvedAt": "2026-05-20"
+   },
    "po": {
     "number": "PO-261128",
     "orderDate": "2026-05-19",
@@ -8265,6 +9255,14 @@
   {
    "id": "ap-0130",
    "supplierCode": "SUP-019",
+   "requisition": {
+    "requestedBy": "Jack Whitfield",
+    "businessNeed": "Replacement need: cloud hosting — monthly",
+    "requestDate": "2026-05-23",
+    "approvalBand": "auto",
+    "approvedBy": "standing-authority (auto band)",
+    "approvedAt": "2026-05-23"
+   },
    "po": {
     "number": "PO-261129",
     "orderDate": "2026-05-24",
@@ -8318,6 +9316,14 @@
   {
    "id": "ap-0131",
    "supplierCode": "SUP-016",
+   "requisition": {
+    "requestedBy": "Mei Doyle",
+    "businessNeed": "Office need: insurance premium",
+    "requestDate": "2026-04-12",
+    "approvalBand": "standard",
+    "approvedBy": "Yusuf Nakamura (manager)",
+    "approvedAt": "2026-04-12"
+   },
    "po": {
     "number": "PO-261130",
     "orderDate": "2026-04-17",
@@ -8371,6 +9377,14 @@
   {
    "id": "ap-0132",
    "supplierCode": "SUP-023",
+   "requisition": {
+    "requestedBy": "Hannah Lindqvist",
+    "businessNeed": "New starter need: electricity q bill",
+    "requestDate": "2026-08-31",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-09-01"
+   },
    "po": {
     "number": "PO-261131",
     "orderDate": "2026-09-04",
@@ -8424,6 +9438,14 @@
   {
    "id": "ap-0133",
    "supplierCode": "SUP-007",
+   "requisition": {
+    "requestedBy": "Nadia Brennan",
+    "businessNeed": "New starter need: electricity q bill",
+    "requestDate": "2026-05-21",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-05-22"
+   },
    "po": {
     "number": "PO-261132",
     "orderDate": "2026-05-25",
@@ -8490,6 +9512,14 @@
   {
    "id": "ap-0134",
    "supplierCode": "SUP-035",
+   "requisition": {
+    "requestedBy": "Priya Brennan",
+    "businessNeed": "Team need: employment law advice",
+    "requestDate": "2026-04-22",
+    "approvalBand": "standard",
+    "approvedBy": "Jordan Novak (manager)",
+    "approvedAt": "2026-04-22"
+   },
    "po": {
     "number": "PO-261133",
     "orderDate": "2026-04-27",
@@ -8543,6 +9573,14 @@
   {
    "id": "ap-0135",
    "supplierCode": "SUP-004",
+   "requisition": {
+    "requestedBy": "Yusuf Lindqvist",
+    "businessNeed": "Team need: av equipment hire",
+    "requestDate": "2026-04-26",
+    "approvalBand": "auto",
+    "approvedBy": "standing-authority (auto band)",
+    "approvedAt": "2026-04-26"
+   },
    "po": {
     "number": "PO-261134",
     "orderDate": "2026-04-27",
@@ -8596,6 +9634,14 @@
   {
    "id": "ap-0136",
    "supplierCode": "SUP-003",
+   "requisition": {
+    "requestedBy": "Elena Udo",
+    "businessNeed": "Office need: insurance premium",
+    "requestDate": "2026-04-19",
+    "approvalBand": "standard",
+    "approvedBy": "Elena Shah (manager)",
+    "approvedAt": "2026-04-20"
+   },
    "po": {
     "number": "PO-261135",
     "orderDate": "2026-04-24",
@@ -8643,6 +9689,14 @@
   {
    "id": "ap-0137",
    "supplierCode": "SUP-002",
+   "requisition": {
+    "requestedBy": "Elena Begum",
+    "businessNeed": "Replacement need: design tool seats",
+    "requestDate": "2026-04-21",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-04-21"
+   },
    "po": {
     "number": "PO-261136",
     "orderDate": "2026-04-26",
@@ -8696,6 +9750,14 @@
   {
    "id": "ap-0138",
    "supplierCode": "SUP-006",
+   "requisition": {
+    "requestedBy": "Chris Udo",
+    "businessNeed": "Office need: observability platform",
+    "requestDate": "2026-05-17",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-05-17"
+   },
    "po": {
     "number": "PO-261137",
     "orderDate": "2026-05-21",
@@ -8749,6 +9811,14 @@
   {
    "id": "ap-0139",
    "supplierCode": "SUP-039",
+   "requisition": {
+    "requestedBy": "Mei Marsh",
+    "businessNeed": "Client project need: meeting room hire",
+    "requestDate": "2026-08-30",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-09-01"
+   },
    "po": {
     "number": "PO-261138",
     "orderDate": "2026-09-02",
@@ -8815,6 +9885,14 @@
   {
    "id": "ap-0140",
    "supplierCode": "SUP-027",
+   "requisition": {
+    "requestedBy": "Olu Marsh",
+    "businessNeed": "New starter need: meeting room hire",
+    "requestDate": "2026-09-01",
+    "approvalBand": "standard",
+    "approvedBy": "Mei Carter (manager)",
+    "approvedAt": "2026-09-02"
+   },
    "po": {
     "number": "PO-261139",
     "orderDate": "2026-09-03",
@@ -8868,6 +9946,14 @@
   {
    "id": "ap-0141",
    "supplierCode": "SUP-027",
+   "requisition": {
+    "requestedBy": "Ruth Nakamura",
+    "businessNeed": "Team need: electricity q bill",
+    "requestDate": "2026-08-23",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-08-23"
+   },
    "po": {
     "number": "PO-261140",
     "orderDate": "2026-08-25",
@@ -8921,6 +10007,14 @@
   {
    "id": "ap-0142",
    "supplierCode": "SUP-021",
+   "requisition": {
+    "requestedBy": "Nadia Carter",
+    "businessNeed": "Client project need: electricity q bill",
+    "requestDate": "2026-08-18",
+    "approvalBand": "standard",
+    "approvedBy": "Priya Doyle (manager)",
+    "approvedAt": "2026-08-18"
+   },
    "po": {
     "number": "PO-261141",
     "orderDate": "2026-08-19",
@@ -8974,6 +10068,14 @@
   {
    "id": "ap-0143",
    "supplierCode": "SUP-040",
+   "requisition": {
+    "requestedBy": "Ruth Patel",
+    "businessNeed": "Office need: conference stand",
+    "requestDate": "2026-08-17",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-08-18"
+   },
    "po": {
     "number": "PO-261142",
     "orderDate": "2026-08-18",
@@ -9040,6 +10142,14 @@
   {
    "id": "ap-0144",
    "supplierCode": "SUP-005",
+   "requisition": {
+    "requestedBy": "Jack Marsh",
+    "businessNeed": "Team need: meeting room hire",
+    "requestDate": "2026-08-04",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-08-06"
+   },
    "po": {
     "number": "PO-261143",
     "orderDate": "2026-08-05",
@@ -9119,6 +10229,14 @@
   {
    "id": "ap-0145",
    "supplierCode": "SUP-010",
+   "requisition": {
+    "requestedBy": "Jack Nakamura",
+    "businessNeed": "Quarterly need: office cleaning — monthly",
+    "requestDate": "2026-05-06",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-05-08"
+   },
    "po": {
     "number": "PO-261144",
     "orderDate": "2026-05-07",
@@ -9172,6 +10290,14 @@
   {
    "id": "ap-0146",
    "supplierCode": "SUP-009",
+   "requisition": {
+    "requestedBy": "Jack Patel",
+    "businessNeed": "New starter need: password manager — team",
+    "requestDate": "2026-08-04",
+    "approvalBand": "standard",
+    "approvedBy": "Tom Udo (manager)",
+    "approvedAt": "2026-08-06"
+   },
    "po": {
     "number": "PO-261145",
     "orderDate": "2026-08-08",
@@ -9225,6 +10351,14 @@
   {
    "id": "ap-0147",
    "supplierCode": "SUP-002",
+   "requisition": {
+    "requestedBy": "Yusuf Okafor",
+    "businessNeed": "Replacement need: crm licences x10",
+    "requestDate": "2026-06-15",
+    "approvalBand": "standard",
+    "approvedBy": "Hannah Udo (manager)",
+    "approvedAt": "2026-06-17"
+   },
    "po": {
     "number": "PO-261146",
     "orderDate": "2026-06-18",
@@ -9291,6 +10425,14 @@
   {
    "id": "ap-0148",
    "supplierCode": "SUP-024",
+   "requisition": {
+    "requestedBy": "Hannah Shah",
+    "businessNeed": "Team need: av equipment hire",
+    "requestDate": "2026-08-22",
+    "approvalBand": "auto",
+    "approvedBy": "standing-authority (auto band)",
+    "approvedAt": "2026-08-22"
+   },
    "po": {
     "number": "PO-261147",
     "orderDate": "2026-08-23",
@@ -9344,6 +10486,14 @@
   {
    "id": "ap-0149",
    "supplierCode": "SUP-010",
+   "requisition": {
+    "requestedBy": "Hannah Udo",
+    "businessNeed": "Client project need: meeting room hire",
+    "requestDate": "2026-07-24",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-07-25"
+   },
    "po": {
     "number": "PO-261148",
     "orderDate": "2026-07-29",
@@ -9410,6 +10560,14 @@
   {
    "id": "ap-0150",
    "supplierCode": "SUP-030",
+   "requisition": {
+    "requestedBy": "Nadia Brennan",
+    "businessNeed": "Team need: office plant maintenance — quarterly",
+    "requestDate": "2026-07-05",
+    "approvalBand": "standard",
+    "approvedBy": "Ruth Tanaka (manager)",
+    "approvedAt": "2026-07-06"
+   },
    "po": {
     "number": "PO-261149",
     "orderDate": "2026-07-10",
@@ -9463,6 +10621,14 @@
   {
    "id": "ap-0151",
    "supplierCode": "SUP-015",
+   "requisition": {
+    "requestedBy": "Priya Osei",
+    "businessNeed": "Quarterly need: coffee & kitchen supplies",
+    "requestDate": "2026-04-23",
+    "approvalBand": "auto",
+    "approvedBy": "standing-authority (auto band)",
+    "approvedAt": "2026-04-23"
+   },
    "po": {
     "number": "PO-261150",
     "orderDate": "2026-04-26",
@@ -9516,6 +10682,14 @@
   {
    "id": "ap-0152",
    "supplierCode": "SUP-031",
+   "requisition": {
+    "requestedBy": "Priya Novak",
+    "businessNeed": "Quarterly need: associate subcontract — days",
+    "requestDate": "2026-07-02",
+    "approvalBand": "standard",
+    "approvedBy": "Olu Okafor (manager)",
+    "approvedAt": "2026-07-02"
+   },
    "po": {
     "number": "PO-261151",
     "orderDate": "2026-07-04",
@@ -9569,6 +10743,7 @@
   {
    "id": "ap-0153",
    "supplierCode": "SUP-021",
+   "requisition": null,
    "po": null,
    "grn": null,
    "invoice": {
@@ -9596,13 +10771,21 @@
     "from": "accounts@pennine-security-systems.example",
     "date": "2026-05-25"
    },
-   "exception": "no_po",
+   "exception": "no_purchase",
    "paid": false,
    "paidDate": null
   },
   {
    "id": "ap-0154",
    "supplierCode": "SUP-030",
+   "requisition": {
+    "requestedBy": "Beth Patel",
+    "businessNeed": "New starter need: monitor arms x4",
+    "requestDate": "2026-05-04",
+    "approvalBand": "standard",
+    "approvedBy": "Jack Okafor (manager)",
+    "approvedAt": "2026-05-05"
+   },
    "po": {
     "number": "PO-261153",
     "orderDate": "2026-05-06",
@@ -9682,6 +10865,14 @@
   {
    "id": "ap-0155",
    "supplierCode": "SUP-039",
+   "requisition": {
+    "requestedBy": "Stefan Begum",
+    "businessNeed": "Office need: office rent — monthly",
+    "requestDate": "2026-06-04",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-06-05"
+   },
    "po": {
     "number": "PO-261154",
     "orderDate": "2026-06-05",
@@ -9761,6 +10952,14 @@
   {
    "id": "ap-0156",
    "supplierCode": "SUP-032",
+   "requisition": {
+    "requestedBy": "Nadia Hughes",
+    "businessNeed": "Client project need: desk hire x4",
+    "requestDate": "2026-04-16",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-04-16"
+   },
    "po": {
     "number": "PO-261155",
     "orderDate": "2026-04-17",
@@ -9840,6 +11039,14 @@
   {
    "id": "ap-0157",
    "supplierCode": "SUP-003",
+   "requisition": {
+    "requestedBy": "Mei Reid",
+    "businessNeed": "Replacement need: trademark renewal",
+    "requestDate": "2026-07-20",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-07-21"
+   },
    "po": {
     "number": "PO-261156",
     "orderDate": "2026-07-23",
@@ -9893,6 +11100,14 @@
   {
    "id": "ap-0158",
    "supplierCode": "SUP-010",
+   "requisition": {
+    "requestedBy": "Olu Lindqvist",
+    "businessNeed": "Office need: desk hire x4",
+    "requestDate": "2026-08-24",
+    "approvalBand": "standard",
+    "approvedBy": "Ruth Okafor (manager)",
+    "approvedAt": "2026-08-24"
+   },
    "po": {
     "number": "PO-261157",
     "orderDate": "2026-08-29",
@@ -9946,6 +11161,14 @@
   {
    "id": "ap-0159",
    "supplierCode": "SUP-014",
+   "requisition": {
+    "requestedBy": "Sam Nakamura",
+    "businessNeed": "Client project need: specialist data engineering",
+    "requestDate": "2026-07-25",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-07-25"
+   },
    "po": {
     "number": "PO-261158",
     "orderDate": "2026-07-26",
@@ -10025,6 +11248,14 @@
   {
    "id": "ap-0160",
    "supplierCode": "SUP-034",
+   "requisition": {
+    "requestedBy": "Yusuf Carter",
+    "businessNeed": "New starter need: office rent — monthly",
+    "requestDate": "2026-07-09",
+    "approvalBand": "standard",
+    "approvedBy": "Mei Doyle (manager)",
+    "approvedAt": "2026-07-09"
+   },
    "po": {
     "number": "PO-261159",
     "orderDate": "2026-07-12",
@@ -10078,6 +11309,14 @@
   {
    "id": "ap-0161",
    "supplierCode": "SUP-036",
+   "requisition": {
+    "requestedBy": "Stefan Okafor",
+    "businessNeed": "Replacement need: office cleaning — monthly",
+    "requestDate": "2026-05-24",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-05-24"
+   },
    "po": {
     "number": "PO-261160",
     "orderDate": "2026-05-26",
@@ -10131,6 +11370,14 @@
   {
    "id": "ap-0162",
    "supplierCode": "SUP-035",
+   "requisition": {
+    "requestedBy": "Chris Reid",
+    "businessNeed": "Office need: payroll bureau — monthly",
+    "requestDate": "2026-03-30",
+    "approvalBand": "standard",
+    "approvedBy": "Callum Reid (manager)",
+    "approvedAt": "2026-04-01"
+   },
    "po": {
     "number": "PO-261161",
     "orderDate": "2026-04-03",
@@ -10210,6 +11457,14 @@
   {
    "id": "ap-0163",
    "supplierCode": "SUP-023",
+   "requisition": {
+    "requestedBy": "Tom Whitfield",
+    "businessNeed": "Client project need: office cleaning — monthly",
+    "requestDate": "2026-06-21",
+    "approvalBand": "standard",
+    "approvedBy": "Mei Brennan (manager)",
+    "approvedAt": "2026-06-23"
+   },
    "po": {
     "number": "PO-261162",
     "orderDate": "2026-06-26",
@@ -10263,6 +11518,14 @@
   {
    "id": "ap-0164",
    "supplierCode": "SUP-039",
+   "requisition": {
+    "requestedBy": "Sam Brennan",
+    "businessNeed": "Office need: meeting room hire",
+    "requestDate": "2026-03-30",
+    "approvalBand": "standard",
+    "approvedBy": "Jordan Kowalski (manager)",
+    "approvedAt": "2026-03-30"
+   },
    "po": {
     "number": "PO-261163",
     "orderDate": "2026-04-01",
@@ -10316,6 +11579,14 @@
   {
    "id": "ap-0165",
    "supplierCode": "SUP-038",
+   "requisition": {
+    "requestedBy": "Nadia Vance",
+    "businessNeed": "Team need: campaign management — monthly",
+    "requestDate": "2026-07-29",
+    "approvalBand": "standard",
+    "approvedBy": "Callum Nakamura (manager)",
+    "approvedAt": "2026-07-31"
+   },
    "po": {
     "number": "PO-261164",
     "orderDate": "2026-08-01",
@@ -10395,6 +11666,14 @@
   {
    "id": "ap-0166",
    "supplierCode": "SUP-002",
+   "requisition": {
+    "requestedBy": "Priya Doyle",
+    "businessNeed": "Client project need: cloud hosting — monthly",
+    "requestDate": "2026-09-07",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-09-09"
+   },
    "po": {
     "number": "PO-261165",
     "orderDate": "2026-09-09",
@@ -10448,6 +11727,14 @@
   {
    "id": "ap-0167",
    "supplierCode": "SUP-015",
+   "requisition": {
+    "requestedBy": "Mei Doyle",
+    "businessNeed": "Replacement need: office chairs x2",
+    "requestDate": "2026-08-03",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-08-03"
+   },
    "po": {
     "number": "PO-261166",
     "orderDate": "2026-08-08",
@@ -10501,6 +11788,14 @@
   {
    "id": "ap-0168",
    "supplierCode": "SUP-029",
+   "requisition": {
+    "requestedBy": "Yusuf Carter",
+    "businessNeed": "New starter need: quarterly accounts review",
+    "requestDate": "2026-07-29",
+    "approvalBand": "standard",
+    "approvedBy": "Dev Novak (manager)",
+    "approvedAt": "2026-07-29"
+   },
    "po": {
     "number": "PO-261167",
     "orderDate": "2026-08-01",
@@ -10554,6 +11849,14 @@
   {
    "id": "ap-0169",
    "supplierCode": "SUP-019",
+   "requisition": {
+    "requestedBy": "Chris Marsh",
+    "businessNeed": "Team need: ci runner minutes",
+    "requestDate": "2026-05-25",
+    "approvalBand": "standard",
+    "approvedBy": "Nadia Begum (manager)",
+    "approvedAt": "2026-05-25"
+   },
    "po": {
     "number": "PO-261168",
     "orderDate": "2026-05-26",
@@ -10607,6 +11910,14 @@
   {
    "id": "ap-0170",
    "supplierCode": "SUP-038",
+   "requisition": {
+    "requestedBy": "Tom Kowalski",
+    "businessNeed": "Office need: conference stand",
+    "requestDate": "2026-05-01",
+    "approvalBand": "standard",
+    "approvedBy": "Mei Kowalski (manager)",
+    "approvedAt": "2026-05-03"
+   },
    "po": {
     "number": "PO-261169",
     "orderDate": "2026-05-05",
@@ -10660,6 +11971,14 @@
   {
    "id": "ap-0171",
    "supplierCode": "SUP-031",
+   "requisition": {
+    "requestedBy": "Mei Brennan",
+    "businessNeed": "Quarterly need: associate subcontract — days",
+    "requestDate": "2026-05-23",
+    "approvalBand": "standard",
+    "approvedBy": "Callum Udo (manager)",
+    "approvedAt": "2026-05-25"
+   },
    "po": {
     "number": "PO-261170",
     "orderDate": "2026-05-26",
@@ -10713,6 +12032,14 @@
   {
    "id": "ap-0172",
    "supplierCode": "SUP-032",
+   "requisition": {
+    "requestedBy": "Callum Vance",
+    "businessNeed": "Team need: office cleaning — monthly",
+    "requestDate": "2026-04-03",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-04-03"
+   },
    "po": {
     "number": "PO-261171",
     "orderDate": "2026-04-07",
@@ -10779,6 +12106,14 @@
   {
    "id": "ap-0173",
    "supplierCode": "SUP-039",
+   "requisition": {
+    "requestedBy": "Nadia Brennan",
+    "businessNeed": "Team need: office rent — monthly",
+    "requestDate": "2026-06-15",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-06-17"
+   },
    "po": {
     "number": "PO-261172",
     "orderDate": "2026-06-19",
@@ -10832,6 +12167,14 @@
   {
    "id": "ap-0174",
    "supplierCode": "SUP-020",
+   "requisition": {
+    "requestedBy": "Callum Okafor",
+    "businessNeed": "Replacement need: hotel — 2 nights",
+    "requestDate": "2026-04-03",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-04-05"
+   },
    "po": {
     "number": "PO-261173",
     "orderDate": "2026-04-06",
@@ -10885,6 +12228,14 @@
   {
    "id": "ap-0175",
    "supplierCode": "SUP-001",
+   "requisition": {
+    "requestedBy": "Aoife Tanaka",
+    "businessNeed": "Office need: courier & postage batch",
+    "requestDate": "2026-04-16",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-04-18"
+   },
    "po": {
     "number": "PO-261174",
     "orderDate": "2026-04-17",
@@ -10938,6 +12289,14 @@
   {
    "id": "ap-0176",
    "supplierCode": "SUP-013",
+   "requisition": {
+    "requestedBy": "Priya Begum",
+    "businessNeed": "Team need: mileage reimbursement batch",
+    "requestDate": "2026-07-27",
+    "approvalBand": "standard",
+    "approvedBy": "Jordan Whitfield (manager)",
+    "approvedAt": "2026-07-29"
+   },
    "po": {
     "number": "PO-261175",
     "orderDate": "2026-07-29",
@@ -10991,6 +12350,14 @@
   {
    "id": "ap-0177",
    "supplierCode": "SUP-036",
+   "requisition": {
+    "requestedBy": "Olu Udo",
+    "businessNeed": "New starter need: meeting room hire",
+    "requestDate": "2026-04-07",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-04-08"
+   },
    "po": {
     "number": "PO-261176",
     "orderDate": "2026-04-11",
@@ -11044,6 +12411,14 @@
   {
    "id": "ap-0178",
    "supplierCode": "SUP-008",
+   "requisition": {
+    "requestedBy": "Marcus Reid",
+    "businessNeed": "Office need: print & finishing order",
+    "requestDate": "2026-06-19",
+    "approvalBand": "standard",
+    "approvedBy": "Tom Begum (manager)",
+    "approvedAt": "2026-06-20"
+   },
    "po": {
     "number": "PO-261177",
     "orderDate": "2026-06-22",
@@ -11097,6 +12472,14 @@
   {
    "id": "ap-0179",
    "supplierCode": "SUP-033",
+   "requisition": {
+    "requestedBy": "Mei Novak",
+    "businessNeed": "Client project need: courier & postage batch",
+    "requestDate": "2026-06-24",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-06-26"
+   },
    "po": {
     "number": "PO-261178",
     "orderDate": "2026-06-25",
@@ -11163,6 +12546,14 @@
   {
    "id": "ap-0180",
    "supplierCode": "SUP-031",
+   "requisition": {
+    "requestedBy": "Chris Novak",
+    "businessNeed": "New starter need: associate subcontract — days",
+    "requestDate": "2026-09-06",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-09-07"
+   },
    "po": {
     "number": "PO-261179",
     "orderDate": "2026-09-09",
@@ -11229,6 +12620,14 @@
   {
    "id": "ap-0181",
    "supplierCode": "SUP-027",
+   "requisition": {
+    "requestedBy": "Laura Sousa",
+    "businessNeed": "Replacement need: office cleaning — monthly",
+    "requestDate": "2026-04-11",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-04-11"
+   },
    "po": {
     "number": "PO-261180",
     "orderDate": "2026-04-16",
@@ -11308,6 +12707,14 @@
   {
    "id": "ap-0182",
    "supplierCode": "SUP-019",
+   "requisition": {
+    "requestedBy": "Hannah Sousa",
+    "businessNeed": "Client project need: design tool seats",
+    "requestDate": "2026-06-14",
+    "approvalBand": "standard",
+    "approvedBy": "Jordan Shah (manager)",
+    "approvedAt": "2026-06-15"
+   },
    "po": {
     "number": "PO-261181",
     "orderDate": "2026-06-18",
@@ -11361,6 +12768,14 @@
   {
    "id": "ap-0183",
    "supplierCode": "SUP-013",
+   "requisition": {
+    "requestedBy": "Stefan Vance",
+    "businessNeed": "Team need: rail travel — client visits",
+    "requestDate": "2026-07-24",
+    "approvalBand": "standard",
+    "approvedBy": "Aoife Osei (manager)",
+    "approvedAt": "2026-07-25"
+   },
    "po": {
     "number": "PO-261182",
     "orderDate": "2026-07-29",
@@ -11440,6 +12855,14 @@
   {
    "id": "ap-0184",
    "supplierCode": "SUP-007",
+   "requisition": {
+    "requestedBy": "Aoife Whitfield",
+    "businessNeed": "Client project need: desk hire x4",
+    "requestDate": "2026-04-29",
+    "approvalBand": "standard",
+    "approvedBy": "Priya Patel (manager)",
+    "approvedAt": "2026-04-29"
+   },
    "po": {
     "number": "PO-261183",
     "orderDate": "2026-05-01",
@@ -11493,6 +12916,14 @@
   {
    "id": "ap-0185",
    "supplierCode": "SUP-014",
+   "requisition": {
+    "requestedBy": "Laura Okafor",
+    "businessNeed": "Client project need: associate subcontract — days",
+    "requestDate": "2026-06-01",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-06-02"
+   },
    "po": {
     "number": "PO-261184",
     "orderDate": "2026-06-04",
@@ -11546,6 +12977,7 @@
   {
    "id": "ap-0186",
    "supplierCode": "SUP-029",
+   "requisition": null,
    "po": null,
    "grn": null,
    "invoice": {
@@ -11585,13 +13017,21 @@
     "from": "accounts@yarrow-health-safety-ltd.example",
     "date": "2026-07-29"
    },
-   "exception": "no_po",
+   "exception": "no_purchase",
    "paid": false,
    "paidDate": null
   },
   {
    "id": "ap-0187",
    "supplierCode": "SUP-023",
+   "requisition": {
+    "requestedBy": "Marcus Reid",
+    "businessNeed": "Office need: desk hire x4",
+    "requestDate": "2026-05-03",
+    "approvalBand": "standard",
+    "approvedBy": "Priya Sousa (manager)",
+    "approvedAt": "2026-05-04"
+   },
    "po": {
     "number": "PO-261186",
     "orderDate": "2026-05-05",
@@ -11645,6 +13085,14 @@
   {
    "id": "ap-0188",
    "supplierCode": "SUP-019",
+   "requisition": {
+    "requestedBy": "Beth Tanaka",
+    "businessNeed": "Team need: password manager — team",
+    "requestDate": "2026-07-17",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-07-18"
+   },
    "po": {
     "number": "PO-261187",
     "orderDate": "2026-07-18",
@@ -11711,6 +13159,14 @@
   {
    "id": "ap-0189",
    "supplierCode": "SUP-023",
+   "requisition": {
+    "requestedBy": "Mei Carter",
+    "businessNeed": "Office need: desk hire x4",
+    "requestDate": "2026-08-09",
+    "approvalBand": "standard",
+    "approvedBy": "Olu Okafor (manager)",
+    "approvedAt": "2026-08-11"
+   },
    "po": {
     "number": "PO-261188",
     "orderDate": "2026-08-11",
@@ -11764,6 +13220,14 @@
   {
    "id": "ap-0190",
    "supplierCode": "SUP-011",
+   "requisition": {
+    "requestedBy": "Yusuf Osei",
+    "businessNeed": "Replacement need: webinar platform",
+    "requestDate": "2026-04-11",
+    "approvalBand": "standard",
+    "approvedBy": "Dev Reid (manager)",
+    "approvedAt": "2026-04-11"
+   },
    "po": {
     "number": "PO-261189",
     "orderDate": "2026-04-16",
@@ -11830,6 +13294,14 @@
   {
    "id": "ap-0191",
    "supplierCode": "SUP-017",
+   "requisition": {
+    "requestedBy": "Callum Reid",
+    "businessNeed": "Quarterly need: quarterly accounts review",
+    "requestDate": "2026-08-19",
+    "approvalBand": "standard",
+    "approvedBy": "Callum Lindqvist (manager)",
+    "approvedAt": "2026-08-19"
+   },
    "po": {
     "number": "PO-261190",
     "orderDate": "2026-08-24",
@@ -11883,6 +13355,14 @@
   {
    "id": "ap-0192",
    "supplierCode": "SUP-027",
+   "requisition": {
+    "requestedBy": "Elena Doyle",
+    "businessNeed": "Team need: meeting room hire",
+    "requestDate": "2026-08-03",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-08-05"
+   },
    "po": {
     "number": "PO-261191",
     "orderDate": "2026-08-07",
@@ -11936,6 +13416,14 @@
   {
    "id": "ap-0193",
    "supplierCode": "SUP-027",
+   "requisition": {
+    "requestedBy": "Beth Hughes",
+    "businessNeed": "Client project need: office rent — monthly",
+    "requestDate": "2026-06-01",
+    "approvalBand": "standard",
+    "approvedBy": "Aoife Kowalski (manager)",
+    "approvedAt": "2026-06-01"
+   },
    "po": {
     "number": "PO-261192",
     "orderDate": "2026-06-06",
@@ -11989,6 +13477,14 @@
   {
    "id": "ap-0194",
    "supplierCode": "SUP-015",
+   "requisition": {
+    "requestedBy": "Chris Hughes",
+    "businessNeed": "Quarterly need: office plant maintenance — quarterly",
+    "requestDate": "2026-06-08",
+    "approvalBand": "standard",
+    "approvedBy": "Laura Whitfield (manager)",
+    "approvedAt": "2026-06-10"
+   },
    "po": {
     "number": "PO-261193",
     "orderDate": "2026-06-10",
@@ -12042,6 +13538,14 @@
   {
    "id": "ap-0195",
    "supplierCode": "SUP-033",
+   "requisition": {
+    "requestedBy": "Elena Carter",
+    "businessNeed": "Client project need: coffee & kitchen supplies",
+    "requestDate": "2026-07-25",
+    "approvalBand": "auto",
+    "approvedBy": "standing-authority (auto band)",
+    "approvedAt": "2026-07-25"
+   },
    "po": {
     "number": "PO-261194",
     "orderDate": "2026-07-28",
@@ -12095,6 +13599,14 @@
   {
    "id": "ap-0196",
    "supplierCode": "SUP-040",
+   "requisition": {
+    "requestedBy": "Elena Novak",
+    "businessNeed": "Quarterly need: conference stand",
+    "requestDate": "2026-07-15",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-07-16"
+   },
    "po": {
     "number": "PO-261195",
     "orderDate": "2026-07-18",
@@ -12148,6 +13660,14 @@
   {
    "id": "ap-0197",
    "supplierCode": "SUP-014",
+   "requisition": {
+    "requestedBy": "Hannah Osei",
+    "businessNeed": "Replacement need: qa testing support",
+    "requestDate": "2026-06-14",
+    "approvalBand": "standard",
+    "approvedBy": "Stefan Doyle (manager)",
+    "approvedAt": "2026-06-16"
+   },
    "po": {
     "number": "PO-261196",
     "orderDate": "2026-06-16",
@@ -12201,6 +13721,14 @@
   {
    "id": "ap-0198",
    "supplierCode": "SUP-040",
+   "requisition": {
+    "requestedBy": "Dev Udo",
+    "businessNeed": "Replacement need: campaign management — monthly",
+    "requestDate": "2026-09-02",
+    "approvalBand": "standard",
+    "approvedBy": "Yusuf Okafor (manager)",
+    "approvedAt": "2026-09-02"
+   },
    "po": {
     "number": "PO-261197",
     "orderDate": "2026-09-04",
@@ -12254,6 +13782,14 @@
   {
    "id": "ap-0199",
    "supplierCode": "SUP-022",
+   "requisition": {
+    "requestedBy": "Hannah Udo",
+    "businessNeed": "New starter need: insurance premium",
+    "requestDate": "2026-08-28",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-08-29"
+   },
    "po": {
     "number": "PO-261198",
     "orderDate": "2026-08-29",
@@ -12307,6 +13843,14 @@
   {
    "id": "ap-0200",
    "supplierCode": "SUP-022",
+   "requisition": {
+    "requestedBy": "Jordan Brennan",
+    "businessNeed": "Office need: employment law advice",
+    "requestDate": "2026-08-08",
+    "approvalBand": "standard",
+    "approvedBy": "Nadia Marsh (manager)",
+    "approvedAt": "2026-08-09"
+   },
    "po": {
     "number": "PO-261199",
     "orderDate": "2026-08-12",
@@ -12360,6 +13904,14 @@
   {
    "id": "ap-0201",
    "supplierCode": "SUP-028",
+   "requisition": {
+    "requestedBy": "Priya Udo",
+    "businessNeed": "Team need: sponsored newsletter",
+    "requestDate": "2026-08-02",
+    "approvalBand": "auto",
+    "approvedBy": "standing-authority (auto band)",
+    "approvedAt": "2026-08-02"
+   },
    "po": {
     "number": "PO-261200",
     "orderDate": "2026-08-05",
@@ -12413,6 +13965,14 @@
   {
    "id": "ap-0202",
    "supplierCode": "SUP-036",
+   "requisition": {
+    "requestedBy": "Dev Whitfield",
+    "businessNeed": "New starter need: office rent — monthly",
+    "requestDate": "2026-08-05",
+    "approvalBand": "standard",
+    "approvedBy": "Jordan Whitfield (manager)",
+    "approvedAt": "2026-08-05"
+   },
    "po": {
     "number": "PO-261201",
     "orderDate": "2026-08-10",
@@ -12466,6 +14026,14 @@
   {
    "id": "ap-0203",
    "supplierCode": "SUP-035",
+   "requisition": {
+    "requestedBy": "Laura Tanaka",
+    "businessNeed": "Replacement need: quarterly accounts review",
+    "requestDate": "2026-08-01",
+    "approvalBand": "standard",
+    "approvedBy": "Jack Patel (manager)",
+    "approvedAt": "2026-08-02"
+   },
    "po": {
     "number": "PO-261202",
     "orderDate": "2026-08-02",
@@ -12519,6 +14087,14 @@
   {
    "id": "ap-0204",
    "supplierCode": "SUP-030",
+   "requisition": {
+    "requestedBy": "Hannah Patel",
+    "businessNeed": "Office need: courier & postage batch",
+    "requestDate": "2026-05-30",
+    "approvalBand": "standard",
+    "approvedBy": "Yusuf Nakamura (manager)",
+    "approvedAt": "2026-05-30"
+   },
    "po": {
     "number": "PO-261203",
     "orderDate": "2026-05-31",
@@ -12572,6 +14148,14 @@
   {
    "id": "ap-0205",
    "supplierCode": "SUP-022",
+   "requisition": {
+    "requestedBy": "Sam Novak",
+    "businessNeed": "Quarterly need: quarterly accounts review",
+    "requestDate": "2026-08-13",
+    "approvalBand": "standard",
+    "approvedBy": "Jack Sousa (manager)",
+    "approvedAt": "2026-08-13"
+   },
    "po": {
     "number": "PO-261204",
     "orderDate": "2026-08-17",
@@ -12625,6 +14209,14 @@
   {
    "id": "ap-0206",
    "supplierCode": "SUP-032",
+   "requisition": {
+    "requestedBy": "Mei Novak",
+    "businessNeed": "Client project need: electricity q bill",
+    "requestDate": "2026-08-30",
+    "approvalBand": "standard",
+    "approvedBy": "Tom Brennan (manager)",
+    "approvedAt": "2026-08-30"
+   },
    "po": {
     "number": "PO-261205",
     "orderDate": "2026-09-02",
@@ -12678,6 +14270,14 @@
   {
    "id": "ap-0207",
    "supplierCode": "SUP-036",
+   "requisition": {
+    "requestedBy": "Hannah Osei",
+    "businessNeed": "Office need: electricity q bill",
+    "requestDate": "2026-06-22",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-06-24"
+   },
    "po": {
     "number": "PO-261206",
     "orderDate": "2026-06-27",
@@ -12744,6 +14344,14 @@
   {
    "id": "ap-0208",
    "supplierCode": "SUP-038",
+   "requisition": {
+    "requestedBy": "Laura Osei",
+    "businessNeed": "Replacement need: campaign management — monthly",
+    "requestDate": "2026-08-03",
+    "approvalBand": "standard",
+    "approvedBy": "Dev Whitfield (manager)",
+    "approvedAt": "2026-08-04"
+   },
    "po": {
     "number": "PO-261207",
     "orderDate": "2026-08-06",
@@ -12823,6 +14431,14 @@
   {
    "id": "ap-0209",
    "supplierCode": "SUP-003",
+   "requisition": {
+    "requestedBy": "Marcus Begum",
+    "businessNeed": "Client project need: employment law advice",
+    "requestDate": "2026-05-06",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-05-06"
+   },
    "po": {
     "number": "PO-261208",
     "orderDate": "2026-05-07",
@@ -12889,6 +14505,14 @@
   {
    "id": "ap-0210",
    "supplierCode": "SUP-011",
+   "requisition": {
+    "requestedBy": "Chris Doyle",
+    "businessNeed": "Office need: campaign management — monthly",
+    "requestDate": "2026-05-06",
+    "approvalBand": "standard",
+    "approvedBy": "Ruth Reid (manager)",
+    "approvedAt": "2026-05-07"
+   },
    "po": {
     "number": "PO-261209",
     "orderDate": "2026-05-09",
@@ -12955,6 +14579,14 @@
   {
    "id": "ap-0211",
    "supplierCode": "SUP-006",
+   "requisition": {
+    "requestedBy": "Hannah Osei",
+    "businessNeed": "Replacement need: observability platform",
+    "requestDate": "2026-05-18",
+    "approvalBand": "standard",
+    "approvedBy": "Yusuf Osei (manager)",
+    "approvedAt": "2026-05-20"
+   },
    "po": {
     "number": "PO-261210",
     "orderDate": "2026-05-23",
@@ -13008,6 +14640,14 @@
   {
    "id": "ap-0212",
    "supplierCode": "SUP-004",
+   "requisition": {
+    "requestedBy": "Aoife Marsh",
+    "businessNeed": "New starter need: stationery order",
+    "requestDate": "2026-07-14",
+    "approvalBand": "standard",
+    "approvedBy": "Aoife Novak (manager)",
+    "approvedAt": "2026-07-16"
+   },
    "po": {
     "number": "PO-261211",
     "orderDate": "2026-07-17",
@@ -13074,6 +14714,14 @@
   {
    "id": "ap-0213",
    "supplierCode": "SUP-027",
+   "requisition": {
+    "requestedBy": "Priya Novak",
+    "businessNeed": "Replacement need: electricity q bill",
+    "requestDate": "2026-04-12",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-04-12"
+   },
    "po": {
     "number": "PO-261212",
     "orderDate": "2026-04-15",
@@ -13127,6 +14775,14 @@
   {
    "id": "ap-0214",
    "supplierCode": "SUP-021",
+   "requisition": {
+    "requestedBy": "Hannah Begum",
+    "businessNeed": "Quarterly need: office rent — monthly",
+    "requestDate": "2026-05-01",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-05-01"
+   },
    "po": {
     "number": "PO-261213",
     "orderDate": "2026-05-06",
@@ -13206,6 +14862,14 @@
   {
    "id": "ap-0215",
    "supplierCode": "SUP-001",
+   "requisition": {
+    "requestedBy": "Laura Novak",
+    "businessNeed": "Client project need: office chairs x2",
+    "requestDate": "2026-07-24",
+    "approvalBand": "standard",
+    "approvedBy": "Marcus Udo (manager)",
+    "approvedAt": "2026-07-24"
+   },
    "po": {
     "number": "PO-261214",
     "orderDate": "2026-07-27",
@@ -13272,6 +14936,14 @@
   {
    "id": "ap-0216",
    "supplierCode": "SUP-036",
+   "requisition": {
+    "requestedBy": "Dev Marsh",
+    "businessNeed": "Team need: desk hire x4",
+    "requestDate": "2026-05-08",
+    "approvalBand": "standard",
+    "approvedBy": "Olu Udo (manager)",
+    "approvedAt": "2026-05-09"
+   },
    "po": {
     "number": "PO-261215",
     "orderDate": "2026-05-10",
@@ -13338,6 +15010,14 @@
   {
    "id": "ap-0217",
    "supplierCode": "SUP-032",
+   "requisition": {
+    "requestedBy": "Mei Tanaka",
+    "businessNeed": "Replacement need: meeting room hire",
+    "requestDate": "2026-04-08",
+    "approvalBand": "standard",
+    "approvedBy": "Dev Shah (manager)",
+    "approvedAt": "2026-04-10"
+   },
    "po": {
     "number": "PO-261216",
     "orderDate": "2026-04-13",
@@ -13391,6 +15071,14 @@
   {
    "id": "ap-0218",
    "supplierCode": "SUP-004",
+   "requisition": {
+    "requestedBy": "Hannah Nakamura",
+    "businessNeed": "Client project need: office plant maintenance — quarterly",
+    "requestDate": "2026-09-04",
+    "approvalBand": "standard",
+    "approvedBy": "Tom Vance (manager)",
+    "approvedAt": "2026-09-04"
+   },
    "po": {
     "number": "PO-261217",
     "orderDate": "2026-09-08",
@@ -13444,6 +15132,14 @@
   {
    "id": "ap-0219",
    "supplierCode": "SUP-039",
+   "requisition": {
+    "requestedBy": "Tom Reid",
+    "businessNeed": "Quarterly need: office rent — monthly",
+    "requestDate": "2026-06-14",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-06-16"
+   },
    "po": {
     "number": "PO-261218",
     "orderDate": "2026-06-16",
@@ -13510,6 +15206,14 @@
   {
    "id": "ap-0220",
    "supplierCode": "SUP-021",
+   "requisition": {
+    "requestedBy": "Yusuf Sousa",
+    "businessNeed": "Quarterly need: electricity q bill",
+    "requestDate": "2026-08-26",
+    "approvalBand": "standard",
+    "approvedBy": "Dev Begum (manager)",
+    "approvedAt": "2026-08-26"
+   },
    "po": {
     "number": "PO-261219",
     "orderDate": "2026-08-28",
@@ -13563,6 +15267,14 @@
   {
    "id": "ap-0221",
    "supplierCode": "SUP-003",
+   "requisition": {
+    "requestedBy": "Hannah Okafor",
+    "businessNeed": "Replacement need: insurance premium",
+    "requestDate": "2026-04-17",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-04-19"
+   },
    "po": {
     "number": "PO-261220",
     "orderDate": "2026-04-21",
@@ -13616,6 +15328,14 @@
   {
    "id": "ap-0222",
    "supplierCode": "SUP-016",
+   "requisition": {
+    "requestedBy": "Tom Udo",
+    "businessNeed": "Team need: insurance premium",
+    "requestDate": "2026-06-09",
+    "approvalBand": "standard",
+    "approvedBy": "Mei Kowalski (manager)",
+    "approvedAt": "2026-06-11"
+   },
    "po": {
     "number": "PO-261221",
     "orderDate": "2026-06-10",
@@ -13669,6 +15389,14 @@
   {
    "id": "ap-0223",
    "supplierCode": "SUP-040",
+   "requisition": {
+    "requestedBy": "Chris Whitfield",
+    "businessNeed": "New starter need: campaign management — monthly",
+    "requestDate": "2026-08-24",
+    "approvalBand": "standard",
+    "approvedBy": "Hannah Hughes (manager)",
+    "approvedAt": "2026-08-24"
+   },
    "po": {
     "number": "PO-261222",
     "orderDate": "2026-08-27",
@@ -13722,6 +15450,14 @@
   {
    "id": "ap-0224",
    "supplierCode": "SUP-004",
+   "requisition": {
+    "requestedBy": "Callum Okafor",
+    "businessNeed": "Client project need: coffee & kitchen supplies",
+    "requestDate": "2026-08-19",
+    "approvalBand": "standard",
+    "approvedBy": "Hannah Vance (manager)",
+    "approvedAt": "2026-08-21"
+   },
    "po": {
     "number": "PO-261223",
     "orderDate": "2026-08-23",
@@ -13788,6 +15524,14 @@
   {
    "id": "ap-0225",
    "supplierCode": "SUP-012",
+   "requisition": {
+    "requestedBy": "Ruth Hughes",
+    "businessNeed": "Client project need: employment law advice",
+    "requestDate": "2026-04-17",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-04-17"
+   },
    "po": {
     "number": "PO-261224",
     "orderDate": "2026-04-19",
@@ -13854,6 +15598,14 @@
   {
    "id": "ap-0226",
    "supplierCode": "SUP-028",
+   "requisition": {
+    "requestedBy": "Mei Reid",
+    "businessNeed": "Quarterly need: campaign management — monthly",
+    "requestDate": "2026-06-27",
+    "approvalBand": "standard",
+    "approvedBy": "Aoife Vance (manager)",
+    "approvedAt": "2026-06-28"
+   },
    "po": {
     "number": "PO-261225",
     "orderDate": "2026-06-29",
@@ -13907,6 +15659,14 @@
   {
    "id": "ap-0227",
    "supplierCode": "SUP-038",
+   "requisition": {
+    "requestedBy": "Callum Vance",
+    "businessNeed": "Client project need: campaign management — monthly",
+    "requestDate": "2026-08-08",
+    "approvalBand": "standard",
+    "approvedBy": "Callum Sousa (manager)",
+    "approvedAt": "2026-08-09"
+   },
    "po": {
     "number": "PO-261226",
     "orderDate": "2026-08-12",
@@ -13960,6 +15720,14 @@
   {
    "id": "ap-0228",
    "supplierCode": "SUP-022",
+   "requisition": {
+    "requestedBy": "Beth Brennan",
+    "businessNeed": "New starter need: quarterly accounts review",
+    "requestDate": "2026-06-13",
+    "approvalBand": "standard",
+    "approvedBy": "Mei Patel (manager)",
+    "approvedAt": "2026-06-15"
+   },
    "po": {
     "number": "PO-261227",
     "orderDate": "2026-06-15",
@@ -14013,6 +15781,14 @@
   {
    "id": "ap-0229",
    "supplierCode": "SUP-033",
+   "requisition": {
+    "requestedBy": "Dev Osei",
+    "businessNeed": "Client project need: coffee & kitchen supplies",
+    "requestDate": "2026-05-25",
+    "approvalBand": "auto",
+    "approvedBy": "standing-authority (auto band)",
+    "approvedAt": "2026-05-25"
+   },
    "po": {
     "number": "PO-261228",
     "orderDate": "2026-05-27",
@@ -14066,6 +15842,14 @@
   {
    "id": "ap-0230",
    "supplierCode": "SUP-005",
+   "requisition": {
+    "requestedBy": "Beth Kowalski",
+    "businessNeed": "Client project need: office cleaning — monthly",
+    "requestDate": "2026-04-21",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-04-23"
+   },
    "po": {
     "number": "PO-261229",
     "orderDate": "2026-04-24",
@@ -14132,6 +15916,14 @@
   {
    "id": "ap-0231",
    "supplierCode": "SUP-011",
+   "requisition": {
+    "requestedBy": "Mei Carter",
+    "businessNeed": "Team need: sponsored newsletter",
+    "requestDate": "2026-04-20",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-04-21"
+   },
    "po": {
     "number": "PO-261230",
     "orderDate": "2026-04-24",
@@ -14185,6 +15977,14 @@
   {
    "id": "ap-0232",
    "supplierCode": "SUP-020",
+   "requisition": {
+    "requestedBy": "Yusuf Nakamura",
+    "businessNeed": "Office need: flights — partner summit",
+    "requestDate": "2026-08-10",
+    "approvalBand": "standard",
+    "approvedBy": "Elena Patel (manager)",
+    "approvedAt": "2026-08-12"
+   },
    "po": {
     "number": "PO-261231",
     "orderDate": "2026-08-12",
@@ -14238,6 +16038,14 @@
   {
    "id": "ap-0233",
    "supplierCode": "SUP-009",
+   "requisition": {
+    "requestedBy": "Elena Patel",
+    "businessNeed": "New starter need: cloud hosting — monthly",
+    "requestDate": "2026-04-14",
+    "approvalBand": "standard",
+    "approvedBy": "Ruth Shah (manager)",
+    "approvedAt": "2026-04-16"
+   },
    "po": {
     "number": "PO-261232",
     "orderDate": "2026-04-19",
@@ -14291,6 +16099,14 @@
   {
    "id": "ap-0234",
    "supplierCode": "SUP-009",
+   "requisition": {
+    "requestedBy": "Marcus Kowalski",
+    "businessNeed": "Office need: observability platform",
+    "requestDate": "2026-07-08",
+    "approvalBand": "standard",
+    "approvedBy": "Mei Hughes (manager)",
+    "approvedAt": "2026-07-10"
+   },
    "po": {
     "number": "PO-261233",
     "orderDate": "2026-07-12",
@@ -14344,6 +16160,14 @@
   {
    "id": "ap-0235",
    "supplierCode": "SUP-033",
+   "requisition": {
+    "requestedBy": "Mei Kowalski",
+    "businessNeed": "Team need: stationery order",
+    "requestDate": "2026-07-06",
+    "approvalBand": "standard",
+    "approvedBy": "Olu Begum (manager)",
+    "approvedAt": "2026-07-06"
+   },
    "po": {
     "number": "PO-261234",
     "orderDate": "2026-07-09",
@@ -14397,6 +16221,14 @@
   {
    "id": "ap-0236",
    "supplierCode": "SUP-007",
+   "requisition": {
+    "requestedBy": "Hannah Kowalski",
+    "businessNeed": "Client project need: desk hire x4",
+    "requestDate": "2026-03-31",
+    "approvalBand": "standard",
+    "approvedBy": "Aoife Carter (manager)",
+    "approvedAt": "2026-04-02"
+   },
    "po": {
     "number": "PO-261235",
     "orderDate": "2026-04-01",
@@ -14450,6 +16282,14 @@
   {
    "id": "ap-0237",
    "supplierCode": "SUP-007",
+   "requisition": {
+    "requestedBy": "Mei Osei",
+    "businessNeed": "New starter need: electricity q bill",
+    "requestDate": "2026-07-29",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-07-31"
+   },
    "po": {
     "number": "PO-261236",
     "orderDate": "2026-07-31",
@@ -14503,6 +16343,7 @@
   {
    "id": "ap-0238",
    "supplierCode": "SUP-027",
+   "requisition": null,
    "po": null,
    "grn": null,
    "invoice": {
@@ -14542,13 +16383,21 @@
     "from": "accounts@vantage-office-interiors.example",
     "date": "2026-05-14"
    },
-   "exception": "no_po",
+   "exception": "no_purchase",
    "paid": false,
    "paidDate": null
   },
   {
    "id": "ap-0239",
    "supplierCode": "SUP-006",
+   "requisition": {
+    "requestedBy": "Callum Okafor",
+    "businessNeed": "New starter need: crm licences x10",
+    "requestDate": "2026-07-02",
+    "approvalBand": "standard",
+    "approvedBy": "Jack Tanaka (manager)",
+    "approvedAt": "2026-07-03"
+   },
    "po": {
     "number": "PO-261238",
     "orderDate": "2026-07-03",
@@ -14602,6 +16451,14 @@
   {
    "id": "ap-0240",
    "supplierCode": "SUP-021",
+   "requisition": {
+    "requestedBy": "Tom Lindqvist",
+    "businessNeed": "Replacement need: office cleaning — monthly",
+    "requestDate": "2026-05-16",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-05-16"
+   },
    "po": {
     "number": "PO-261239",
     "orderDate": "2026-05-17",
@@ -14668,6 +16525,14 @@
   {
    "id": "ap-0241",
    "supplierCode": "SUP-022",
+   "requisition": {
+    "requestedBy": "Callum Shah",
+    "businessNeed": "Office need: payroll bureau — monthly",
+    "requestDate": "2026-07-07",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-07-09"
+   },
    "po": {
     "number": "PO-261240",
     "orderDate": "2026-07-12",
@@ -14747,6 +16612,14 @@
   {
    "id": "ap-0242",
    "supplierCode": "SUP-018",
+   "requisition": {
+    "requestedBy": "Jordan Patel",
+    "businessNeed": "Replacement need: crm licences x10",
+    "requestDate": "2026-08-23",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-08-24"
+   },
    "po": {
     "number": "PO-261241",
     "orderDate": "2026-08-28",
@@ -14826,6 +16699,14 @@
   {
    "id": "ap-0243",
    "supplierCode": "SUP-020",
+   "requisition": {
+    "requestedBy": "Tom Whitfield",
+    "businessNeed": "Office need: flights — partner summit",
+    "requestDate": "2026-08-07",
+    "approvalBand": "standard",
+    "approvedBy": "Laura Udo (manager)",
+    "approvedAt": "2026-08-08"
+   },
    "po": {
     "number": "PO-261242",
     "orderDate": "2026-08-10",
@@ -14879,6 +16760,14 @@
   {
    "id": "ap-0244",
    "supplierCode": "SUP-005",
+   "requisition": {
+    "requestedBy": "Olu Vance",
+    "businessNeed": "New starter need: office rent — monthly",
+    "requestDate": "2026-07-26",
+    "approvalBand": "standard",
+    "approvedBy": "Stefan Begum (manager)",
+    "approvedAt": "2026-07-27"
+   },
    "po": {
     "number": "PO-261243",
     "orderDate": "2026-07-30",
@@ -14932,6 +16821,14 @@
   {
    "id": "ap-0245",
    "supplierCode": "SUP-027",
+   "requisition": {
+    "requestedBy": "Callum Vance",
+    "businessNeed": "Team need: desk hire x4",
+    "requestDate": "2026-04-24",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-04-26"
+   },
    "po": {
     "number": "PO-261244",
     "orderDate": "2026-04-27",
@@ -15011,6 +16908,14 @@
   {
    "id": "ap-0246",
    "supplierCode": "SUP-028",
+   "requisition": {
+    "requestedBy": "Yusuf Reid",
+    "businessNeed": "New starter need: sponsored newsletter",
+    "requestDate": "2026-09-04",
+    "approvalBand": "standard",
+    "approvedBy": "Callum Tanaka (manager)",
+    "approvedAt": "2026-09-05"
+   },
    "po": {
     "number": "PO-261245",
     "orderDate": "2026-09-05",
@@ -15064,6 +16969,14 @@
   {
    "id": "ap-0247",
    "supplierCode": "SUP-028",
+   "requisition": {
+    "requestedBy": "Dev Tanaka",
+    "businessNeed": "Quarterly need: webinar platform",
+    "requestDate": "2026-06-15",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-06-17"
+   },
    "po": {
     "number": "PO-261246",
     "orderDate": "2026-06-16",
@@ -15117,6 +17030,14 @@
   {
    "id": "ap-0248",
    "supplierCode": "SUP-015",
+   "requisition": {
+    "requestedBy": "Mei Begum",
+    "businessNeed": "Team need: office chairs x2",
+    "requestDate": "2026-06-01",
+    "approvalBand": "standard",
+    "approvedBy": "Jordan Marsh (manager)",
+    "approvedAt": "2026-06-03"
+   },
    "po": {
     "number": "PO-261247",
     "orderDate": "2026-06-04",
@@ -15170,6 +17091,14 @@
   {
    "id": "ap-0249",
    "supplierCode": "SUP-040",
+   "requisition": {
+    "requestedBy": "Nadia Udo",
+    "businessNeed": "Quarterly need: print run — brochures",
+    "requestDate": "2026-04-15",
+    "approvalBand": "auto",
+    "approvedBy": "standing-authority (auto band)",
+    "approvedAt": "2026-04-15"
+   },
    "po": {
     "number": "PO-261248",
     "orderDate": "2026-04-17",
@@ -15223,6 +17152,14 @@
   {
    "id": "ap-0250",
    "supplierCode": "SUP-025",
+   "requisition": {
+    "requestedBy": "Callum Osei",
+    "businessNeed": "Team need: cloud hosting — monthly",
+    "requestDate": "2026-08-03",
+    "approvalBand": "standard",
+    "approvedBy": "Callum Patel (manager)",
+    "approvedAt": "2026-08-03"
+   },
    "po": {
     "number": "PO-261249",
     "orderDate": "2026-08-06",
@@ -15276,6 +17213,14 @@
   {
    "id": "ap-0251",
    "supplierCode": "SUP-007",
+   "requisition": {
+    "requestedBy": "Beth Doyle",
+    "businessNeed": "Replacement need: electricity q bill",
+    "requestDate": "2026-05-10",
+    "approvalBand": "standard",
+    "approvedBy": "Olu Osei (manager)",
+    "approvedAt": "2026-05-12"
+   },
    "po": {
     "number": "PO-261250",
     "orderDate": "2026-05-15",
@@ -15329,6 +17274,14 @@
   {
    "id": "ap-0252",
    "supplierCode": "SUP-027",
+   "requisition": {
+    "requestedBy": "Jack Begum",
+    "businessNeed": "Office need: office rent — monthly",
+    "requestDate": "2026-04-22",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-04-22"
+   },
    "po": {
     "number": "PO-261251",
     "orderDate": "2026-04-23",
@@ -15382,6 +17335,14 @@
   {
    "id": "ap-0253",
    "supplierCode": "SUP-030",
+   "requisition": {
+    "requestedBy": "Aoife Tanaka",
+    "businessNeed": "Quarterly need: office plant maintenance — quarterly",
+    "requestDate": "2026-05-29",
+    "approvalBand": "auto",
+    "approvedBy": "standing-authority (auto band)",
+    "approvedAt": "2026-05-29"
+   },
    "po": {
     "number": "PO-261252",
     "orderDate": "2026-06-03",
@@ -15435,6 +17396,14 @@
   {
    "id": "ap-0254",
    "supplierCode": "SUP-026",
+   "requisition": {
+    "requestedBy": "Jack Okafor",
+    "businessNeed": "Team need: av equipment hire",
+    "requestDate": "2026-04-20",
+    "approvalBand": "auto",
+    "approvedBy": "standing-authority (auto band)",
+    "approvedAt": "2026-04-20"
+   },
    "po": {
     "number": "PO-261253",
     "orderDate": "2026-04-24",
@@ -15488,6 +17457,14 @@
   {
    "id": "ap-0255",
    "supplierCode": "SUP-035",
+   "requisition": {
+    "requestedBy": "Elena Patel",
+    "businessNeed": "Team need: employment law advice",
+    "requestDate": "2026-04-18",
+    "approvalBand": "standard",
+    "approvedBy": "Tom Nakamura (manager)",
+    "approvedAt": "2026-04-18"
+   },
    "po": {
     "number": "PO-261254",
     "orderDate": "2026-04-22",
@@ -15541,6 +17518,14 @@
   {
    "id": "ap-0256",
    "supplierCode": "SUP-023",
+   "requisition": {
+    "requestedBy": "Priya Osei",
+    "businessNeed": "Replacement need: electricity q bill",
+    "requestDate": "2026-08-08",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-08-09"
+   },
    "po": {
     "number": "PO-261255",
     "orderDate": "2026-08-09",
@@ -15588,6 +17573,14 @@
   {
    "id": "ap-0257",
    "supplierCode": "SUP-034",
+   "requisition": {
+    "requestedBy": "Elena Sousa",
+    "businessNeed": "Quarterly need: office cleaning — monthly",
+    "requestDate": "2026-05-26",
+    "approvalBand": "standard",
+    "approvedBy": "Elena Sousa (manager)",
+    "approvedAt": "2026-05-26"
+   },
    "po": {
     "number": "PO-261256",
     "orderDate": "2026-05-30",
@@ -15641,6 +17634,14 @@
   {
    "id": "ap-0258",
    "supplierCode": "SUP-016",
+   "requisition": {
+    "requestedBy": "Dev Shah",
+    "businessNeed": "Quarterly need: employment law advice",
+    "requestDate": "2026-03-31",
+    "approvalBand": "standard",
+    "approvedBy": "Aoife Osei (manager)",
+    "approvedAt": "2026-04-02"
+   },
    "po": {
     "number": "PO-261257",
     "orderDate": "2026-04-05",
@@ -15694,6 +17695,14 @@
   {
    "id": "ap-0259",
    "supplierCode": "SUP-035",
+   "requisition": {
+    "requestedBy": "Sam Shah",
+    "businessNeed": "Team need: employment law advice",
+    "requestDate": "2026-08-19",
+    "approvalBand": "standard",
+    "approvedBy": "Laura Carter (manager)",
+    "approvedAt": "2026-08-21"
+   },
    "po": {
     "number": "PO-261258",
     "orderDate": "2026-08-23",
@@ -15747,6 +17756,14 @@
   {
    "id": "ap-0260",
    "supplierCode": "SUP-001",
+   "requisition": {
+    "requestedBy": "Laura Nakamura",
+    "businessNeed": "New starter need: print & finishing order",
+    "requestDate": "2026-04-28",
+    "approvalBand": "auto",
+    "approvedBy": "standing-authority (auto band)",
+    "approvedAt": "2026-04-28"
+   },
    "po": {
     "number": "PO-261259",
     "orderDate": "2026-04-29",
@@ -15800,6 +17817,14 @@
   {
    "id": "ap-0261",
    "supplierCode": "SUP-011",
+   "requisition": {
+    "requestedBy": "Mei Tanaka",
+    "businessNeed": "Team need: campaign management — monthly",
+    "requestDate": "2026-08-12",
+    "approvalBand": "standard",
+    "approvedBy": "Hannah Begum (manager)",
+    "approvedAt": "2026-08-14"
+   },
    "po": {
     "number": "PO-261260",
     "orderDate": "2026-08-14",
@@ -15853,6 +17878,14 @@
   {
    "id": "ap-0262",
    "supplierCode": "SUP-025",
+   "requisition": {
+    "requestedBy": "Stefan Tanaka",
+    "businessNeed": "New starter need: design tool seats",
+    "requestDate": "2026-07-09",
+    "approvalBand": "standard",
+    "approvedBy": "Jordan Patel (manager)",
+    "approvedAt": "2026-07-09"
+   },
    "po": {
     "number": "PO-261261",
     "orderDate": "2026-07-14",
@@ -15906,6 +17939,14 @@
   {
    "id": "ap-0263",
    "supplierCode": "SUP-011",
+   "requisition": {
+    "requestedBy": "Hannah Lindqvist",
+    "businessNeed": "Office need: conference stand",
+    "requestDate": "2026-09-02",
+    "approvalBand": "standard",
+    "approvedBy": "Olu Nakamura (manager)",
+    "approvedAt": "2026-09-04"
+   },
    "po": {
     "number": "PO-261262",
     "orderDate": "2026-09-03",
@@ -15959,6 +18000,14 @@
   {
    "id": "ap-0264",
    "supplierCode": "SUP-027",
+   "requisition": {
+    "requestedBy": "Beth Vance",
+    "businessNeed": "Replacement need: electricity q bill",
+    "requestDate": "2026-07-27",
+    "approvalBand": "standard",
+    "approvedBy": "Callum Sousa (manager)",
+    "approvedAt": "2026-07-27"
+   },
    "po": {
     "number": "PO-261263",
     "orderDate": "2026-07-30",
@@ -16012,6 +18061,14 @@
   {
    "id": "ap-0265",
    "supplierCode": "SUP-008",
+   "requisition": {
+    "requestedBy": "Yusuf Marsh",
+    "businessNeed": "Quarterly need: print & finishing order",
+    "requestDate": "2026-06-09",
+    "approvalBand": "standard",
+    "approvedBy": "Tom Carter (manager)",
+    "approvedAt": "2026-06-10"
+   },
    "po": {
     "number": "PO-261264",
     "orderDate": "2026-06-12",
@@ -16091,6 +18148,14 @@
   {
    "id": "ap-0266",
    "supplierCode": "SUP-034",
+   "requisition": {
+    "requestedBy": "Laura Okafor",
+    "businessNeed": "Team need: electricity q bill",
+    "requestDate": "2026-04-02",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-04-04"
+   },
    "po": {
     "number": "PO-261265",
     "orderDate": "2026-04-04",
@@ -16157,6 +18222,14 @@
   {
    "id": "ap-0267",
    "supplierCode": "SUP-026",
+   "requisition": {
+    "requestedBy": "Chris Novak",
+    "businessNeed": "Replacement need: coffee & kitchen supplies",
+    "requestDate": "2026-04-20",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-04-22"
+   },
    "po": {
     "number": "PO-261266",
     "orderDate": "2026-04-21",
@@ -16210,6 +18283,14 @@
   {
    "id": "ap-0268",
    "supplierCode": "SUP-027",
+   "requisition": {
+    "requestedBy": "Hannah Osei",
+    "businessNeed": "New starter need: desk hire x4",
+    "requestDate": "2026-07-20",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-07-21"
+   },
    "po": {
     "number": "PO-261267",
     "orderDate": "2026-07-24",
@@ -16276,6 +18357,14 @@
   {
    "id": "ap-0269",
    "supplierCode": "SUP-039",
+   "requisition": {
+    "requestedBy": "Aoife Doyle",
+    "businessNeed": "Client project need: office rent — monthly",
+    "requestDate": "2026-05-25",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-05-27"
+   },
    "po": {
     "number": "PO-261268",
     "orderDate": "2026-05-26",
@@ -16355,6 +18444,14 @@
   {
    "id": "ap-0270",
    "supplierCode": "SUP-012",
+   "requisition": {
+    "requestedBy": "Priya Vance",
+    "businessNeed": "Replacement need: payroll bureau — monthly",
+    "requestDate": "2026-06-04",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-06-05"
+   },
    "po": {
     "number": "PO-261269",
     "orderDate": "2026-06-05",
@@ -16434,6 +18531,14 @@
   {
    "id": "ap-0271",
    "supplierCode": "SUP-033",
+   "requisition": {
+    "requestedBy": "Dev Hughes",
+    "businessNeed": "Client project need: monitor arms x4",
+    "requestDate": "2026-09-01",
+    "approvalBand": "standard",
+    "approvedBy": "Ruth Tanaka (manager)",
+    "approvedAt": "2026-09-03"
+   },
    "po": {
     "number": "PO-261270",
     "orderDate": "2026-09-02",
@@ -16500,6 +18605,14 @@
   {
    "id": "ap-0272",
    "supplierCode": "SUP-039",
+   "requisition": {
+    "requestedBy": "Tom Udo",
+    "businessNeed": "New starter need: meeting room hire",
+    "requestDate": "2026-09-06",
+    "approvalBand": "standard",
+    "approvedBy": "Aoife Osei (manager)",
+    "approvedAt": "2026-09-06"
+   },
    "po": {
     "number": "PO-261271",
     "orderDate": "2026-09-09",
@@ -16553,6 +18666,14 @@
   {
    "id": "ap-0273",
    "supplierCode": "SUP-013",
+   "requisition": {
+    "requestedBy": "Olu Reid",
+    "businessNeed": "Replacement need: flights — partner summit",
+    "requestDate": "2026-06-09",
+    "approvalBand": "standard",
+    "approvedBy": "Dev Begum (manager)",
+    "approvedAt": "2026-06-09"
+   },
    "po": {
     "number": "PO-261272",
     "orderDate": "2026-06-12",
@@ -16606,6 +18727,14 @@
   {
    "id": "ap-0274",
    "supplierCode": "SUP-032",
+   "requisition": {
+    "requestedBy": "Aoife Reid",
+    "businessNeed": "Replacement need: electricity q bill",
+    "requestDate": "2026-05-06",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-05-07"
+   },
    "po": {
     "number": "PO-261273",
     "orderDate": "2026-05-09",
@@ -16659,6 +18788,14 @@
   {
    "id": "ap-0275",
    "supplierCode": "SUP-024",
+   "requisition": {
+    "requestedBy": "Callum Osei",
+    "businessNeed": "Quarterly need: stationery order",
+    "requestDate": "2026-08-16",
+    "approvalBand": "standard",
+    "approvedBy": "Yusuf Begum (manager)",
+    "approvedAt": "2026-08-18"
+   },
    "po": {
     "number": "PO-261274",
     "orderDate": "2026-08-21",
@@ -16725,6 +18862,14 @@
   {
    "id": "ap-0276",
    "supplierCode": "SUP-026",
+   "requisition": {
+    "requestedBy": "Jack Doyle",
+    "businessNeed": "Quarterly need: office plant maintenance — quarterly",
+    "requestDate": "2026-04-11",
+    "approvalBand": "standard",
+    "approvedBy": "Olu Marsh (manager)",
+    "approvedAt": "2026-04-11"
+   },
    "po": {
     "number": "PO-261275",
     "orderDate": "2026-04-13",
@@ -16778,6 +18923,14 @@
   {
    "id": "ap-0277",
    "supplierCode": "SUP-018",
+   "requisition": {
+    "requestedBy": "Laura Shah",
+    "businessNeed": "Client project need: design tool seats",
+    "requestDate": "2026-07-08",
+    "approvalBand": "standard",
+    "approvedBy": "Jordan Tanaka (manager)",
+    "approvedAt": "2026-07-08"
+   },
    "po": {
     "number": "PO-261276",
     "orderDate": "2026-07-13",
@@ -16831,6 +18984,14 @@
   {
    "id": "ap-0278",
    "supplierCode": "SUP-004",
+   "requisition": {
+    "requestedBy": "Nadia Carter",
+    "businessNeed": "Team need: first aid restock",
+    "requestDate": "2026-09-04",
+    "approvalBand": "auto",
+    "approvedBy": "standing-authority (auto band)",
+    "approvedAt": "2026-09-04"
+   },
    "po": {
     "number": "PO-261277",
     "orderDate": "2026-09-07",
@@ -16884,6 +19045,14 @@
   {
    "id": "ap-0279",
    "supplierCode": "SUP-022",
+   "requisition": {
+    "requestedBy": "Elena Lindqvist",
+    "businessNeed": "Office need: quarterly accounts review",
+    "requestDate": "2026-04-26",
+    "approvalBand": "standard",
+    "approvedBy": "Ruth Carter (manager)",
+    "approvedAt": "2026-04-27"
+   },
    "po": {
     "number": "PO-261278",
     "orderDate": "2026-04-28",
@@ -16937,6 +19106,14 @@
   {
    "id": "ap-0280",
    "supplierCode": "SUP-020",
+   "requisition": {
+    "requestedBy": "Priya Whitfield",
+    "businessNeed": "Quarterly need: rail travel — client visits",
+    "requestDate": "2026-04-03",
+    "approvalBand": "standard",
+    "approvedBy": "Nadia Carter (manager)",
+    "approvedAt": "2026-04-05"
+   },
    "po": {
     "number": "PO-261279",
     "orderDate": "2026-04-06",
@@ -16990,6 +19167,14 @@
   {
    "id": "ap-0281",
    "supplierCode": "SUP-032",
+   "requisition": {
+    "requestedBy": "Nadia Novak",
+    "businessNeed": "Replacement need: desk hire x4",
+    "requestDate": "2026-08-07",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-08-07"
+   },
    "po": {
     "number": "PO-261280",
     "orderDate": "2026-08-10",
@@ -17056,6 +19241,14 @@
   {
    "id": "ap-0282",
    "supplierCode": "SUP-028",
+   "requisition": {
+    "requestedBy": "Jordan Udo",
+    "businessNeed": "Team need: campaign management — monthly",
+    "requestDate": "2026-06-17",
+    "approvalBand": "auto",
+    "approvedBy": "standing-authority (auto band)",
+    "approvedAt": "2026-06-17"
+   },
    "po": {
     "number": "PO-261281",
     "orderDate": "2026-06-21",
@@ -17109,6 +19302,14 @@
   {
    "id": "ap-0283",
    "supplierCode": "SUP-003",
+   "requisition": {
+    "requestedBy": "Olu Hughes",
+    "businessNeed": "Office need: trademark renewal",
+    "requestDate": "2026-04-02",
+    "approvalBand": "standard",
+    "approvedBy": "Jack Novak (manager)",
+    "approvedAt": "2026-04-02"
+   },
    "po": {
     "number": "PO-261282",
     "orderDate": "2026-04-07",
@@ -17162,6 +19363,14 @@
   {
    "id": "ap-0284",
    "supplierCode": "SUP-028",
+   "requisition": {
+    "requestedBy": "Beth Okafor",
+    "businessNeed": "Office need: campaign management — monthly",
+    "requestDate": "2026-04-04",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-04-05"
+   },
    "po": {
     "number": "PO-261283",
     "orderDate": "2026-04-06",
@@ -17241,6 +19450,14 @@
   {
    "id": "ap-0285",
    "supplierCode": "SUP-003",
+   "requisition": {
+    "requestedBy": "Jack Hughes",
+    "businessNeed": "Team need: quarterly accounts review",
+    "requestDate": "2026-06-16",
+    "approvalBand": "standard",
+    "approvedBy": "Beth Shah (manager)",
+    "approvedAt": "2026-06-17"
+   },
    "po": {
     "number": "PO-261284",
     "orderDate": "2026-06-21",
@@ -17294,6 +19511,14 @@
   {
    "id": "ap-0286",
    "supplierCode": "SUP-034",
+   "requisition": {
+    "requestedBy": "Elena Brennan",
+    "businessNeed": "Office need: meeting room hire",
+    "requestDate": "2026-08-04",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-08-04"
+   },
    "po": {
     "number": "PO-261285",
     "orderDate": "2026-08-07",
@@ -17347,6 +19572,14 @@
   {
    "id": "ap-0287",
    "supplierCode": "SUP-008",
+   "requisition": {
+    "requestedBy": "Stefan Vance",
+    "businessNeed": "New starter need: stationery order",
+    "requestDate": "2026-08-19",
+    "approvalBand": "standard",
+    "approvedBy": "Beth Marsh (manager)",
+    "approvedAt": "2026-08-21"
+   },
    "po": {
     "number": "PO-261286",
     "orderDate": "2026-08-24",
@@ -17400,6 +19633,14 @@
   {
    "id": "ap-0288",
    "supplierCode": "SUP-027",
+   "requisition": {
+    "requestedBy": "Mei Vance",
+    "businessNeed": "Replacement need: office rent — monthly",
+    "requestDate": "2026-04-23",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-04-24"
+   },
    "po": {
     "number": "PO-261287",
     "orderDate": "2026-04-24",
@@ -17453,6 +19694,14 @@
   {
    "id": "ap-0289",
    "supplierCode": "SUP-016",
+   "requisition": {
+    "requestedBy": "Tom Tanaka",
+    "businessNeed": "Replacement need: insurance premium",
+    "requestDate": "2026-07-02",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-07-02"
+   },
    "po": {
     "number": "PO-261288",
     "orderDate": "2026-07-07",
@@ -17532,6 +19781,14 @@
   {
    "id": "ap-0290",
    "supplierCode": "SUP-035",
+   "requisition": {
+    "requestedBy": "Olu Shah",
+    "businessNeed": "Quarterly need: insurance premium",
+    "requestDate": "2026-09-05",
+    "approvalBand": "standard",
+    "approvedBy": "Dev Kowalski (manager)",
+    "approvedAt": "2026-09-06"
+   },
    "po": {
     "number": "PO-261289",
     "orderDate": "2026-09-09",
@@ -17585,6 +19842,14 @@
   {
    "id": "ap-0291",
    "supplierCode": "SUP-017",
+   "requisition": {
+    "requestedBy": "Jordan Nakamura",
+    "businessNeed": "Replacement need: quarterly accounts review",
+    "requestDate": "2026-07-26",
+    "approvalBand": "auto",
+    "approvedBy": "standing-authority (auto band)",
+    "approvedAt": "2026-07-26"
+   },
    "po": {
     "number": "PO-261290",
     "orderDate": "2026-07-30",
@@ -17638,6 +19903,14 @@
   {
    "id": "ap-0292",
    "supplierCode": "SUP-030",
+   "requisition": {
+    "requestedBy": "Tom Shah",
+    "businessNeed": "New starter need: coffee & kitchen supplies",
+    "requestDate": "2026-07-10",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-07-12"
+   },
    "po": {
     "number": "PO-261291",
     "orderDate": "2026-07-14",
@@ -17704,6 +19977,14 @@
   {
    "id": "ap-0293",
    "supplierCode": "SUP-035",
+   "requisition": {
+    "requestedBy": "Laura Udo",
+    "businessNeed": "Client project need: employment law advice",
+    "requestDate": "2026-05-13",
+    "approvalBand": "standard",
+    "approvedBy": "Laura Kowalski (manager)",
+    "approvedAt": "2026-05-13"
+   },
    "po": {
     "number": "PO-261292",
     "orderDate": "2026-05-16",
@@ -17757,6 +20038,14 @@
   {
    "id": "ap-0294",
    "supplierCode": "SUP-015",
+   "requisition": {
+    "requestedBy": "Elena Begum",
+    "businessNeed": "Quarterly need: monitor arms x4",
+    "requestDate": "2026-04-13",
+    "approvalBand": "auto",
+    "approvedBy": "standing-authority (auto band)",
+    "approvedAt": "2026-04-13"
+   },
    "po": {
     "number": "PO-261293",
     "orderDate": "2026-04-18",
@@ -17810,6 +20099,14 @@
   {
    "id": "ap-0295",
    "supplierCode": "SUP-025",
+   "requisition": {
+    "requestedBy": "Stefan Udo",
+    "businessNeed": "New starter need: crm licences x10",
+    "requestDate": "2026-04-06",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-04-06"
+   },
    "po": {
     "number": "PO-261294",
     "orderDate": "2026-04-09",
@@ -17863,6 +20160,14 @@
   {
    "id": "ap-0296",
    "supplierCode": "SUP-020",
+   "requisition": {
+    "requestedBy": "Marcus Begum",
+    "businessNeed": "Office need: flights — partner summit",
+    "requestDate": "2026-08-23",
+    "approvalBand": "standard",
+    "approvedBy": "Jack Reid (manager)",
+    "approvedAt": "2026-08-25"
+   },
    "po": {
     "number": "PO-261295",
     "orderDate": "2026-08-27",
@@ -17916,6 +20221,14 @@
   {
    "id": "ap-0297",
    "supplierCode": "SUP-035",
+   "requisition": {
+    "requestedBy": "Priya Reid",
+    "businessNeed": "Quarterly need: insurance premium",
+    "requestDate": "2026-09-03",
+    "approvalBand": "standard",
+    "approvedBy": "Tom Lindqvist (manager)",
+    "approvedAt": "2026-09-04"
+   },
    "po": {
     "number": "PO-261296",
     "orderDate": "2026-09-04",
@@ -17969,6 +20282,14 @@
   {
    "id": "ap-0298",
    "supplierCode": "SUP-010",
+   "requisition": {
+    "requestedBy": "Dev Patel",
+    "businessNeed": "Replacement need: meeting room hire",
+    "requestDate": "2026-04-30",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-05-02"
+   },
    "po": {
     "number": "PO-261297",
     "orderDate": "2026-05-01",
@@ -18048,6 +20369,14 @@
   {
    "id": "ap-0299",
    "supplierCode": "SUP-019",
+   "requisition": {
+    "requestedBy": "Priya Nakamura",
+    "businessNeed": "Team need: crm licences x10",
+    "requestDate": "2026-07-16",
+    "approvalBand": "standard",
+    "approvedBy": "Elena Novak (manager)",
+    "approvedAt": "2026-07-18"
+   },
    "po": {
     "number": "PO-261298",
     "orderDate": "2026-07-19",
@@ -18101,6 +20430,14 @@
   {
    "id": "ap-0300",
    "supplierCode": "SUP-019",
+   "requisition": {
+    "requestedBy": "Callum Doyle",
+    "businessNeed": "Client project need: ci runner minutes",
+    "requestDate": "2026-08-23",
+    "approvalBand": "director",
+    "approvedBy": "Finance Director",
+    "approvedAt": "2026-08-24"
+   },
    "po": {
     "number": "PO-261299",
     "orderDate": "2026-08-27",
