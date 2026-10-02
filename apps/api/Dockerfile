@@ -10,4 +10,5 @@ RUN pnpm --filter @af/shared build && pnpm --filter @af/db build && pnpm --filte
 
 ENV NODE_ENV=production
 ENV PORT=3001
-CMD ["node", "apps/api/dist/server.js"]
+# Load the demo dataset on boot (idempotent: self-skips once loaded; deterministic, no LLM).
+CMD ["sh", "-c", "node apps/api/dist/scripts/loadDataset.js || echo 'loader skipped/failed (non-fatal)'; node apps/api/dist/server.js"]

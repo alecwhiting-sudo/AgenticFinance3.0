@@ -146,6 +146,10 @@ ANTHROPIC_API_KEY is configured; daily drip wires in with P2P M5.)*
 - Real auth and role separation, security review, backups/DR, real bank/payment
   rails, data migration from demo, go-live checklist. **Deliberately not
   designed yet** — revisit when the business is ready (~3 months).
+- Database: demo runs Railway's managed Postgres (full standard Postgres,
+  private network, no cold starts). Evaluate **Neon** at this phase for
+  branching + point-in-time restore; we use plain Postgres only, so migration
+  is pg_dump/restore + a DATABASE_URL swap.
 
 ## 5. Build order rationale
 
