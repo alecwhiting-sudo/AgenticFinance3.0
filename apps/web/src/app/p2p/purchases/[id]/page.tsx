@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getJson } from "@/lib/api";
+import { getJson, PUBLIC_API_URL } from "@/lib/api";
 import { Badge, Card, SectionTitle, toneForStatus } from "@/components/ui";
 
 type Detail = {
@@ -27,6 +27,7 @@ type Detail = {
     grossMinor: number;
     status: string;
     exceptionCode: string | null;
+    documentPath: string | null;
   }[];
 };
 
@@ -38,7 +39,7 @@ export default async function PurchasePage({ params }: { params: Promise<{ id: s
   if (!d) return <main>Purchase not found.</main>;
   const p = d.purchase;
 
-  const thread: { when: string | null; what: string; who: string }[] = [
+  const thread: { when: string | null; what: string; who: string; doc?: string | null }[] = [
     { when: p.requestDate, what: `Requested — ${p.businessNeed}`, who: p.requestedBy },
     ...(p.approvedAt
       ? [{
@@ -56,6 +57,7 @@ export default async function PurchasePage({ params }: { params: Promise<{ id: s
       when: i.invoiceDate,
       what: `Invoice ${i.supplierInvoiceNumber} (${gbp(i.grossMinor)}) — ${i.status}${i.exceptionCode ? ` · ${i.exceptionCode}` : ""}`,
       who: d.supplier?.name ?? "supplier",
+      doc: i.documentPath,
     })),
   ];
 
@@ -71,6 +73,17 @@ export default async function PurchasePage({ params }: { params: Promise<{ id: s
             One record from intent to payment — requisition and PO are the same thing here.
           </p>
         </div>
+        <span className="flex gap-2">
+        {p.documentPath && (
+          <a
+            href={`${PUBLIC_API_URL}/${p.documentPath}`}
+            target="_blank"
+            className="rounded-lg border px-3 py-1.5 text-sm"
+            style={{ borderColor: "var(--border)" }}
+          >
+            PO PDF ↗
+          </a>
+        )}
         <Link
           href={`/p2p/purchases/${p.id}/view`}
           className="rounded-lg border px-3 py-1.5 text-sm"
@@ -78,6 +91,7 @@ export default async function PurchasePage({ params }: { params: Promise<{ id: s
         >
           Supplier view ↗
         </Link>
+        </span>
       </section>
 
       <section className="grid gap-4 md:grid-cols-2">
@@ -90,7 +104,19 @@ export default async function PurchasePage({ params }: { params: Promise<{ id: s
                   className="absolute -left-[5px] mt-1.5 inline-block h-2.5 w-2.5 rounded-full"
                   style={{ background: t.when ? "var(--accent)" : "var(--border)" }}
                 />
-                <div className="text-sm">{t.what}</div>
+                <div className="text-sm">
+                  {t.what}
+                  {t.doc && (
+                    <a
+                      href={`${PUBLIC_API_URL}/${t.doc}`}
+                      target="_blank"
+                      className="ml-2 text-xs hover:underline"
+                      style={{ color: "var(--accent)" }}
+                    >
+                      PDF ↗
+                    </a>
+                  )}
+                </div>
                 <div className="text-xs" style={{ color: "var(--muted)" }}>
                   {t.when ?? "pending"}{t.who ? ` · ${t.who}` : ""}
                 </div>

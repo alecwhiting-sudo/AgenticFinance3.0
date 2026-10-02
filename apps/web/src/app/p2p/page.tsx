@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getJson } from "@/lib/api";
+import { getJson, PUBLIC_API_URL } from "@/lib/api";
 import { Badge, Card, SectionTitle, Stat, toneForStatus } from "@/components/ui";
 import DripButton from "@/components/DripButton";
 
@@ -17,6 +17,7 @@ type Invoice = {
   grossMinor: number;
   status: string;
   exceptionCode: string | null;
+  documentPath: string | null;
 };
 type Purchase = {
   id: string;
@@ -86,7 +87,13 @@ export default async function P2PPage() {
                 <div>
                   <Badge tone="warn">{i.exceptionCode}</Badge>{" "}
                   <span className="font-medium">{i.supplierName}</span>{" "}
-                  <span style={{ color: "var(--muted)" }}>{i.supplierInvoiceNumber}</span>
+                  {i.documentPath ? (
+                    <a href={`${PUBLIC_API_URL}/${i.documentPath}`} target="_blank" className="hover:underline" style={{ color: "var(--muted)" }}>
+                      {i.supplierInvoiceNumber} ↗
+                    </a>
+                  ) : (
+                    <span style={{ color: "var(--muted)" }}>{i.supplierInvoiceNumber}</span>
+                  )}
                 </div>
                 <span className="tabular-nums">{gbp(i.grossMinor)}</span>
               </li>

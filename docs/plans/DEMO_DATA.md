@@ -71,3 +71,11 @@ complete.
   extraction look hard).
 - Drip scheduling mechanics (cron work item vs manual "advance a day" button —
   leaning button: more control mid-demo).
+
+## Additive format mix (agreed 2026-10-02 — keep all current documents)
+
+On top of the existing 300 PDF invoices, a later Studio run ADDS:
+- ~110 **Peppol/UBL XML e-invoices** (tiny files; flow through intake
+  deterministically — the demo contrast to PDF extraction).
+- ~15–20 **scan-style image PDFs** (rasterised, no text layer) — bigger files,
+  worth it: they force the vision/LLM extraction path. Illustrative volumes.

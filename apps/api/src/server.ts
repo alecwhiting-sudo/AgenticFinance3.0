@@ -1,4 +1,7 @@
 import cors from "@fastify/cors";
+import fastifyStatic from "@fastify/static";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import Fastify from "fastify";
 import { count, eq } from "drizzle-orm";
 import { account, customer, item, supplier } from "@af/db";
@@ -17,6 +20,13 @@ const SERVICE = "api";
 
 const app = Fastify({ logger: { level: process.env.LOG_LEVEL ?? "info" } });
 await app.register(cors, { origin: true });
+
+// Serve the demo evidence documents (D10): PDFs/emails/CSVs from the repo.
+await app.register(fastifyStatic, {
+  root: path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../packages/db/seed/documents"),
+  prefix: "/documents/",
+  decorateReply: false,
+});
 
 app.setErrorHandler((err: unknown, _req, reply) => {
   if (err instanceof ZodError) {
