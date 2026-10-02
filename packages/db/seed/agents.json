@@ -108,7 +108,8 @@
       }
      ]
     }
-   ]
+   ],
+   "process": "platform"
   },
   {
    "slug": "transaction-generator",
@@ -127,7 +128,8 @@
     "notes": "v1 pipelines are deterministic (pnpm studio:generate/render/validate). LLM enrichment of email/contract prose becomes a release change when ANTHROPIC_API_KEY is configured."
    },
    "workItemTypes": [],
-   "evalCases": []
+   "evalCases": [],
+   "process": "platform"
   },
   {
    "slug": "purchase-request",
@@ -216,7 +218,8 @@
       }
      ]
     }
-   ]
+   ],
+   "process": "p2p"
   },
   {
    "slug": "invoice-extraction",
@@ -295,7 +298,8 @@
       }
      ]
     }
-   ]
+   ],
+   "process": "p2p"
   },
   {
    "slug": "invoice-exception",
@@ -392,7 +396,8 @@
       }
      ]
     }
-   ]
+   ],
+   "process": "p2p"
   },
   {
    "slug": "reconciliation",
@@ -505,7 +510,8 @@
       }
      ]
     }
-   ]
+   ],
+   "process": "r2r"
   },
   {
    "slug": "close",
@@ -590,7 +596,8 @@
       }
      ]
     }
-   ]
+   ],
+   "process": "r2r"
   },
   {
    "slug": "cash-application",
@@ -716,7 +723,8 @@
       }
      ]
     }
-   ]
+   ],
+   "process": "o2c"
   },
   {
    "slug": "collections",
@@ -788,7 +796,8 @@
       }
      ]
     }
-   ]
+   ],
+   "process": "o2c"
   }
  ]
 }

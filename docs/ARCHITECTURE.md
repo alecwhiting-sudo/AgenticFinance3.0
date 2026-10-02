@@ -4,6 +4,11 @@
 **Source inspiration:** `research/Finance-Agent-Framework-Research.html`
 (deliberately simplified; see §9 for what was dropped and why).
 
+> **Living diagram:** `docs/architecture.html` renders this document's system
+> view and the schema map (served in-app at `<api>/docs/architecture.html`,
+> linked from Admin). Update it in the same commit as any structural change
+> here — the diagram and this file must never disagree.
+
 ## 1. Shape of the system
 
 Three deployables on Railway plus one database. A modular monolith split only

@@ -1,0 +1,1 @@
+ALTER TABLE "agent"."agent" ADD COLUMN "process" text DEFAULT 'platform' NOT NULL;

@@ -6,8 +6,9 @@ An agentic finance function for a small business: a mini ERP/EPM on PostgreSQL,
 an agent framework (registry, versioned skills/releases, work queue, command
 gateway, evals), and a workbench front end — demo-first, production later.
 **Source of truth:** `docs/MASTER_PLAN.md` (phases, scope) and
-`docs/ARCHITECTURE.md` (design, decisions D1–D10). Read both before structural
-changes. Per-process plans live in `docs/plans/`.
+`docs/ARCHITECTURE.md` (design, decisions D1–D13). Read both before structural
+changes, and update `docs/architecture.html` (the living diagram) in the same
+commit as any structural change. Per-process plans live in `docs/plans/`.
 
 ## Layout
 

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import DripButton from "@/components/DripButton";
+import { PUBLIC_API_URL } from "@/lib/api";
 import AdminData from "@/components/AdminData";
 import { Card, SectionTitle } from "@/components/ui";
 
@@ -16,6 +17,22 @@ export default function AdminPage() {
       </section>
 
       <AdminData />
+
+      <Card>
+        <SectionTitle>Architecture</SectionTitle>
+        <p className="text-sm" style={{ color: "var(--muted)" }}>
+          The living system diagram and schema map, maintained alongside the
+          architecture doc —{" "}
+          <a
+            href={`${PUBLIC_API_URL}/docs/architecture.html`}
+            target="_blank"
+            className="hover:underline"
+            style={{ color: "var(--accent)" }}
+          >
+            open the diagram ↗
+          </a>
+        </p>
+      </Card>
 
       <Card>
         <SectionTitle>Drip a transaction</SectionTitle>

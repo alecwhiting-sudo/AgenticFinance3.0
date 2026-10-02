@@ -161,6 +161,22 @@ ANTHROPIC_API_KEY is configured; daily drip wires in with P2P M5.)*
   contracts/billing push the business event and its accounting together
   through the one pipe.
 
+### Phase 4c — Analytics & natural-language reporting (planned; before PM)
+- A reporting layer for exploring ALL platform data, not just the fixed
+  statements: pick any dimension (account, supplier, customer, period,
+  object, agent), slice/pivot, and chart it (trend, bar, waterfall for flux,
+  aging curves). Derived aggregations over LES/journal lines only — the
+  reporting layer never recalculates economics, and every chart drills to
+  the underlying movements/events.
+- **Natural-language analytics:** an Analyst Agent that turns questions
+  ("why did software costs jump in September?", "top 5 customers by overdue
+  balance") into governed read-only queries over curated views, answers with
+  the chart + the figures, and cites the drill path. Read-only by
+  construction; query shapes constrained to the curated views (no raw SQL
+  from the model against the platform).
+- Saved views land on a dashboard; the Close Agent's commentary upgrade
+  (plans/R2R.md §9) feeds off the same layer.
+
 ### Phase 5 — Performance Management
 - Per its own plan: driver-based budget and forecast on the EPM tables,
   actuals-vs-budget variance, **Forecast Preparation Agent** gathering

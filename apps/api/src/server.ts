@@ -31,6 +31,12 @@ await app.register(fastifyStatic, {
   prefix: "/documents/",
   decorateReply: false,
 });
+// The living architecture diagram + docs, viewable from the workbench.
+await app.register(fastifyStatic, {
+  root: path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../docs"),
+  prefix: "/docs/",
+  decorateReply: false,
+});
 
 app.setErrorHandler((err: unknown, _req, reply) => {
   if (err instanceof ZodError) {
@@ -105,4 +111,10 @@ o2cRoutes(app);
 const port = Number(process.env.PORT ?? 3001);
 // "::" = dual-stack: Railway private networking is IPv6-only, so an
 // IPv4-only bind makes api.railway.internal unreachable from the worker.
-await app.listen({ port, host: "::" });
+// Environments without IPv6 (some sandboxes) fall back to IPv4.
+try {
+  await app.listen({ port, host: "::" });
+} catch (err) {
+  if ((err as NodeJS.ErrnoException).code !== "EAFNOSUPPORT") throw err;
+  await app.listen({ port, host: "0.0.0.0" });
+}

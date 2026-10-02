@@ -157,6 +157,8 @@ export const agent = ag.table("agent", {
   name: text("name").notNull(),
   purpose: text("purpose").notNull(),
   owner: text("owner").notNull(),
+  /** Process family (modules are families for agents, D13): p2p | r2r | o2c | pm | platform */
+  process: text("process").notNull().default("platform"),
   status: agentStatus("status").notNull().default("active"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

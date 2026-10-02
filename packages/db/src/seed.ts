@@ -9,7 +9,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import type { Db } from "./client.js";
 import {
   account,
@@ -111,6 +111,7 @@ type AgentSeed = {
     name: string;
     purpose: string;
     owner: string;
+    process?: string;
     release: {
       instructions: string;
       skills: string[];
@@ -165,12 +166,15 @@ for (const s of agentData.skills) {
 for (const a of agentData.agents) {
   const [row] = await db
     .insert(agent)
-    .values({ slug: a.slug, name: a.name, purpose: a.purpose, owner: a.owner })
+    .values({ slug: a.slug, name: a.name, purpose: a.purpose, owner: a.owner, process: a.process ?? "platform" })
     .onConflictDoNothing({ target: agent.slug })
     .returning();
   const agentRow =
     row ?? (await db.query.agent.findFirst({ where: (t, { eq }) => eq(t.slug, a.slug) }));
   if (!agentRow) throw new Error(`agent ${a.slug} missing`);
+  // keep the process family current for agents seeded before the column existed
+  if (!row && a.process && agentRow.process !== a.process)
+    await db.update(agent).set({ process: a.process }).where(eq(agent.id, agentRow.id));
 
   const existingRelease = await db.query.agentRelease.findFirst({
     where: (t, { and, eq }) => and(eq(t.agentId, agentRow.id), eq(t.version, 1)),

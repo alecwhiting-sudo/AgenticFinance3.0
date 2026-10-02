@@ -5,6 +5,7 @@ RUN corepack enable
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml tsconfig.base.json ./
 COPY packages ./packages
 COPY apps/api ./apps/api
+COPY docs ./docs
 RUN pnpm install --frozen-lockfile --filter @af/api...
 RUN pnpm --filter @af/shared build && pnpm --filter @af/db build && pnpm --filter @af/api build
 
