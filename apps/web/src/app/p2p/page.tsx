@@ -4,7 +4,6 @@ import { getJson } from "@/lib/api";
 import { money } from "@/lib/format";
 import { ApiDownBanner } from "@/components/Chrome";
 import { Badge, Card, SectionTitle, Stat, toneForStatus } from "@/components/ui";
-import DripButton from "@/components/DripButton";
 
 export const metadata: Metadata = { title: "P2P" };
 
@@ -79,7 +78,6 @@ export default async function P2PPage() {
           >
             Payments &amp; reconciliation
           </Link>
-          <DripButton />
         </span>
       </section>
 

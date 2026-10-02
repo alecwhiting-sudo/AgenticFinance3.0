@@ -17,6 +17,7 @@ const nav = [
   { href: "/reports", label: "Reports" },
   { href: "/work", label: "Work" },
   { href: "/approvals", label: "Approvals" },
+  { href: "/admin", label: "Admin" },
 ];
 
 export default function RootLayout({

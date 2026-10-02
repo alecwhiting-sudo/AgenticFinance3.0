@@ -16,6 +16,7 @@ import { p2pRoutes } from "./routes/p2p.js";
 import { dripRoutes } from "./routes/drip.js";
 import { paymentRoutes } from "./routes/payments.js";
 import { r2rRoutes } from "./routes/r2r.js";
+import { adminRoutes } from "./routes/admin.js";
 
 const VERSION = "0.2.0";
 const SERVICE = "api";
@@ -97,6 +98,7 @@ p2pRoutes(app);
 dripRoutes(app);
 paymentRoutes(app);
 r2rRoutes(app);
+adminRoutes(app);
 
 const port = Number(process.env.PORT ?? 3001);
 await app.listen({ port, host: "0.0.0.0" });
