@@ -99,7 +99,7 @@ ANTHROPIC_API_KEY is configured; daily drip wires in with P2P M5.)*
 - **Demo moment:** edit a skill in the UI → new version → run evals → promote
   → watch the generator agent work live in the activity feed and transcript.
 
-### Phase 2 — Mini ERP core + P2P (first real process)
+### Phase 2 — Mini ERP core + P2P (first real process) ✅ built 2026-10-02
 - ERP core: entities/periods, chart of accounts, GL journal + trial balance,
   supplier master, document store.
 - P2P per its own plan (`docs/plans/P2P.md` v2 — the **unified Purchase

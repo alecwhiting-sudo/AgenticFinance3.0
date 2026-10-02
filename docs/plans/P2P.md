@@ -180,17 +180,17 @@ re-approval of already-approved spend. The demo narrates this absence.
 
 ## 9. Milestones (each demo-ready)
 
-1. **M1 — Purchase model + match:** `purchase`/receipt/invoice/bank tables
+1. **M1 — Purchase model + match:** ✅ `purchase`/receipt/invoice/bank tables
    with state machines, approval router + policy bands, category budgets,
    3-way match + duplicate check (unit-tested); load the Studio dataset
    through the intake services; pipeline view reads real statuses.
-2. **M2 — Intake:** Purchase Request Agent (free-text → structured purchase,
+2. **M2 — Intake:** ✅ Purchase Request Agent (free-text → structured purchase,
    deterministic fallback first), approval tasks in the workbench, supplier
    view rendering.
-3. **M3 — Capture + exceptions:** document intake queue, Invoice Extraction
+3. **M3 — Capture + exceptions:** ✅ document intake queue, Invoice Extraction
    Agent, cases, Invoice Exception Agent, `ap.invoice.resolve` approvals,
    posting + TB view.
-4. **M4 — Straight-through + payments:** scheduler, simulated settlement,
+4. **M4 — Straight-through + payments:** ✅ scheduler, simulated settlement,
    bank feed + reconciliation matcher; demonstrate the zero-touch clean path.
-5. **M5 — Polish:** P2P flow view wired to live events, drip button, eval
+5. **M5 — Polish:** ✅ P2P flow view wired to live events, drip button, eval
    suites per §7.

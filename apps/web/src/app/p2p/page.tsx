@@ -59,6 +59,13 @@ export default async function P2PPage() {
         </div>
         <span className="flex items-center gap-3">
           <Link
+            href="/p2p/flow"
+            className="rounded-lg border px-3 py-1.5 text-sm font-medium"
+            style={{ borderColor: "var(--accent)", color: "var(--accent)" }}
+          >
+            Live flow
+          </Link>
+          <Link
             href="/p2p/payments"
             className="rounded-lg border px-3 py-1.5 text-sm"
             style={{ borderColor: "var(--border)" }}
