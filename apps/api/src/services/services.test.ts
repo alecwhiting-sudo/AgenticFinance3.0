@@ -1,0 +1,141 @@
+import { describe, expect, it } from "vitest";
+import { approvalBandFor, priceWithinTolerance } from "./policy.js";
+import { isDuplicate, threeWayMatch } from "./match.js";
+import { apInvoiceJournalLines, validateJournalLines } from "./posting.js";
+import type { PurchaseLine } from "@af/db";
+
+const line = (over: Partial<PurchaseLine> = {}): PurchaseLine => ({
+  lineNo: 1,
+  description: "Thing",
+  qty: 10,
+  unitPriceMinor: 10_000,
+  accountCode: "6200",
+  ...over,
+});
+
+describe("approval bands (approve once, at intent)", () => {
+  it("auto band at and under £500 for known suppliers", () => {
+    expect(approvalBandFor(50_000, true)).toBe("auto");
+    expect(approvalBandFor(49_999, true)).toBe("auto");
+  });
+  it("standard band to £5,000", () => {
+    expect(approvalBandFor(50_001, true)).toBe("standard");
+    expect(approvalBandFor(500_000, true)).toBe("standard");
+  });
+  it("director above £5,000", () => expect(approvalBandFor(500_001, true)).toBe("director"));
+  it("new supplier always goes to director, even small spend", () =>
+    expect(approvalBandFor(1_000, false)).toBe("director"));
+});
+
+describe("price tolerance (±1% or ±£5, whichever lower)", () => {
+  it("1% governs under £500 unit price", () => {
+    expect(priceWithinTolerance(10_000, 10_100)).toBe(true); // +1% exactly
+    expect(priceWithinTolerance(10_000, 10_101)).toBe(false);
+  });
+  it("£5 cap governs on expensive units", () => {
+    expect(priceWithinTolerance(200_000, 200_500)).toBe(true); // +£5
+    expect(priceWithinTolerance(200_000, 200_600)).toBe(false); // 1% would allow £20
+  });
+});
+
+describe("3-way match", () => {
+  const approved = { status: "approved", lines: [line()] };
+  const fullReceipt = new Map([[1, 10]]);
+
+  it("clean invoice matches", () => {
+    expect(threeWayMatch({ purchase: approved, received: fullReceipt, invoiceLines: [line()] })).toEqual({
+      result: "matched",
+    });
+  });
+  it("no purchase record", () => {
+    const r = threeWayMatch({ purchase: null, received: null, invoiceLines: [line()] });
+    expect(r).toMatchObject({ result: "exception", code: "no_purchase" });
+  });
+  it("unapproved purchase is not a commitment", () => {
+    const r = threeWayMatch({
+      purchase: { status: "requested", lines: [line()] },
+      received: fullReceipt,
+      invoiceLines: [line()],
+    });
+    expect(r).toMatchObject({ result: "exception", code: "no_purchase" });
+  });
+  it("missing receipt", () => {
+    const r = threeWayMatch({ purchase: approved, received: null, invoiceLines: [line()] });
+    expect(r).toMatchObject({ result: "exception", code: "missing_receipt" });
+  });
+  it("price variance beyond tolerance", () => {
+    const r = threeWayMatch({
+      purchase: approved,
+      received: fullReceipt,
+      invoiceLines: [line({ unitPriceMinor: 11_000 })],
+    });
+    expect(r).toMatchObject({ result: "exception", code: "price_variance" });
+  });
+  it("invoiced 100 received 80", () => {
+    const r = threeWayMatch({
+      purchase: { status: "approved", lines: [line({ qty: 100 })] },
+      received: new Map([[1, 80]]),
+      invoiceLines: [line({ qty: 100 })],
+    });
+    expect(r).toMatchObject({ result: "exception", code: "qty_short_receipt" });
+  });
+  it("invoicing less than received is fine (part billing)", () => {
+    const r = threeWayMatch({
+      purchase: { status: "approved", lines: [line({ qty: 10 })] },
+      received: fullReceipt,
+      invoiceLines: [line({ qty: 8 })],
+    });
+    expect(r).toEqual({ result: "matched" });
+  });
+});
+
+describe("duplicate detection", () => {
+  const existing = [{ supplierInvoiceNumber: "ABC-1", grossMinor: 12_000, invoiceDate: "2026-05-01" }];
+  it("same supplier invoice number", () => {
+    expect(
+      isDuplicate({ supplierInvoiceNumber: "ABC-1", grossMinor: 99, invoiceDate: "2026-07-01" }, existing).duplicate,
+    ).toBe(true);
+  });
+  it("same amount within window", () => {
+    expect(
+      isDuplicate({ supplierInvoiceNumber: "ABC-2", grossMinor: 12_000, invoiceDate: "2026-05-08" }, existing).duplicate,
+    ).toBe(true);
+  });
+  it("same amount outside window is fine", () => {
+    expect(
+      isDuplicate({ supplierInvoiceNumber: "ABC-2", grossMinor: 12_000, invoiceDate: "2026-06-20" }, existing).duplicate,
+    ).toBe(false);
+  });
+});
+
+describe("posting rules", () => {
+  it("rejects unbalanced journals", () => {
+    expect(
+      validateJournalLines([
+        { accountCode: "6200", amountMinor: 100 },
+        { accountCode: "2000", amountMinor: -99 },
+      ]),
+    ).toMatch(/balance/);
+  });
+  it("rejects single-line and zero-amount journals", () => {
+    expect(validateJournalLines([{ accountCode: "6200", amountMinor: 100 }])).toBeTruthy();
+    expect(
+      validateJournalLines([
+        { accountCode: "6200", amountMinor: 0 },
+        { accountCode: "2000", amountMinor: 0 },
+      ]),
+    ).toBeTruthy();
+  });
+  it("AP invoice journal: DR expenses by account, DR VAT, CR payables, balanced", () => {
+    const lines = apInvoiceJournalLines({
+      lines: [line({ accountCode: "6200", qty: 1, unitPriceMinor: 10_000 }), line({ lineNo: 2, accountCode: "6400", qty: 2, unitPriceMinor: 5_000 })],
+      vatMinor: 4_000,
+      grossMinor: 24_000,
+    });
+    expect(lines.reduce((n, l) => n + l.amountMinor, 0)).toBe(0);
+    expect(lines.find((l) => l.accountCode === "6200")!.amountMinor).toBe(10_000);
+    expect(lines.find((l) => l.accountCode === "6400")!.amountMinor).toBe(10_000);
+    expect(lines.find((l) => l.accountCode === "2200")!.amountMinor).toBe(4_000);
+    expect(lines.find((l) => l.accountCode === "2000")!.amountMinor).toBe(-24_000);
+  });
+});

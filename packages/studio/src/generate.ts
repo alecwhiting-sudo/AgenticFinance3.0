@@ -145,9 +145,6 @@ export function generate(seed = 20261001, apCount = 300, arCount = 400): Dataset
     } else if (exception === "no_purchase") {
       hasPo = false;
       hasGrn = false;
-    } else if (exception === "duplicate_suspect" && duplicateOf) {
-      // re-issue a previous invoice under a new chain
-      invNumber = duplicateOf.invoice.number;
     }
 
     const netMinor = money(invLines);
@@ -203,11 +200,33 @@ export function generate(seed = 20261001, apCount = 300, arCount = 400): Dataset
       paidDate: null,
     };
     if (exception === "duplicate_suspect" && !duplicateOf) {
-      // first duplicate candidate becomes the "original"; mark next one
+      // first duplicate candidate becomes the "original"; the next one re-bills it
       chain.exception = null;
       duplicateOf = chain;
+    } else if (exception === "duplicate_suspect" && duplicateOf) {
+      // A true duplicate: the SAME supplier re-bills the same amount a few
+      // days after the original, under a fresh invoice number (caught by the
+      // amount+date-window heuristic, plans/P2P.md §3). rngReq keeps the main
+      // stream stable for all other chains.
+      const orig = duplicateOf;
+      chain.supplierCode = orig.supplierCode;
+      chain.invoice.lines = orig.invoice.lines.map((l) => ({ ...l }));
+      chain.invoice.netMinor = orig.invoice.netMinor;
+      chain.invoice.vatMinor = orig.invoice.vatMinor;
+      chain.invoice.grossMinor = orig.invoice.grossMinor;
+      chain.invoice.invoiceDate = addDays(orig.invoice.invoiceDate, int(rngReq, 2, 8));
+      chain.invoice.dueDate = addDays(chain.invoice.invoiceDate, 30);
+      const origPrefix = orig.invoice.number.split("-")[0]!;
+      chain.invoice.number = `${origPrefix}-${int(rngReq, 10000, 99999)}`;
+      chain.invoice.file = `documents/ap/${chain.id}-${chain.invoice.number}.pdf`;
+      const origSupplier = suppliers.find((x) => x.code === orig.supplierCode)!;
+      chain.email = buildApEmail(
+        rngReq, chain.id, origSupplier.name, origSupplier.email,
+        chain.invoice.number, chain.invoice.invoiceDate, "duplicate_suspect",
+      );
+      chain.email.subject = `Invoice ${chain.invoice.number} (resend)`;
+      duplicateOf = null;
     }
-    if (exception === "duplicate_suspect" && duplicateOf && chain !== duplicateOf) duplicateOf = null;
 
     // clean invoices due before mid-Sep get paid on (or near) the due date
     if (!chain.exception && chain.invoice.dueDate < "2026-09-15") {

@@ -9,6 +9,7 @@ import { agentRoutes } from "./routes/agents.js";
 import { workRoutes } from "./routes/work.js";
 import { commandRoutes } from "./routes/commands.js";
 import { activityRoutes } from "./routes/activity.js";
+import { p2pRoutes } from "./routes/p2p.js";
 
 const VERSION = "0.2.0";
 const SERVICE = "api";
@@ -79,6 +80,7 @@ agentRoutes(app);
 workRoutes(app);
 commandRoutes(app);
 activityRoutes(app);
+p2pRoutes(app);
 
 const port = Number(process.env.PORT ?? 3001);
 await app.listen({ port, host: "0.0.0.0" });

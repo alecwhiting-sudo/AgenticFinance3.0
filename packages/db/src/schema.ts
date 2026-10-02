@@ -329,3 +329,160 @@ export const caseEvent = ev.table("case_event", {
   kind: text("kind").notNull(), // note | decision | document | command | status_change
   detail: jsonb("detail").$type<Record<string, unknown>>().notNull().default({}),
 });
+
+/* ------------------------------------------------------------------ */
+/* erp: GL + P2P (unified Purchase model — plans/P2P.md §2, D12)       */
+/* ------------------------------------------------------------------ */
+
+export const journalStatus = erp.enum("journal_status", ["draft", "posted", "reversed"]);
+
+export const journal = erp.table("journal", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  companyId: uuid("company_id").notNull().references(() => company.id),
+  number: integer("number").notNull().unique(), // sequential, assigned at posting
+  journalDate: date("journal_date").notNull(),
+  periodCode: text("period_code").notNull(), // e.g. 2026-04
+  memo: text("memo").notNull(),
+  sourceType: text("source_type").notNull(), // ap_invoice | ap_payment | manual | ...
+  sourceId: text("source_id").notNull(),
+  status: journalStatus("status").notNull().default("posted"),
+  reversesJournalId: uuid("reverses_journal_id"),
+  postedBy: text("posted_by").notNull(),
+  postedAt: timestamp("posted_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [unique("journal_source_unique").on(t.sourceType, t.sourceId)]);
+
+export const journalLine = erp.table("journal_line", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  journalId: uuid("journal_id").notNull().references(() => journal.id),
+  lineNo: integer("line_no").notNull(),
+  accountCode: text("account_code").notNull(),
+  // signed minor units: positive = debit, negative = credit; sum per journal = 0
+  amountMinor: integer("amount_minor").notNull(),
+  memo: text("memo"),
+});
+
+export const purchaseStatus = erp.enum("purchase_status", [
+  "requested",
+  "approved",
+  "partially_received",
+  "received",
+  "closed",
+  "rejected",
+  "cancelled",
+]);
+export const approvalBand = erp.enum("approval_band", ["auto", "standard", "director"]);
+
+export type PurchaseLine = {
+  lineNo: number;
+  description: string;
+  qty: number;
+  unitPriceMinor: number;
+  accountCode: string;
+};
+
+/** The unified Purchase: requisition and PO are one record (D12). */
+export const purchase = erp.table("purchase", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  number: text("number").notNull().unique(), // PO-26xxxx — doubles as the supplier-facing reference
+  supplierId: uuid("supplier_id").notNull().references(() => supplier.id),
+  requestedBy: text("requested_by").notNull(),
+  businessNeed: text("business_need").notNull(),
+  requestDate: date("request_date").notNull(),
+  approvalBand: approvalBand("approval_band"),
+  approvedBy: text("approved_by"),
+  approvedAt: timestamp("approved_at", { withTimezone: true }),
+  orderDate: date("order_date"), // set at approval — when the supplier view is issued
+  lines: jsonb("lines").$type<PurchaseLine[]>().notNull(),
+  totalMinor: integer("total_minor").notNull(), // ex VAT
+  status: purchaseStatus("status").notNull().default("requested"),
+  documentPath: text("document_path"), // rendered supplier view
+  caseId: uuid("case_id"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const goodsReceipt = erp.table("goods_receipt", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  number: text("number").notNull().unique(),
+  purchaseId: uuid("purchase_id").notNull().references(() => purchase.id),
+  receiptDate: date("receipt_date").notNull(),
+  /** qty received per purchase line, keyed by lineNo */
+  quantities: jsonb("quantities").$type<{ lineNo: number; qtyReceived: number }[]>().notNull(),
+  recordedBy: text("recorded_by").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const apInvoiceStatus = erp.enum("ap_invoice_status", [
+  "captured",
+  "matched",
+  "exception",
+  "approved",
+  "posted",
+  "scheduled",
+  "paid",
+  "rejected",
+]);
+
+export const apInvoice = erp.table("ap_invoice", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  supplierId: uuid("supplier_id").notNull().references(() => supplier.id),
+  supplierInvoiceNumber: text("supplier_invoice_number").notNull(),
+  purchaseId: uuid("purchase_id").references(() => purchase.id),
+  invoiceDate: date("invoice_date").notNull(),
+  dueDate: date("due_date").notNull(),
+  lines: jsonb("lines").$type<PurchaseLine[]>().notNull(),
+  netMinor: integer("net_minor").notNull(),
+  vatMinor: integer("vat_minor").notNull(),
+  grossMinor: integer("gross_minor").notNull(),
+  status: apInvoiceStatus("status").notNull().default("captured"),
+  exceptionCode: text("exception_code"),
+  caseId: uuid("case_id"),
+  documentPath: text("document_path"),
+  emailPath: text("email_path"),
+  journalId: uuid("journal_id"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [unique("ap_invoice_supplier_number").on(t.supplierId, t.supplierInvoiceNumber)]);
+
+export const apPaymentStatus = erp.enum("ap_payment_status", [
+  "proposed",
+  "approved",
+  "executed",
+  "reconciled",
+  "rejected",
+]);
+
+export const apPayment = erp.table("ap_payment", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  paymentRef: text("payment_ref").notNull().unique(),
+  runDate: date("run_date").notNull(),
+  invoiceIds: jsonb("invoice_ids").$type<string[]>().notNull(),
+  totalMinor: integer("total_minor").notNull(),
+  status: apPaymentStatus("status").notNull().default("proposed"),
+  executedAt: timestamp("executed_at", { withTimezone: true }),
+  journalId: uuid("journal_id"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const bankTxnStatus = erp.enum("bank_txn_status", ["unmatched", "matched"]);
+
+export const bankTransaction = erp.table("bank_transaction", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  txnDate: date("txn_date").notNull(),
+  amountMinor: integer("amount_minor").notNull(), // positive = money in
+  reference: text("reference").notNull(),
+  counterparty: text("counterparty").notNull(),
+  kind: text("kind").notNull(), // ap_payment | ar_receipt | salaries | vat | bank_fees
+  status: bankTxnStatus("status").notNull().default("unmatched"),
+  matchedType: text("matched_type"),
+  matchedId: text("matched_id"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Commitment accounting lite (plans/P2P.md §2): drives the auto band. */
+export const categoryBudget = erp.table("category_budget", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  accountCode: text("account_code").notNull(),
+  periodCode: text("period_code").notNull(),
+  budgetMinor: integer("budget_minor").notNull(),
+  committedMinor: integer("committed_minor").notNull().default(0),
+  actualMinor: integer("actual_minor").notNull().default(0),
+}, (t) => [unique("category_budget_unique").on(t.accountCode, t.periodCode)]);

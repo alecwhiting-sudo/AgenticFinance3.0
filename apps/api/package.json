@@ -7,7 +7,9 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "dev": "tsx watch src/server.ts",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "test": "vitest run",
+    "load:p2p": "tsx src/scripts/loadDataset.ts"
   },
   "dependencies": {
     "@af/db": "workspace:*",
@@ -20,6 +22,7 @@
   "devDependencies": {
     "@types/pg": "^8.23.1",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vitest": "^5.0.3"
   }
 }
