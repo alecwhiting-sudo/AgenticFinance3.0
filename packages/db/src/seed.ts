@@ -23,6 +23,7 @@ import {
   skill,
   skillVersion,
   supplier,
+  fdpParameterSet,
 } from "./schema.js";
 
 type SeedFile = {
@@ -206,6 +207,26 @@ for (const a of agentData.agents) {
         .values({ agentId: agentRow.id, name: c.name, input: c.input, assertions: c.assertions });
     }
   }
+}
+
+// Month-end parameter set (plans/R2R.md §3): versioned, immutable once
+// active; the derivation engine reads it for period.tick events.
+const existingPs = await db.query.fdpParameterSet.findFirst({
+  where: (t, { and, eq }) => and(eq(t.name, "month-end-schedules"), eq(t.status, "active")),
+});
+if (!existingPs) {
+  await db.insert(fdpParameterSet).values({
+    name: "month-end-schedules",
+    status: "active",
+    parameters: {
+      schedules: [
+        { key: "prepay-insurance", kind: "prepayment_release", description: "Annual insurance released monthly", accountDr: "6100", accountCr: "1500", amountMinor: 24900 },
+        { key: "accrual-cleaning", kind: "accrual", description: "Cleaning services accrued (invoice arrives late)", accountDr: "6100", accountCr: "2100", amountMinor: 42000 },
+        { key: "recurring-rent", kind: "recurring", description: "Office rent", accountDr: "6100", accountCr: "2100", amountMinor: 180000 },
+      ],
+    },
+  });
+  console.log("seeded month-end parameter set v1");
 }
 
 console.log(

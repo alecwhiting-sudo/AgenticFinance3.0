@@ -5,6 +5,7 @@ import { apInvoiceJournalLines, validateJournalLines } from "./posting.js";
 import { bankTxnMatchesPayment, selectDueInvoices } from "./payments.js";
 import { parseUblInvoice } from "./ubl.js";
 import { validateDeltas } from "./fdpPost.js";
+import { deriveDeltas, deriveMonthEndDeltas, periodEnd } from "./fdpEngine.js";
 import type { PurchaseLine } from "@af/db";
 
 const line = (over: Partial<PurchaseLine> = {}): PurchaseLine => ({
@@ -241,5 +242,32 @@ describe("FDP posting pipeline (D13)", () => {
       { accountCode: "62", amountMinor: 5 },
       { accountCode: "2000", amountMinor: -5 },
     ])).toMatch(/account code/);
+  });
+});
+
+describe("month-end derivation engine (R2R M2)", () => {
+  const sched = { key: "prepay-insurance", kind: "prepayment_release" as const, description: "Annual insurance released monthly", accountDr: "6100", accountCr: "1500", amountMinor: 24900 };
+  it("derives a balanced DR/CR pair from a schedule", () => {
+    const d = deriveMonthEndDeltas(sched);
+    expect(d).toEqual([
+      { accountCode: "6100", amountMinor: 24900, memo: "Annual insurance released monthly" },
+      { accountCode: "1500", amountMinor: -24900, memo: "Annual insurance released monthly" },
+    ]);
+  });
+  it("reversal negates both sides", () => {
+    const d = deriveMonthEndDeltas(sched, true);
+    expect(d[0]!.amountMinor).toBe(-24900);
+    expect(d[1]!.amountMinor).toBe(24900);
+    expect(d[0]!.memo).toMatch(/Reversal/);
+  });
+  it("deriveDeltas routes period.tick and rejects unknown types", () => {
+    expect(deriveDeltas("period.tick", { schedule: sched }).length).toBe(2);
+    expect(() => deriveDeltas("period.tick", {})).toThrow(/schedule/);
+    expect(() => deriveDeltas("mystery.event", {})).toThrow(/no derivation engine/);
+  });
+  it("periodEnd handles month lengths and leap years", () => {
+    expect(periodEnd("2026-07")).toBe("2026-07-31");
+    expect(periodEnd("2026-09")).toBe("2026-09-30");
+    expect(periodEnd("2028-02")).toBe("2028-02-29");
   });
 });

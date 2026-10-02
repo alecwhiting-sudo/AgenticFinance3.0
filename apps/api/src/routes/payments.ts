@@ -101,6 +101,28 @@ export function paymentRoutes(app: FastifyInstance): void {
     return { ...stats, rulesPosted: rules.posted, byKind: rules.byKind };
   });
 
+  /** Month-end postings for a period (plans/R2R.md §3) — prepayment
+   * releases, accruals (+ auto-reversal of last period's), recurring
+   * journals, all engine-derived through the pipe. Idempotent per period. */
+  app.post<{ Body: { periodCode: string } }>("/r2r/month-end", async (req, reply) => {
+    const db = requireDb();
+    const periodCode = req.body?.periodCode;
+    if (!periodCode || !/^\d{4}-\d{2}$/.test(periodCode))
+      return reply.code(400).send({ error: "periodCode (YYYY-MM) required" });
+    const { runMonthEnd } = await import("../services/monthEnd.js");
+    const result = await runMonthEnd(db, periodCode);
+    if (result.posted > 0)
+      await emitActivity({
+        actorType: "system",
+        actorId: "month-end",
+        verb: "ran_month_end",
+        objectType: "period",
+        objectId: periodCode,
+        summary: `Month-end ${periodCode}: posted ${result.posted} entries (${result.entries.join(", ")})`,
+      });
+    return result;
+  });
+
   /** Hand an ambiguous bank line to the Reconciliation Agent (plans/R2R.md §2). */
   app.post<{ Body: { bankTransactionId: string } }>("/r2r/bank/investigate", async (req, reply) => {
     const db = requireDb();
