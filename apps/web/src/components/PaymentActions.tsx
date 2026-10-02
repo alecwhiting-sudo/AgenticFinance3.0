@@ -79,6 +79,37 @@ export function DecideRun({ paymentId }: { paymentId: string }) {
   );
 }
 
+/** Hand an ambiguous bank line to the Reconciliation Agent. */
+export function InvestigateButton({ bankTransactionId }: { bankTransactionId: string }) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const [sent, setSent] = useState(false);
+  const send = async () => {
+    setBusy(true);
+    try {
+      const res = await fetch(`${apiUrl}/r2r/bank/investigate`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ bankTransactionId }),
+      });
+      if (res.ok) setSent(true);
+    } catch { /* state unchanged on refresh */ }
+    setBusy(false);
+    router.refresh();
+  };
+  if (sent) return <span className="text-xs" style={{ color: "var(--muted)" }}>queued</span>;
+  return (
+    <button
+      disabled={busy}
+      onClick={send}
+      className="rounded border px-2 py-0.5 text-xs disabled:opacity-40"
+      style={{ borderColor: "var(--border)", color: "var(--muted)" }}
+    >
+      {busy ? "…" : "Investigate"}
+    </button>
+  );
+}
+
 export function ReconcileButton() {
   const router = useRouter();
   const [busy, setBusy] = useState(false);

@@ -93,6 +93,17 @@ export const commandDefs = {
       emailPath: z.string().optional(),
     }),
   },
+  /** Post an unmatched bank line against an account — a judgement call, so
+   * ALWAYS a human approval (plans/R2R.md §2). Deterministic kind-rules never
+   * use this; it exists for the Reconciliation Agent's proposals. */
+  "bank.txn.post": {
+    requiresApproval: true,
+    params: z.object({
+      bankTransactionId: z.string().uuid(),
+      accountCode: z.string().regex(/^\d{4}$/),
+      rationale: z.string().min(10).max(2000),
+    }),
+  },
   /** Resolve an invoice exception — ALWAYS a human approval (plans/P2P.md §6). */
   "ap.invoice.resolve": {
     requiresApproval: true,

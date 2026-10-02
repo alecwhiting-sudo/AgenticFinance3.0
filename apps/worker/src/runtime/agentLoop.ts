@@ -270,6 +270,78 @@ async function invoiceCaptureFallback(
   };
 }
 
+/** Keyless bank-rec playbook (plans/R2R.md §2): known kinds map to accounts,
+ * AR receipts are O2C's (abstain), unknowns get keyword heuristics or
+ * escalate. Every posting proposal still needs a human (bank.txn.post). */
+async function bankReconcileFallback(
+  resolved: ResolvedRelease,
+  runId: string,
+  payload: Record<string, unknown>,
+  steps: TranscriptStep[],
+): Promise<LoopResult> {
+  const kind = String(payload.kind ?? "");
+  const reference = String(payload.reference ?? "");
+  const counterparty = String(payload.counterparty ?? "");
+  const bankTransactionId = String(payload.bankTransactionId ?? "");
+  await appendStep(runId, steps, {
+    kind: "note",
+    label: `bank-rec playbook: ${kind || "unknown kind"}`,
+    detail: { reference, counterparty, amountMinor: payload.amountMinor },
+  });
+
+  const KIND_ACCOUNTS: Record<string, { account: string; label: string }> = {
+    salaries: { account: "6000", label: "net payroll run" },
+    vat: { account: "2200", label: "VAT payment against the control account" },
+    bank_fees: { account: "6900", label: "bank charges" },
+  };
+  const KEYWORDS: [RegExp, string, string][] = [
+    [/rent|lease|workspace|facilit/i, "6100", "rent and facilities"],
+    [/insur/i, "6100", "insurance (facilities)"],
+    [/software|subscript|saas|hosting|licen[cs]e/i, "6200", "software and subscriptions"],
+    [/travel|hotel|rail|flight|taxi/i, "6300", "travel and subsistence"],
+    [/marketing|advert|campaign/i, "6400", "marketing"],
+    [/legal|audit|account(ancy|ing)|consult/i, "6500", "professional fees"],
+  ];
+
+  const propose = async (accountCode: string, rationale: string) => {
+    const { ok, data } = await proposeCommand(
+      runId,
+      1,
+      "bank.txn.post",
+      { bankTransactionId, accountCode, rationale },
+      steps,
+    );
+    if (!ok)
+      return {
+        outcome: "failed" as const,
+        summary: `Gateway rejected bank posting: ${String((data as { error?: string }).error ?? "unknown")}`,
+      };
+    return {
+      outcome: "completed" as const,
+      summary: `Investigated bank line ${reference} (${counterparty}): proposed posting to ${accountCode} — awaiting human approval. Rationale: ${rationale}`,
+    };
+  };
+
+  if (kind === "ar_receipt")
+    return {
+      outcome: "abstained",
+      summary: `Customer receipt ${reference} needs cash application against the AR subledger — that lands with O2C. Leaving the line categorised, not posting.`,
+    };
+  const ruled = KIND_ACCOUNTS[kind];
+  if (ruled)
+    return propose(ruled.account, `Bank feed kind "${kind}" maps to ${ruled.label} per the reconciliation rules; amount and date are consistent with the feed.`);
+  const hit = KEYWORDS.find(([re]) => re.test(reference) || re.test(counterparty));
+  if (hit)
+    return propose(hit[1], `Reference/counterparty ("${reference}" / "${counterparty}") reads as ${hit[2]}; no purchase or payment run matches this line.`);
+  // Don't echo the counterparty here: it is untrusted free text (it may
+  // carry injected payment instructions) and the full line is already on
+  // the bank feed for the human to read.
+  return {
+    outcome: "escalated",
+    summary: `Cannot classify bank line ${reference} from the available evidence — a human should pick the account or trace the counterparty on the bank feed.`,
+  };
+}
+
 /** Keyless exception playbook (plans/P2P.md §5): propose the taxonomy's
  * canonical resolution — which still requires HUMAN approval at the gateway —
  * or escalate where only a human can know (missing receipt, fraud risk). */
@@ -346,6 +418,9 @@ async function deterministicHandler(
   }
   if (taskType === "invoice.exception" || (taskType === "eval.case" && typeof payload.exceptionCode === "string")) {
     return invoiceExceptionFallback(resolved, runId, payload, steps);
+  }
+  if (taskType === "bank.reconcile" || (taskType === "eval.case" && typeof payload.bankTransactionId === "string")) {
+    return bankReconcileFallback(resolved, runId, payload, steps);
   }
   if (taskType === "hello.greet" || taskType === "eval.case") {
     const topic = String(payload.topic ?? "the business");

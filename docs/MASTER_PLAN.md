@@ -140,17 +140,19 @@ ANTHROPIC_API_KEY is configured; daily drip wires in with P2P M5.)*
   history and show identical balances.
 
 ### Phase 3 — R2R
-- Per its own plan (`docs/plans/R2R.md`), now sitting on the FDP: the module
-  content is the close lifecycle — lock (LRS snapshot) → certify → supersede
-  (restatement), reconciliation gates that block certification, period close
-  checklist, recurring journals, accruals (first measurement transformation:
-  patterns over versioned parameters), bank reconciliation, **Close Agent**
-  and **Reconciliation Agent**, close dashboard, reporting that always
-  states its basis (live vs certified + version), flux/variance commentary
-  drafted by agent.
-- **Demo moment:** run a month-end close end to end on dummy data; agent
-  drafts the close commentary; human certifies the snapshot; drip a late
-  invoice and restate to v2 with v1 preserved.
+- Per its own plan (`docs/plans/R2R.md`), on the FDP: full bank
+  reconciliation (deterministic kind-rules + **Reconciliation Agent** for
+  the ambiguous), accruals/prepayments as the first measurement
+  transformation (engine derives deltas from bare events + versioned
+  parameter sets), recurring journals, monthly P&L + balance sheet
+  (drillable), month-end dashboard, **Close Agent** flux/variance
+  commentary. Reports always state their basis.
+- **Deferred (Alec, 2026-10-02):** LRS lock → certify → supersede and
+  reconciliation gates — lands later as the dashboard's lock button + the
+  snapshot tables (D13 strangler step 3); nothing in Phase 3 needs rework
+  for it.
+- **Demo moment:** reconcile the bank live; run month-end postings through
+  the one pipe; agent drafts the close commentary from the statements.
 
 ### Phase 4 — O2C
 - Per its own plan: customer master, sales orders, billing, AR subledger, cash

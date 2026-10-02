@@ -95,6 +95,18 @@ async function gradeEvalCase(
       });
       if (!cmd) failures.push(`no ${assertion.value} command proposed`);
     }
+    if (assertion.kind === "not_command_proposed") {
+      const cmd = await db.query.command.findFirst({
+        where: (t) => and(eq(t.runId, runId), eq(t.type, assertion.value)),
+      });
+      if (cmd) failures.push(`${assertion.value} was proposed but must not be`);
+    }
+    if (
+      assertion.kind === "summary_not_contains" &&
+      summary.toLowerCase().includes(assertion.value.toLowerCase())
+    ) {
+      failures.push(`summary must not contain "${assertion.value}"`);
+    }
   }
   const passed = failures.length === 0;
 

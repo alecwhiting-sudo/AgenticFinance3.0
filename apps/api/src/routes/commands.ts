@@ -38,6 +38,16 @@ async function executeCommand(
     case "ap.invoice.resolve": {
       return resolveInvoiceException(db, params as ResolveParams, actor);
     }
+    case "bank.txn.post": {
+      const { postBankTxn } = await import("../services/bankRec.js");
+      const p = params as { bankTransactionId: string; accountCode: string; rationale: string };
+      return postBankTxn(db, {
+        bankTransactionId: p.bankTransactionId,
+        accountCode: p.accountCode,
+        memo: p.rationale.slice(0, 120),
+        postedBy: actor,
+      }) as Promise<Record<string, unknown>>;
+    }
     case "purchase.create": {
       const created = await createPurchase(db, params as CreatePurchaseParams);
       return {

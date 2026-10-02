@@ -1,7 +1,8 @@
 import type { FastifyInstance } from "fastify";
 import { desc, eq } from "drizzle-orm";
-import { apInvoice, apPayment, bankTransaction, supplier } from "@af/db";
+import { apInvoice, apPayment, bankTransaction, supplier, workItem } from "@af/db";
 import { decidePaymentRun, proposePaymentRun, reconcileBank } from "../services/payments.js";
+import { reconcileBankRules } from "../services/bankRec.js";
 import { requireDb } from "../lib/db.js";
 import { emitActivity } from "../lib/activity.js";
 
@@ -84,16 +85,56 @@ export function paymentRoutes(app: FastifyInstance): void {
 
   app.post("/p2p/bank/reconcile", async () => {
     const db = requireDb();
+    // deterministic kind-rules first (salaries/VAT/fees post + match through
+    // the platform), then the AP payment matcher (plans/R2R.md §2)
+    const rules = await reconcileBankRules(db);
     const stats = await reconcileBank(db);
-    if (stats.matched > 0)
+    if (rules.posted > 0 || stats.matched > 0)
       await emitActivity({
         actorType: "system",
         actorId: "reconciliation-matcher",
         verb: "reconciled_bank",
         objectType: "bank_transaction",
         objectId: "batch",
-        summary: `Matched ${stats.matched} of ${stats.scanned} open bank lines`,
+        summary: `Bank rec: posted ${rules.posted} lines by rule (${Object.entries(rules.byKind).map(([k, n]) => `${n} ${k}`).join(", ") || "none"}), matched ${stats.matched} payments`,
       });
-    return stats;
+    return { ...stats, rulesPosted: rules.posted, byKind: rules.byKind };
+  });
+
+  /** Hand an ambiguous bank line to the Reconciliation Agent (plans/R2R.md §2). */
+  app.post<{ Body: { bankTransactionId: string } }>("/r2r/bank/investigate", async (req, reply) => {
+    const db = requireDb();
+    const txn = await db.query.bankTransaction.findFirst({
+      where: (t) => eq(t.id, req.body.bankTransactionId),
+    });
+    if (!txn) return reply.code(404).send({ error: "bank transaction not found" });
+    if (txn.status === "matched") return reply.code(409).send({ error: "already matched" });
+    const agentRow = await db.query.agent.findFirst({ where: (t) => eq(t.slug, "reconciliation") });
+    if (!agentRow) return reply.code(409).send({ error: "reconciliation agent not seeded" });
+    const [wi] = await db
+      .insert(workItem)
+      .values({
+        type: "bank.reconcile",
+        agentId: agentRow.id,
+        payload: {
+          bankTransactionId: txn.id,
+          txnDate: txn.txnDate,
+          amountMinor: txn.amountMinor,
+          reference: txn.reference,
+          counterparty: txn.counterparty,
+          kind: txn.kind,
+        },
+        priority: 4,
+      })
+      .returning();
+    await emitActivity({
+      actorType: "human",
+      actorId: "workbench",
+      verb: "queued_bank_investigation",
+      objectType: "work_item",
+      objectId: wi!.id,
+      summary: `Bank line ${txn.reference} (${txn.counterparty}) sent to the Reconciliation Agent`,
+    });
+    return { workItemId: wi!.id };
   });
 }

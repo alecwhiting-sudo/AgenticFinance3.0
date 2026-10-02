@@ -4,7 +4,7 @@ import { getJson } from "@/lib/api";
 import { money, formatDate } from "@/lib/format";
 import { ApiDownBanner, Breadcrumbs } from "@/components/Chrome";
 import { Badge, Card, SectionTitle, toneForStatus } from "@/components/ui";
-import { DecideRun, ProposeRunButton, ReconcileButton } from "@/components/PaymentActions";
+import { DecideRun, InvestigateButton, ProposeRunButton, ReconcileButton } from "@/components/PaymentActions";
 
 export const metadata: Metadata = { title: "Payments" };
 
@@ -128,7 +128,18 @@ export default async function PaymentsPage() {
                 <td className="py-1.5">{t.reference}</td>
                 <td className="py-1.5" style={{ color: "var(--muted)" }}>{t.counterparty}</td>
                 <td className="py-1.5" style={{ color: "var(--muted)" }}>{t.kind}</td>
-                <td className="py-1.5"><Badge tone={t.status === "matched" ? "good" : "warn"}>{t.status}</Badge></td>
+                <td className="py-1.5">
+                  {t.status === "matched" ? (
+                    <Badge tone="good">matched</Badge>
+                  ) : t.kind === "ar_receipt" ? (
+                    <Badge>awaiting O2C</Badge>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      <Badge tone="warn">unmatched</Badge>
+                      <InvestigateButton bankTransactionId={t.id} />
+                    </span>
+                  )}
+                </td>
                 <td className="py-1.5 text-right tabular-nums">{formatDate(t.txnDate)}</td>
                 <td className="py-1.5 text-right tabular-nums">{money(t.amountMinor)}</td>
               </tr>
