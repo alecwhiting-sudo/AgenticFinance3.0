@@ -155,7 +155,7 @@ export default function PipelinePage() {
               {confirm === "zero"
                 ? "Wipes ALL transactions."
                 : confirm === "cold-all"
-                  ? "Wipes everything, then queues ~300 supplier invoices for REAL agent extraction (~20–30 min, a few $ of model calls)."
+                  ? "Wipes everything, then queues ~300 supplier invoices for model-based extraction (~20–30 min, a few $ of model calls)."
                   : "Wipes and re-runs ALL transactions."}{" "}
               Sure?
             </span>
@@ -184,7 +184,7 @@ export default function PipelinePage() {
               {
                 accent: true,
                 disabled: !p?.nextMonth,
-                title: "Loads the next month's transactions through the full pipe — no model calls",
+                title: "Loads the next month's transactions through the full pipeline — no model calls",
               },
             )}
             {btn("Run remaining months", () => run("months", 60), {
@@ -197,14 +197,14 @@ export default function PipelinePage() {
               {
                 disabled: !p?.nextMonth,
                 title:
-                  "Internal records load as system data; the month's supplier invoices land as unread documents the Invoice Extraction Agent processes one by one — real model calls (Haiku tier, pennies), ~3–5 min per month",
+                  "Internal records load as system data; the month's supplier invoices land as unread documents processed by the Invoice Extraction Agent — model calls (Haiku tier, ~1p per document), ~3–5 min per month",
               },
             )}
             {btn("Everything from scratch", () => setConfirm("cold-all"), {
-              title: "Wipes, then queues all ~300 supplier invoices for real agent extraction — ~20–30 min, a few $ of model calls",
+              title: "Wipes, then queues all ~300 supplier invoices for model-based extraction — ~20–30 min, a few $ of model calls",
             })}
             {btn("Run everything — full speed", () => setConfirm("fullspeed"), {
-              title: "Wipes, then runs the whole dataset flat out with the timer on (the 10x run) — no model calls",
+              title: "Wipes, then processes the whole dataset at full speed, timed (the 10x run) — no model calls",
             })}
             <span className="flex items-center gap-2">
               {btn("Replay all — paced", () => setConfirm("paced"), { title: "Wipes, then replays with live activity — no model calls" })}
@@ -219,7 +219,7 @@ export default function PipelinePage() {
                 <option value={400}>deliberate</option>
               </select>
             </span>
-            {btn("Simulate a day", simulateDay, { title: "Drips a believable morning into the agent queue — a few Haiku-tier model calls, pennies" })}
+            {btn("Simulate a day", simulateDay, { title: "Adds a representative set of new items to the agent queue — a few Haiku-tier model calls, ~1p each" })}
             {btn("Clear to zero", () => setConfirm("zero"), { danger: true })}
           </>
         )}
@@ -264,8 +264,8 @@ export default function PipelinePage() {
           {(lastRun.stats.queued ?? 0) > 0 ? (
             <p className="text-sm leading-6">
               Cold start: <span className="num font-semibold">{lastRun.stats.queued}</span> supplier invoices
-              landed as unread documents — the Invoice Extraction Agent is reading each one (watch the agent queue
-              tile and the ticker). Internal records ({lastRun.stats.purchases ?? 0} purchases,{" "}
+              queued as unread documents — the Invoice Extraction Agent is processing them (see the agent queue
+              tile and the activity panel). Internal records ({lastRun.stats.purchases ?? 0} purchases,{" "}
               {lastRun.stats.receipts ?? 0} receipts, {lastRun.stats.arInvoices ?? 0} customer invoices) loaded as
               system data. Once the queue drains, run payments from the P2P payments page.
             </p>
@@ -273,10 +273,10 @@ export default function PipelinePage() {
             <p className="text-sm leading-6">
               <span className="num font-semibold">{lastRun.items}</span> transactions processed in{" "}
               <span className="num font-semibold">{mmss(lastRun.ms)}</span>
-              {" "}({perMin(lastRun.items, lastRun.ms)} per minute, no model calls — the machine is deterministic code).{" "}
+              {" "}({perMin(lastRun.items, lastRun.ms)} per minute; deterministic processing, no model calls).{" "}
               <span className="num font-semibold">{(lastRun.stats.posted ?? 0) + (lastRun.stats.arInvoices ?? 0)}</span> went
-              straight through untouched. <span className="num font-semibold">{lastRun.stats.exceptions ?? 0}</span> fired
-              exceptions that need judgement. The books balanced the whole way:{" "}
+              straight through without intervention. <span className="num font-semibold">{lastRun.stats.exceptions ?? 0}</span> raised
+              exceptions for review. GL balance throughout:{" "}
               {lastRun.balance === 0 ? "✓ 0" : lastRun.balance}.
             </p>
           )}
@@ -347,7 +347,7 @@ export default function PipelinePage() {
                 </li>
               ))}
               {p.recent.length === 0 && (
-                <li className="text-sm" style={{ color: "var(--muted)" }}>Quiet — run something.</li>
+                <li className="text-sm" style={{ color: "var(--muted)" }}>No recent activity.</li>
               )}
             </ul>
           </div>
@@ -358,10 +358,10 @@ export default function PipelinePage() {
       {p && (
         <section className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
           {[
-            { v: straight, l: "straight through", hint: "posted untouched" },
-            { v: p.split.ap_exceptions, l: "exceptions open", hint: "need judgement" },
+            { v: straight, l: "straight through", hint: "no intervention" },
+            { v: p.split.ap_exceptions, l: "exceptions open", hint: "awaiting review" },
             { v: p.split.agent_queue, l: "agent queue", hint: "being worked" },
-            { v: p.split.awaiting_human, l: "awaiting human", hint: "your approvals" },
+            { v: p.split.awaiting_human, l: "awaiting human", hint: "approval decisions" },
             { v: `${p.split.bank_matched}/${p.split.bank_matched + p.split.bank_unmatched}`, l: "bank matched", hint: "" },
             { v: p.integrity.journals === p.integrity.events ? "✓" : `${p.integrity.journals}≠${p.integrity.events}`, l: "journals = events", hint: "" },
             { v: Number(p.integrity.balance) === 0 ? "✓ 0" : p.integrity.balance, l: "GL balance", hint: "" },
@@ -417,8 +417,8 @@ export default function PipelinePage() {
             </tbody>
           </table>
           <p className="mt-2 text-xs" style={{ color: "var(--muted)" }}>
-            Throughput is measured on demo infrastructure — the honest claim is the shape: machine time
-            scales with volume, human involvement scales only with genuine exceptions.
+            Throughput is measured on demo infrastructure. Processing time scales with volume; human
+            review scales with the exception rate.
           </p>
         </section>
       )}

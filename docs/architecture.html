@@ -233,7 +233,7 @@ const INFO = {
   },
   runtime: {
     t: "Agent runtime",
-    what: "Where the agents actually work. Each one claims a task from the queue, reasons with the model its task shape deserves (cheap for high-volume extraction, mid-tier for judgement), and leaves a full step-by-step transcript you can replay.",
+    what: "Where the agents actually work. Each one claims a task from the queue, reasons with the model tier its task shape requires (small for high-volume extraction, mid-tier for judgement work), and leaves a full step-by-step transcript you can replay.",
     how: "Postgres FOR UPDATE SKIP LOCKED queue; Anthropic SDK loop with per-release call budgets; deterministic fallbacks keep everything demoable with no API key.",
   },
   gateway: {
@@ -288,12 +288,12 @@ const INFO = {
   },
   statements: {
     t: "Statements",
-    what: "Monthly P&L and balance sheet where no number is an orphan: click any figure and walk down to the journal, the movement, the event, and the document or agent run that caused it.",
+    what: "Monthly P&L and balance sheet where every figure traces to its source: click any number and drill to the journal, the movement, the event, and the document or agent run behind it.",
     how: "Aggregations over journal lines/LES only — the reporting layer never recalculates economics.",
   },
   live: {
     t: "Live experience",
-    what: "The demo's heartbeat: a stream of everything happening — agents picking up work, invoices posting, exceptions firing — feeding the live flow view and the test panel.",
+    what: "The live activity layer: a stream of events — agents picking up work, invoices posting, exceptions raised — feeding the live flow view and the test panel.",
     how: "activity_event table + server-sent events; the replay-from-zero runs paced so you can watch the books being built.",
   },
   analytics: {

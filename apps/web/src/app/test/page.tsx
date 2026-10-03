@@ -50,7 +50,7 @@ type Scenario = {
   proves: string[];
   notProves: string[];
   actions: Action[];
-  /** the anticlimax fix: after the run, this is where the show continues */
+  /** post-run guidance: concrete next steps with live counters */
   next: NextStep[];
 };
 
@@ -58,7 +58,7 @@ const SCENARIOS: Scenario[] = [
   {
     id: "months",
     title: "Run the year, month by month",
-    tagline: "The CFO's year on fast-forward — stop between months and look around.",
+    tagline: "Process the dataset one month at a time, pausing at each close for review.",
     cost: "£0 — no model calls (deterministic processing)",
     duration: "~2s per month instant · pauses at each close in auto mode",
     does:
@@ -67,8 +67,8 @@ const SCENARIOS: Scenario[] = [
     proves: [
       "The close discipline: month-end accruals post and reverse through the same pipe as everything else",
       "Books balance at every stopping point — GL to zero, journals = events",
-      "Exceptions accumulate realistically and wait for judgement",
-      "Statements and commentary reflect exactly what has been processed so far",
+      "Exceptions accumulate and await review",
+      "Statements and commentary reflect what has been processed to date",
     ],
     notProves: [
       "Document extraction — invoices load from structured data here (see 'From scratch')",
@@ -80,54 +80,54 @@ const SCENARIOS: Scenario[] = [
     ],
     next: [
       { label: "Run month-end: accruals post, then read the close dashboard", href: "/r2r" },
-      { label: "The statements now reflect exactly what's processed", href: "/reports" },
-      { label: "Exceptions waiting for judgement — open the workbench", href: "/p2p/exceptions", count: "exceptions" },
-      { label: "Approvals waiting for you", href: "/approvals", count: "approvals" },
+      { label: "Statements reflect the months processed so far", href: "/reports" },
+      { label: "Open exceptions — review in the workbench", href: "/p2p/exceptions", count: "exceptions" },
+      { label: "Approvals awaiting decision", href: "/approvals", count: "approvals" },
     ],
   },
   {
     id: "tenx",
     title: "The 10x stress test",
-    tagline: "What if your volume were ten times this? Same machine, same morning.",
+    tagline: "The full dataset processed as a single month's workload, timed.",
     cost: "£0 — no model calls",
     duration: "baseline ~2s · full run ~15–60s, timed live",
     does:
-      "Two runs, side by side. First process one normal month and note the numbers. Then wipe and run the ENTIRE dataset — ten months' volume treated as one month's workload — flat out with the timer on. The runs table on mission control shows both: items, minutes, throughput, and the number that matters — human touches barely move, because exceptions scale with the exception rate, not the volume.",
+      "Two runs, side by side: first a single month as the baseline, then the entire dataset — ten months' volume — processed as one batch at full speed, timed. The runs table on mission control shows both: items, duration, throughput, and the human-review count, which scales with the exception rate rather than the volume.",
     uses: "The full dataset as one batch: 300 supplier invoice chains, 400 customer invoices, 508 bank lines, 36 planted exceptions (~12%).",
     proves: [
-      "Machine time scales linearly and costs nothing — deterministic code, zero tokens",
-      "Human workload scales only with genuine exceptions (36 out of ~1,200)",
-      "Integrity under load: balanced books and journal=event parity at full speed",
+      "Deterministic processing scales linearly, with no model cost",
+      "Human review scales with the exception rate (36 of ~1,200 items)",
+      "Balanced books and journal/event parity maintained at full speed",
     ],
     notProves: [
       "Document extraction (structured data, not reading PDFs — see 'From scratch')",
-      "Absolute speed — demo infrastructure; the honest claim is the shape, not the number",
+      "Absolute throughput — timings reflect demo infrastructure; the scaling behaviour is the result, not the figure",
     ],
     actions: [
       { label: "1 · Baseline month", run: { kind: "reset", mode: "month", paceMs: 0 }, needsNextMonth: true, wipes: false },
       { label: "2 · Run 10x — full speed", run: { kind: "reset", mode: "replay", paceMs: 0 }, danger: true, wipes: true },
     ],
     next: [
-      { label: "The side-by-side: baseline vs 10x in the runs table", href: "/admin/pipeline" },
-      { label: "The human workload that didn't scale — the exceptions workbench", href: "/p2p/exceptions", count: "exceptions" },
-      { label: "Approvals waiting — still a human-sized queue", href: "/approvals", count: "approvals" },
-      { label: "Books balanced the whole way — drill any number", href: "/reports" },
+      { label: "Baseline vs full run, side by side in the runs table", href: "/admin/pipeline" },
+      { label: "Open exceptions — review in the workbench", href: "/p2p/exceptions", count: "exceptions" },
+      { label: "Approvals awaiting decision", href: "/approvals", count: "approvals" },
+      { label: "Statements — every figure drills to its source", href: "/reports" },
     ],
   },
   {
     id: "cold",
     title: "From scratch — agents read every document",
-    tagline: "The inbox is full of unread invoices. Watch the agents actually read them.",
+    tagline: "Supplier invoices arrive as unread documents and are extracted by the agents.",
     cost: "~50–70p per month · ~£3–4 for everything (Haiku-tier extraction, metered live)",
     duration: "~3–5 min per month · ~20–30 min for everything",
     does:
-      "Internal records (purchases, goods receipts, customer billing, bank feed) load as system data — they're yours already. But supplier invoices arrive as unread documents: the Invoice Extraction Agent reads each one for real — text PDFs and e-invoices from their content, scanned images by vision — proposes the capture, and the pipeline matches, posts or raises the exception. Suppliers graduate to learned templates as it goes. Payments wait for you on the payments page afterwards.",
+      "Internal records (purchases, goods receipts, customer billing, bank feed) load as system data — they are internal records. Supplier invoices arrive as unread documents: the Invoice Extraction Agent extracts each one — text PDFs and e-invoices from their content, scanned images by vision — proposes the capture, and the pipeline matches, posts or raises an exception. Suppliers are promoted to learned templates as extractions validate. Payments are then run from the payments page.",
     uses: "The same dataset, but AP invoices as documents in the capture queue; the 'model spend today' tile meters the real cost.",
     proves: [
-      "Genuine model extraction, including vision on scans with no text layer",
+      "Model-based extraction, including vision on scans with no text layer",
       "The control chain: agent proposes → gateway validates → deterministic match decides",
-      "Learned templates (D15): repeat suppliers go free; the extraction bill falls as it runs",
-      "Exact cost per document, measured not estimated",
+      "Learned templates (D15): repeat suppliers move to deterministic extraction, reducing model cost over time",
+      "Cost per document, measured from recorded token usage",
     ],
     notProves: [
       "Payment execution (deliberately left for your click — money never moves itself)",
@@ -138,48 +138,48 @@ const SCENARIOS: Scenario[] = [
       { label: "Everything from scratch", run: { kind: "reset", mode: "cold-all", paceMs: 0 }, danger: true, wipes: true },
     ],
     next: [
-      { label: "Watch the agents read the queue down", href: "/work", count: "queue" },
-      { label: "Learned templates building on the P2P page — repeat suppliers go free", href: "/p2p" },
-      { label: "Exceptions the extraction surfaced — resolve them in the workbench", href: "/p2p/exceptions", count: "exceptions" },
-      { label: "Then release the payments yourself", href: "/p2p/payments" },
-      { label: "What it actually cost — model spend tile", href: "/admin/pipeline" },
+      { label: "Follow the agents working through the queue", href: "/work", count: "queue" },
+      { label: "Learned templates forming on the P2P page", href: "/p2p" },
+      { label: "Exceptions raised by extraction — review in the workbench", href: "/p2p/exceptions", count: "exceptions" },
+      { label: "Run the resulting payments", href: "/p2p/payments" },
+      { label: "Measured model cost — the spend tile", href: "/admin/pipeline" },
     ],
   },
   {
     id: "replay",
     title: "Replay the full history",
-    tagline: "Cutover day: ten months of history into a new system of record.",
+    tagline: "Ten months of history replayed into a new system of record.",
     cost: "£0 — no model calls",
     duration: "~30s–5min depending on pace",
     does:
-      "Wipes the books, then replays the complete ten-month history in date order — dates respected, every month landing as it originally happened — with the live feed narrating. Run it twice and the books come out identical: that's the audit guarantee, not a demo trick.",
+      "Wipes the books, then replays the complete ten-month history in date order — dates respected, every month landing as it originally happened — with the live feed narrating. Running it again produces identical books — the replay guarantee (D13).",
     uses: "The full dataset in chronological order, payments and receipts included (history contains its own settlements).",
     proves: [
       "Replay determinism (D13): same events, same books, every time",
-      "A realistic enterprise moment — migration/cutover onto the platform",
+      "The migration/cutover case: historical data loaded into a new system of record",
       "All controls live under continuous load: immutability, balance enforcement, idempotency",
     ],
-    notProves: ["Document extraction (structured data)", "Anything about day-to-day operations pacing — it's history at demo speed"],
+    notProves: ["Document extraction (structured data)", "Day-to-day operational pacing — this is history replayed at demo speed"],
     actions: [{ label: "Replay everything — paced", run: { kind: "reset", mode: "replay", paceMs: 120 }, danger: true, wipes: true }],
     next: [
       { label: "Drill any statement number to its source event", href: "/reports" },
       { label: "Trial balance — journals = events, GL to zero", href: "/ledger" },
-      { label: "Run it again from the board: identical books, every time", href: "/admin/pipeline" },
+      { label: "Re-run from the board to verify identical results", href: "/admin/pipeline" },
     ],
   },
   {
     id: "day",
     title: "Simulate a day",
-    tagline: "It's 9am. Here's what arrived overnight.",
+    tagline: "A small batch of new items, processed live.",
     cost: "~2–4p (a few Haiku-tier extractions)",
     duration: "~1 minute of agent work",
     does:
-      "Drips a believable morning into the live system: a clean e-invoice that goes straight through, a scanned PDF the agent must read by vision, one exception (random — price variance, short receipt, missing receipt, unknown supplier or a bank-detail-change email), and a customer receipt investigation when one is available. Watch on the live flow, finish in the approvals inbox.",
+      "Adds a representative set of new items: a clean e-invoice, a scanned PDF extracted by vision, one exception (random — price variance, short receipt, missing receipt, unknown supplier or a bank-detail-change email), and a customer receipt investigation when one is available. Progress shows on the live flow; decisions land in the approvals inbox.",
     uses: "Fresh synthetic items against the loaded books — needs data loaded first.",
     proves: [
       "The daily experience end to end: arrive → extract → match → exception → human approval",
       "Fraud screening: the bank-detail-change email is flagged, never actioned",
-      "Your whole involvement in a day is a couple of clicks",
+      "Human involvement is limited to the approval decisions",
     ],
     notProves: ["Volume (that's the 10x run)", "The close (that's month by month)"],
     actions: [
@@ -188,10 +188,10 @@ const SCENARIOS: Scenario[] = [
       { label: "Just O2C", run: { kind: "day", scope: "o2c" }, wipes: false },
     ],
     next: [
-      { label: "Watch the invoices travel on the live flow", href: "/p2p/flow" },
+      { label: "Follow the items on the live flow", href: "/p2p/flow" },
       { label: "Agents working now", href: "/work", count: "queue" },
       { label: "The exception's case — explore and resolve it in the workbench", href: "/p2p/exceptions", count: "exceptions" },
-      { label: "Approve or reject what reached your inbox (incl. the dunning letter)", href: "/approvals", count: "approvals" },
+      { label: "Approve or reject pending items (including the dunning letter)", href: "/approvals", count: "approvals" },
     ],
   },
   {
@@ -201,7 +201,7 @@ const SCENARIOS: Scenario[] = [
     cost: "~1–1.5p each",
     duration: "seconds",
     does:
-      "Lands one invoice of a chosen shape in the capture queue, exactly as inbound mail would. Useful mid-conversation: 'what happens if a supplier short-ships?' — drip it and watch.",
+      "Lands one invoice of a chosen shape in the capture queue, exactly as inbound mail would. Useful for demonstrating one mechanism on demand, e.g. a short-shipped delivery.",
     uses: "A synthetic invoice (and purchase/receipt as the scenario requires) against a random supplier.",
     proves: ["One mechanism at a time, on demand"],
     notProves: ["Anything at volume"],
@@ -223,16 +223,16 @@ const SCENARIOS: Scenario[] = [
   {
     id: "zero",
     title: "Clear to zero",
-    tagline: "Empty books. The blank slate every scenario starts from.",
+    tagline: "Clears all transaction data.",
     cost: "£0",
     duration: "instant",
     does:
       "Wipes all transactions — documents, journals, events, pending approvals and open cases. Master data, agents, their skills, run history and learned templates survive.",
     uses: "Nothing — it removes.",
-    proves: ["Nothing — it's the reset lever"],
+    proves: ["Nothing — a utility action"],
     notProves: [],
     actions: [{ label: "Clear to zero", run: { kind: "reset", mode: "zero" }, danger: true, wipes: true }],
-    next: [{ label: "Pick a scenario above and build the books back up", href: "/test" }],
+    next: [{ label: "Select a scenario to load data", href: "/test" }],
   },
 ];
 
@@ -328,8 +328,8 @@ export default function TestPage() {
         <div>
           <h2 className="text-2xl font-semibold tracking-tight">Test panel</h2>
           <p className="mt-1 text-sm" style={{ color: "var(--muted)" }}>
-            Demo land, kept apart from the finance product. Pick a scenario, read what it proves —
-            and what it doesn&apos;t — then run it.
+            Test scenarios, kept separate from the finance product. Each states what it does, what
+            data it uses, and what it does and does not demonstrate.
           </p>
         </div>
         <Link href="/admin/pipeline" className="rounded-lg border px-3 py-1.5 text-sm" style={{ borderColor: "var(--accent)", color: "var(--accent)" }}>
@@ -370,7 +370,7 @@ export default function TestPage() {
             {ds.ar.invoices} customer invoices ({ds.ar.contracts} with contracts) · {ds.bank.lines} bank lines ·{" "}
             {Object.values(ds.ap.plantedExceptions).reduce((a, b) => a + b, 0)} planted exceptions ·{" "}
             {ds.masters.suppliers} suppliers, {ds.masters.customers} customers. Generated once by the Transaction
-            Generator Agent, committed, deterministic — every run sees the same world.
+            Generator Agent and committed to the repository; every run uses the same dataset.
           </p>
           {showData && (
             <div className="mt-3 grid gap-4 text-sm sm:grid-cols-3">
@@ -502,13 +502,13 @@ export default function TestPage() {
             )}
           </div>
 
-          {/* where the show continues — the counters are live */}
+          {/* post-run guidance — live counters */}
           <div
             className="mt-4 rounded-lg border p-3"
             style={{ borderColor: justFinished ? "var(--accent)" : "var(--border)", background: "var(--background)" }}
           >
             <h4 className="text-xs font-semibold uppercase tracking-wide" style={{ color: justFinished ? "var(--accent)" : "var(--muted)" }}>
-              {justFinished ? "Done — this is where the show continues" : "After it runs — where to go"}
+              {justFinished ? "Run complete — suggested next steps" : "After it runs — next steps"}
             </h4>
             <ul className="mt-2 space-y-1.5 text-sm">
               {scenario.next.map((n, i) => {

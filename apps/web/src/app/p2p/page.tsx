@@ -115,8 +115,8 @@ export default async function P2PPage() {
       {tpl && tpl.templates.length > 0 && (
         <Card>
           <SectionTitle>
-            Learned extraction templates — the model reads a supplier&apos;s first invoices; once the layout is
-            proven, later invoices extract in code for free
+            Learned extraction templates — the model extracts a supplier&apos;s first invoices; once the layout is
+            validated, later invoices extract deterministically at no model cost
           </SectionTitle>
           <div className="mb-3 flex flex-wrap gap-x-6 gap-y-1 text-sm">
             <span><span className="num font-semibold">{tpl.summary.active}</span> suppliers learned</span>
@@ -130,9 +130,9 @@ export default async function P2PPage() {
                 key={t.supplierCode}
                 className="rounded-full border px-2 py-0.5"
                 style={{ borderColor: t.status === "active" ? "var(--good)" : "var(--border)", color: "var(--muted)" }}
-                title={t.status === "active" ? `${t.hits} invoices extracted for free` : `${t.confirmations}/3 validated extractions`}
+                title={t.status === "active" ? `${t.hits} invoices extracted deterministically` : `${t.confirmations}/3 validated extractions`}
               >
-                {t.supplierName} · {t.status === "active" ? `${t.hits} free` : `learning ${t.confirmations}/3`}
+                {t.supplierName} · {t.status === "active" ? `${t.hits} auto` : `learning ${t.confirmations}/3`}
               </span>
             ))}
           </div>

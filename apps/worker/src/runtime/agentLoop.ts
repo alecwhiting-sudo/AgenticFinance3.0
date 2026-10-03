@@ -561,14 +561,14 @@ async function invoiceExceptionFallback(
     options.push(
       {
         resolution: "part_approve",
-        label: "Pay for what actually arrived",
+        label: "Pay for the quantities received",
         rationale: `Invoiced quantity exceeds goods received (${detail}). Part-approve for the received quantities; the shortfall re-bills on delivery.`,
         costedNote: partGross !== null && inv ? `pays ${gbp(partGross)} of ${gbp(inv.grossMinor)}` : undefined,
         adjustedQuantities: adjusted,
       },
       {
         resolution: "record_receipt",
-        label: "The goods did arrive — record the receipt and pay in full",
+        label: "Goods confirmed received — record the receipt and pay in full",
         rationale: `If ops confirm the delivery landed but was never booked, record the receipt and the invoice matches (${detail}).`,
         costedNote: inv ? `pays ${gbp(inv.grossMinor)} in full` : undefined,
       },
@@ -578,11 +578,11 @@ async function invoiceExceptionFallback(
     options.push(
       {
         resolution: "record_receipt",
-        label: "Goods confirmed arrived — record the receipt and post",
+        label: "Goods confirmed received — record the receipt and post",
         rationale: `The purchase exists but no goods receipt was booked (${detail}). Once a human confirms arrival, record it and the 3-way match completes.`,
         costedNote: inv ? `pays ${gbp(inv.grossMinor)}` : undefined,
       },
-      { resolution: "reject", label: "Nothing arrived — reject the invoice", rationale: `No goods receipt and no confirmation of delivery (${detail}).` },
+      { resolution: "reject", label: "No goods received — reject the invoice", rationale: `No goods receipt and no confirmation of delivery (${detail}).` },
     );
   } else if (code === "no_purchase") {
     options.push(
@@ -602,7 +602,7 @@ async function invoiceExceptionFallback(
         rationale: `Duplicate billing detected (${detail}). The original invoice stands; notify the supplier.`,
         costedNote: inv ? `avoids paying ${gbp(inv.grossMinor)} twice` : undefined,
       },
-      { resolution: "approve_adjusted", label: "Not a duplicate — post it", rationale: `If review shows this is a genuinely separate charge (${detail}), post at invoiced amounts.` },
+      { resolution: "approve_adjusted", label: "Confirmed as a separate charge — post at invoiced amounts", rationale: `If review shows this is a genuinely separate charge (${detail}), post at invoiced amounts.` },
     );
   } else if (code === "bank_detail_change") {
     options.push({

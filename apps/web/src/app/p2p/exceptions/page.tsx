@@ -140,8 +140,8 @@ export default function ExceptionsPage() {
         <div>
           <h2 className="text-2xl font-semibold tracking-tight">Exceptions workbench</h2>
           <p className="mt-1 text-sm" style={{ color: "var(--muted)" }}>
-            Everything that needs judgement: the evidence side by side, the agent&apos;s grounded
-            options, your decision. {rows.length} open.
+            Open exceptions with the evidence side by side, the agent&apos;s proposed options, and
+            resolution actions. {rows.length} open.
           </p>
         </div>
         <Link href="/p2p" className="rounded-lg border px-3 py-1.5 text-sm" style={{ borderColor: "var(--border)" }}>
@@ -277,7 +277,7 @@ export default function ExceptionsPage() {
                       <p className="mt-1 flex-1 text-xs leading-5" style={{ color: "var(--muted)" }}>{o.rationale}</p>
                       {o.resolution === "human_verify" ? (
                         <span className="mt-2 text-xs font-medium" style={{ color: "var(--warn)" }}>
-                          guidance only — this one stays with you
+                          guidance only — requires out-of-band verification
                         </span>
                       ) : (
                         <button
