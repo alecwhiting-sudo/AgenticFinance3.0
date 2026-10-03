@@ -32,12 +32,25 @@ infrastructure, and this parallelises"), not a precision benchmark. The
 claim that survives scrutiny: machine time scales linearly and cheaply;
 human time scales only with genuine exceptions.
 
-**Variant framing — "Cutover day"** (for migration-minded technical
-buyers): *"You've just adopted the platform; here is your historical
-transaction file — switch it on."* Replaying history through a new system
-of record is a real enterprise event, the history already contains the
-payments, and it quietly showcases the replay guarantee: same events, same
-books (D13).
+## 1b. Scenario A2 — "Replay the full history" (same button, different story)
+
+The same end-to-end run as §1 step 2, but told straight: the dataset is ten
+months of history and the machine replays it **as ten months** — dates
+respected, periods landing one after another, month-ends included. Two
+framings that both hold up:
+
+- **Cutover day** (migration-minded buyers): *"You've just adopted the
+  platform; here is your historical transaction file — switch it on."*
+  Replaying history into a new system of record is a real enterprise event,
+  and the history already contains the payments, so nothing reads overdue.
+- **The audit guarantee** (technical buyers): same events, same books,
+  every time (D13). Run it twice if anyone doubts it.
+
+Mechanically this is today's "replay from zero" with the §4 dashboard on
+top — the backlog-by-month bars drain in date order and the period close
+markers tick past. No extra build beyond §5 items 1–2; the loader keeps its
+plain full-replay mode alongside the one-month and stop-after-period
+controls.
 
 ## 2. Scenario B — "Run the year in fast-forward" (month by month)
 
