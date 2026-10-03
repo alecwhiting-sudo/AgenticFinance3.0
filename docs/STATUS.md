@@ -18,7 +18,7 @@ _Last updated: 2026-10-03_
 | 2b — FDP substrate (D13 steps 1–2) | ✅ built | event store → deltas → movements + journals + LES, one validated pipe (`fdpPost`), immutability triggers, deferred balance constraint, replay verified |
 | 3 — R2R | ✅ built minus deferral | bank rec + Reconciliation Agent, accruals/prepayments engine, recurring journals, P&L/BS, month-end dashboard, Close Agent commentary. **Deferred:** LRS lock → certify → supersede (D13 step 3) |
 | 4 — O2C | ✅ built | AR invoices through the pipe, cash application + agent, collections agent + dunning approval |
-| 4c — Analytics + NL reporting | 📋 planned (next big build) | charting over LES/journals + Analyst Agent on governed read-only views |
+| 4c — Analytics + NL reporting | 🔨 in progress | plan: `plans/ANALYTICS.md`. M1 curated views + charts, M2 Analyst Agent + right-hand chat panel |
 | 5 — Performance Management | 📋 planned | user: not ready yet |
 | 6 — Demo polish | 🔶 partial | agent staff strip, release pipeline, permissions matrix, decision history, per-agent period cost (D14), admin reset/replay done; guided tour + cross-process dashboard outstanding |
 | P — Production | ⬜ stub | deliberately undesigned |
@@ -64,10 +64,10 @@ _Last updated: 2026-10-03_
 
 ## Backlog (agreed, not yet built)
 
-1. **Phase 4c** analytics layer + NL Analyst Agent (before PM), including
-   the right-hand analyst chat panel in the workbench (MASTER_PLAN 4c) —
-   chat with the data, grounded in curated views + the data model +
-   architecture decisions.
+1. **Phase 4c** analytics layer + NL Analyst Agent — **in progress**, plan
+   written (`plans/ANALYTICS.md`): M1 curated read-only views + SVG charting
+   with drill-to-source; M2 the right-hand analyst chat panel, grounded in
+   the curated views + the data model + D1–D15 (never model-written SQL).
 2. **LRS lock/certify/supersede** — lands as the month-end dashboard's lock
    button + snapshot tables.
 3. **Commentary quality** — Close Agent output is too bland; skills +
