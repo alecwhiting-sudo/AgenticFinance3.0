@@ -88,14 +88,20 @@ One screen, linked from Admin, presentable full-screen:
 - **Integrity strip** — GL balance ✓ 0, journals = events.
 - The existing live activity feed alongside.
 
-## 5. Build items (not started; small)
+## 5. Build items — ✅ built 2026-10-03
 
-1. Pipeline dashboard page — front end over existing `/admin/status` job
-   progress + activity SSE; new API: per-month backlog/processed breakdown
-   and straight-through/agent/human split.
-2. Loader controls — "stop after period" / load-one-month, "process next
-   month" resume, true full-speed mode, elapsed + throughput in job status;
-   dashboard remembers the baseline run for the §1 side-by-side.
-3. "Simulate a day" composite drip bundle.
-4. Nothing else: scenarios reuse replay, drip, month-end, commentary,
-   approvals as built.
+1. ✅ Mission control at `/admin/pipeline` (web) over `GET /admin/pipeline`
+   (api): backlog by month (AP/AR/bank) draining live, elapsed + items/min,
+   control split (straight-through / exceptions / agent queue / awaiting
+   human), integrity strip, runs table with the honesty footnote.
+2. ✅ Loader: `nextMonthOnly` incremental mode (admin reset `mode:"month"`)
+   with cross-month duplicate memory and payment catch-up (a payment dated
+   in a later month waits for that month's load); `paceMs:0` = full speed;
+   finished runs remembered in memory (`runs`, capped 12 — clears on
+   redeploy, fine for a demo) for the §1 side-by-side.
+3. ✅ `POST /admin/simulate-day`: clean + scan + one random exception
+   dripped, plus a cash-application investigation when an unapplied receipt
+   exists.
+4. Everything else reuses replay, drip, month-end, commentary, approvals as
+   built. Measured on the dev box: full dataset (~1,200 transactions) in
+   ~12s at full speed, 1,159 journals, balance 0.

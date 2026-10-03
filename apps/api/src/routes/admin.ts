@@ -2,11 +2,13 @@ import type { FastifyInstance } from "fastify";
 import { sql } from "drizzle-orm";
 import { requireDb } from "../lib/db.js";
 import { emitActivity } from "../lib/activity.js";
-import { loadDemoDataset, truncateTransactions } from "../services/datasetLoader.js";
+import { datasetMonthTotals, loadDemoDataset, truncateTransactions } from "../services/datasetLoader.js";
 
 /** Admin panel backend (demo control room — not part of the finance product).
- * Reset/reload the demo data, replay it live from zero, and host the drip
- * controls that used to sit on the front of the UI. */
+ * Reset/reload the demo data, replay it live from zero, process it month by
+ * month, and host the drip controls. Finished runs are remembered in memory
+ * for the pipeline dashboard's side-by-side (plans/DEMO_SCRIPTS.md §1; the
+ * memory does not survive a container restart — fine for a demo). */
 
 type Job = {
   running: boolean;
@@ -19,6 +21,27 @@ type Job = {
   error: string | null;
 };
 const job: Job = { running: false, mode: "", done: 0, total: 0, message: "", startedAt: null, finishedAt: null, error: null };
+
+export type RunRecord = {
+  label: string;
+  mode: string;
+  startedAt: string;
+  finishedAt: string;
+  ms: number;
+  items: number;
+  monthLoaded: string | null;
+  journals: number;
+  balance: number;
+  stats: Record<string, number>;
+};
+const runs: RunRecord[] = []; // newest first, capped
+
+const jobWithElapsed = () => ({
+  ...job,
+  elapsedMs: job.startedAt
+    ? new Date(job.finishedAt ?? new Date().toISOString()).getTime() - new Date(job.startedAt).getTime()
+    : 0,
+});
 
 export function adminRoutes(app: FastifyInstance): void {
   app.get("/admin/status", async () => {
@@ -33,15 +56,64 @@ export function adminRoutes(app: FastifyInstance): void {
                (select coalesce(sum(amount_minor),0)::bigint from erp.journal_line) as balance
       `)
     ).rows;
-    return { counts, job };
+    return { counts, job: jobWithElapsed() };
   });
 
-  /** mode: "reload" (instant), "zero" (truncate only), "replay" (live, paced). */
-  app.post<{ Body: { mode?: string; paceMs?: number } }>("/admin/reset", async (req, reply) => {
+  /** The mission-control feed (plans/DEMO_SCRIPTS.md §4): dataset backlog vs
+   * loaded per month, the control split, integrity, job state, past runs. */
+  app.get("/admin/pipeline", async () => {
+    const db = requireDb();
+    const datasetMonths = datasetMonthTotals();
+    const loaded = (
+      await db.execute(sql`
+        select m, sum(ap)::int as ap, sum(ar)::int as ar, sum(bank)::int as bank from (
+          select to_char(invoice_date,'YYYY-MM') as m, count(*) as ap, 0 as ar, 0 as bank from erp.ap_invoice group by 1
+          union all
+          select to_char(invoice_date,'YYYY-MM'), 0, count(*), 0 from erp.ar_invoice group by 1
+          union all
+          select to_char(txn_date,'YYYY-MM'), 0, 0, count(*) from erp.bank_transaction group by 1
+        ) t group by m
+      `)
+    ).rows as { m: string; ap: number; ar: number; bank: number }[];
+    const loadedBy = new Map(loaded.map((r) => [r.m, r]));
+    const months = datasetMonths.map((d) => {
+      const l = loadedBy.get(d.month);
+      return {
+        month: d.month,
+        dataset: { ap: d.ap, ar: d.ar, bank: d.bank, total: d.ap + d.ar + d.bank },
+        loaded: { ap: l?.ap ?? 0, ar: l?.ar ?? 0, bank: l?.bank ?? 0, total: (l?.ap ?? 0) + (l?.ar ?? 0) + (l?.bank ?? 0) },
+      };
+    });
+    const [split] = (
+      await db.execute(sql`
+        select
+          (select count(*)::int from erp.ap_invoice where status in ('matched','approved','posted','scheduled','paid')) as ap_straight,
+          (select count(*)::int from erp.ap_invoice where status = 'exception') as ap_exceptions,
+          (select count(*)::int from erp.ar_invoice) as ar_posted,
+          (select count(*)::int from erp.bank_transaction where status = 'matched') as bank_matched,
+          (select count(*)::int from erp.bank_transaction where status = 'unmatched') as bank_unmatched,
+          (select count(*)::int from agent.work_item where status in ('pending','claimed','running')) as agent_queue,
+          (select count(*)::int from agent.command where status = 'proposed' and requires_approval) as awaiting_human
+      `)
+    ).rows;
+    const [integrity] = (
+      await db.execute(sql`
+        select (select count(*)::int from erp.journal) as journals,
+               (select count(*)::int from fdp.event) as events,
+               (select coalesce(sum(amount_minor),0)::bigint from erp.journal_line) as balance
+      `)
+    ).rows;
+    return { months, split, integrity, job: jobWithElapsed(), runs };
+  });
+
+  /** mode: "reload" (instant full), "zero" (truncate only), "replay" (full
+   * from zero; paceMs 0 = flat out, timed), "month" (incremental: next
+   * unloaded month). Optional label names the run in the dashboard history. */
+  app.post<{ Body: { mode?: string; paceMs?: number; label?: string } }>("/admin/reset", async (req, reply) => {
     const db = requireDb();
     const mode = req.body?.mode ?? "reload";
-    if (!["reload", "zero", "replay"].includes(mode))
-      return reply.code(400).send({ error: "mode must be reload | zero | replay" });
+    if (!["reload", "zero", "replay", "month"].includes(mode))
+      return reply.code(400).send({ error: "mode must be reload | zero | replay | month" });
     if (job.running) return reply.code(409).send({ error: `a ${job.mode} job is already running` });
 
     job.running = true;
@@ -59,9 +131,10 @@ export function adminRoutes(app: FastifyInstance): void {
           await truncateTransactions(db);
           job.message = "all transaction data cleared — the books are empty";
         } else {
-          const paceMs = mode === "replay" ? Math.min(Math.max(Number(req.body?.paceMs ?? 120), 20), 2000) : 0;
+          const paceMs = Math.min(Math.max(Number(req.body?.paceMs ?? (mode === "replay" ? 120 : 0)), 0), 2000);
           const result = await loadDemoDataset(db, {
-            reset: true,
+            reset: mode !== "month",
+            nextMonthOnly: mode === "month",
             paceMs,
             onProgress: (done, total, message) => {
               job.done = done;
@@ -69,7 +142,26 @@ export function adminRoutes(app: FastifyInstance): void {
               job.message = message;
             },
           });
-          job.message = result.skipped ? "nothing to do" : `loaded — ${result.journals} journals, balance ${result.balance}`;
+          if (result.skipped) {
+            job.message = result.reason ?? "nothing to do";
+          } else {
+            job.message = `loaded${result.monthLoaded ? ` ${result.monthLoaded}` : ""} — ${result.journals} journals, balance ${result.balance}`;
+            job.finishedAt = new Date().toISOString();
+            const ms = new Date(job.finishedAt).getTime() - new Date(job.startedAt!).getTime();
+            runs.unshift({
+              label: req.body?.label?.slice(0, 60) ?? `${mode}${result.monthLoaded ? ` ${result.monthLoaded}` : ""}${mode === "replay" && paceMs === 0 ? " (full speed)" : ""}`,
+              mode,
+              startedAt: job.startedAt!,
+              finishedAt: job.finishedAt,
+              ms,
+              items: job.done,
+              monthLoaded: result.monthLoaded ?? null,
+              journals: result.journals,
+              balance: result.balance,
+              stats: result.stats,
+            });
+            if (runs.length > 12) runs.pop();
+          }
         }
         await emitActivity({
           actorType: "human",
@@ -81,25 +173,62 @@ export function adminRoutes(app: FastifyInstance): void {
             mode === "zero"
               ? "Demo data cleared — books at zero"
               : mode === "replay"
-                ? "Demo dataset replayed live from zero"
-                : "Demo dataset reset and reloaded",
+                ? "Demo dataset replayed from zero"
+                : mode === "month"
+                  ? `Demo data: ${job.message}`
+                  : "Demo dataset reset and reloaded",
         });
       } catch (err) {
         job.error = String(err);
         job.message = "failed";
       } finally {
         job.running = false;
-        job.finishedAt = new Date().toISOString();
+        job.finishedAt = job.finishedAt ?? new Date().toISOString();
       }
     };
 
-    if (mode === "replay") {
-      // long-running: fire and forget; the UI polls /admin/status
+    if (mode === "replay" || mode === "month") {
+      // potentially long-running: fire and forget; the UI polls /admin/status
       void work();
       return { started: true, mode };
     }
     await work();
     return { started: true, mode, job };
+  });
+
+  /** Scenario C (plans/DEMO_SCRIPTS.md §3): one believable morning's inbox —
+   * a clean e-invoice, a scanned PDF, one exception, and (when an unapplied
+   * receipt exists) a cash-application investigation. */
+  app.post("/admin/simulate-day", async (_req, reply) => {
+    const db = requireDb();
+    const exceptionPool = ["price_variance", "qty_short_receipt", "missing_receipt", "no_purchase", "bank_detail_change"];
+    const scenarios = ["clean", "scan_document", exceptionPool[Math.floor(Math.random() * exceptionPool.length)]!];
+    const dripped: { scenario: string; summary: string }[] = [];
+    for (const scenario of scenarios) {
+      const res = await app.inject({ method: "POST", url: "/p2p/drip", payload: { scenario } });
+      const body = res.json() as { supplier?: string; invoiceNumber?: string; error?: string };
+      dripped.push({
+        scenario,
+        summary: res.statusCode === 200 ? `${body.supplier} ${body.invoiceNumber}` : `skipped: ${body.error}`,
+      });
+    }
+    let receipt: string | null = null;
+    const txn = await db.query.bankTransaction.findFirst({
+      where: (t, { and: a, eq: e }) => a(e(t.status, "unmatched"), e(t.kind, "ar_receipt")),
+    });
+    if (txn) {
+      const res = await app.inject({ method: "POST", url: "/o2c/investigate-receipt", payload: { bankTransactionId: txn.id } });
+      receipt = res.statusCode === 200 ? txn.reference : null;
+    }
+    await emitActivity({
+      actorType: "human",
+      actorId: "demo-drip",
+      verb: "simulated_day",
+      objectType: "dataset",
+      objectId: "day",
+      summary: `Simulated a morning: ${dripped.length} invoices landed${receipt ? `, receipt ${receipt} under investigation` : ""}`,
+    });
+    return reply.send({ dripped, receipt });
   });
 
   /** Flush agent history to keep the demo cheap (D14): strip run transcripts

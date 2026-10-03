@@ -19,6 +19,17 @@ export default function AdminPage() {
       <AdminData />
 
       <Card>
+        <SectionTitle>Pipeline — mission control</SectionTitle>
+        <p className="text-sm" style={{ color: "var(--muted)" }}>
+          The demo backlog by month and the machine working through it: process
+          month by month, replay everything, or run the timed full-speed 10x —{" "}
+          <Link href="/admin/pipeline" className="hover:underline" style={{ color: "var(--accent)" }}>
+            open mission control →
+          </Link>
+        </p>
+      </Card>
+
+      <Card>
         <SectionTitle>Architecture</SectionTitle>
         <p className="text-sm" style={{ color: "var(--muted)" }}>
           The living system diagram and schema map, maintained alongside the

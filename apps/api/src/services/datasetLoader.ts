@@ -13,7 +13,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import {
   seedCore,
   apInvoice,
@@ -111,6 +111,9 @@ export type LoadOptions = {
   reset?: boolean;
   /** truncate the transaction tables and stop — "from zero" state */
   truncateOnly?: boolean;
+  /** incremental: load only the next unloaded dataset month (no truncate).
+   * Drives the month-by-month demo scenario (plans/DEMO_SCRIPTS.md §2). */
+  nextMonthOnly?: boolean;
   /** pace per chain in ms; >0 also emits per-chain activity events */
   paceMs?: number;
   onProgress?: (done: number, total: number, message: string) => void;
@@ -118,8 +121,28 @@ export type LoadOptions = {
 };
 
 export type LoadResult =
-  | { skipped: true }
-  | { skipped?: false; stats: Record<string, number>; journals: number; balance: number };
+  | { skipped: true; reason?: string }
+  | { skipped?: false; stats: Record<string, number>; journals: number; balance: number; monthLoaded?: string | null };
+
+const monthOf = (d: string) => d.slice(0, 7);
+
+/** Per-month transaction totals of the committed dataset (static — cached). */
+let monthTotalsCache: { month: string; ap: number; ar: number; bank: number }[] | null = null;
+export function datasetMonthTotals(): { month: string; ap: number; ar: number; bank: number }[] {
+  if (monthTotalsCache) return monthTotalsCache;
+  const d: StudioDataset = JSON.parse(readFileSync(path.join(seedDir, "generated/dataset.json"), "utf8"));
+  const map = new Map<string, { ap: number; ar: number; bank: number }>();
+  const bump = (m: string, k: "ap" | "ar" | "bank") => {
+    const row = map.get(m) ?? { ap: 0, ar: 0, bank: 0 };
+    row[k]++;
+    map.set(m, row);
+  };
+  for (const c of d.ap) bump(monthOf(c.invoice.invoiceDate), "ap");
+  for (const a of d.ar) bump(monthOf(a.invoiceDate), "ar");
+  for (const b of d.bank) bump(monthOf(b.date), "bank");
+  monthTotalsCache = [...map.entries()].sort(([a], [b]) => (a < b ? -1 : 1)).map(([month, v]) => ({ month, ...v }));
+  return monthTotalsCache;
+}
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -145,16 +168,47 @@ export async function loadDemoDataset(db: Db, opts: LoadOptions = {}): Promise<L
   const companyRow = await db.query.company.findFirst();
   if (!companyRow) throw new Error("core seed did not produce a company row");
 
-  const existing = await db.select({ n: sql<number>`count(*)` }).from(purchase);
-  if (Number(existing[0]!.n) > 0) {
-    if (!opts.reset && !opts.truncateOnly) {
-      log("P2P data already loaded — reset required to reload");
-      return { skipped: true };
+  // Month window for incremental loading: months in (from, to] load this call.
+  let window: { from: string | null; to: string } | null = null;
+  if (opts.nextMonthOnly) {
+    const allMonths = datasetMonthTotals().map((m) => m.month);
+    const [{ m }] = (
+      await db.execute(sql`
+        select greatest(
+          (select max(invoice_date) from erp.ap_invoice),
+          (select max(invoice_date) from erp.ar_invoice),
+          (select max(txn_date) from erp.bank_transaction)
+        )::text as m`)
+    ).rows as { m: string | null }[];
+    const loadedUpTo = m ? m.slice(0, 7) : null;
+    const target = allMonths.find((x) => !loadedUpTo || x > loadedUpTo);
+    if (!target) {
+      log("all dataset months already loaded");
+      return { skipped: true, reason: "all dataset months already loaded" };
     }
-    await truncateTransactions(db);
-    log("transaction tables truncated");
+    window = { from: loadedUpTo, to: target };
+    log(`loading dataset month ${target}`);
+  } else {
+    const existing = await db.select({ n: sql<number>`count(*)` }).from(purchase);
+    if (Number(existing[0]!.n) > 0) {
+      if (!opts.reset && !opts.truncateOnly) {
+        log("P2P data already loaded — reset required to reload");
+        return { skipped: true };
+      }
+      await truncateTransactions(db);
+      log("transaction tables truncated");
+    }
   }
   if (opts.truncateOnly) return { skipped: false, stats: {}, journals: 0, balance: 0 };
+
+  const inWindow = (d: string) => {
+    if (!window) return true;
+    const mm = monthOf(d);
+    return (window.from === null || mm > window.from) && mm <= window.to;
+  };
+  const apChains = dataset.ap.filter((c) => inWindow(c.invoice.invoiceDate));
+  const arRows = dataset.ar.filter((a) => inWindow(a.invoiceDate));
+  const bankRows = dataset.bank.filter((b) => inWindow(b.date));
 
   // budgets Apr–Mar (12 seeded periods)
   const periods = await db.query.fiscalPeriod.findMany();
@@ -182,10 +236,23 @@ export async function loadDemoDataset(db: Db, opts: LoadOptions = {}): Promise<L
 
   const stats: Record<string, number> = { purchases: 0, receipts: 0, invoices: 0, posted: 0, paid: 0, exceptions: 0, mismatches: 0, ublParsed: 0 };
   const seenInvoices = new Map<string, { supplierInvoiceNumber: string; grossMinor: number; invoiceDate: string }[]>();
-  const total = dataset.ap.length + 2; // + bank feed + AR load steps
+  // incremental loads: duplicate detection must also see what earlier months loaded
+  if (window) {
+    const prior = (
+      await db.execute(sql`
+        select s.code, i.supplier_invoice_number as num, i.gross_minor as gross, i.invoice_date::text as d
+        from erp.ap_invoice i join erp.supplier s on s.id = i.supplier_id`)
+    ).rows as { code: string; num: string; gross: number; d: string }[];
+    for (const r of prior) {
+      const list = seenInvoices.get(r.code) ?? [];
+      list.push({ supplierInvoiceNumber: r.num, grossMinor: Number(r.gross), invoiceDate: r.d });
+      seenInvoices.set(r.code, list);
+    }
+  }
+  const total = apChains.length + 2; // + bank feed + AR load steps
   let done = 0;
 
-  for (const chain of dataset.ap) {
+  for (const chain of apChains) {
     const sup = supplierByCode.get(chain.supplierCode);
     if (!sup) continue;
 
@@ -290,7 +357,8 @@ export async function loadDemoDataset(db: Db, opts: LoadOptions = {}): Promise<L
         await db.update(apInvoice).set({ status: "matched" }).where(eq(apInvoice.id, inv.id));
         await postApInvoice(db, inv.id, "loader");
         stats.posted!++;
-        if (chain.paid && chain.paidDate) {
+        // month mode: a payment dated in a later month waits for that month's load
+        if (chain.paid && chain.paidDate && (!window || monthOf(chain.paidDate) <= window.to)) {
           const [pay] = await db
             .insert(apPayment)
             .values({
@@ -351,10 +419,40 @@ export async function loadDemoDataset(db: Db, opts: LoadOptions = {}): Promise<L
     }
   }
 
+  // 3b. Month mode catch-up: pay invoices loaded in earlier months whose
+  // payment date lands in this window.
+  if (window) {
+    for (const chain of dataset.ap) {
+      if (!chain.paid || !chain.paidDate) continue;
+      if (inWindow(chain.invoice.invoiceDate)) continue; // handled above
+      const payM = monthOf(chain.paidDate);
+      if (!((window.from === null || payM > window.from) && payM <= window.to)) continue;
+      const sup = supplierByCode.get(chain.supplierCode);
+      if (!sup) continue;
+      const inv = await db.query.apInvoice.findFirst({
+        where: (t) => and(eq(t.supplierId, sup.id), eq(t.supplierInvoiceNumber, chain.invoice.number)),
+      });
+      if (!inv || inv.status !== "posted") continue;
+      const [pay] = await db
+        .insert(apPayment)
+        .values({
+          paymentRef: `PAY-${chain.invoice.number}`,
+          runDate: chain.paidDate,
+          invoiceIds: [inv.id],
+          totalMinor: chain.invoice.grossMinor,
+          status: "approved",
+        })
+        .returning();
+      await executeApPayment(db, pay!.id, "loader");
+      if (inv.purchaseId) await db.update(purchase).set({ status: "closed" }).where(eq(purchase.id, inv.purchaseId));
+      stats.paid!++;
+    }
+  }
+
   // 4. Bank feed; match payment lines to executed payments
   const payments = await db.query.apPayment.findMany();
   const payByRef = new Map(payments.map((p) => [p.paymentRef, p]));
-  for (const t of dataset.bank) {
+  for (const t of bankRows) {
     const pay = t.kind === "ap_payment" ? payByRef.get(`PAY-${t.reference}`) : undefined;
     await db.insert(bankTransaction).values({
       txnDate: t.date,
@@ -385,7 +483,7 @@ export async function loadDemoDataset(db: Db, opts: LoadOptions = {}): Promise<L
       if (row) customerByCode.set(c.code, row);
     }
   }
-  for (const a of dataset.ar) {
+  for (const a of arRows) {
     const cust = customerByCode.get(a.customerCode);
     if (!cust) continue;
     const [inv] = await db
@@ -428,5 +526,5 @@ export async function loadDemoDataset(db: Db, opts: LoadOptions = {}): Promise<L
   const [{ n: journals }] = (await db.execute(sql`select count(*) as n from erp.journal`)).rows as { n: string }[];
   const [{ bal }] = (await db.execute(sql`select coalesce(sum(amount_minor),0) as bal from erp.journal_line`)).rows as { bal: string }[];
   log(`journals: ${journals}, ledger balance check (must be 0): ${bal}`);
-  return { stats, journals: Number(journals), balance: Number(bal) };
+  return { stats, journals: Number(journals), balance: Number(bal), monthLoaded: window?.to ?? null };
 }
