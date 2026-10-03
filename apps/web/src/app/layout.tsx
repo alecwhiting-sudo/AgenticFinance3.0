@@ -36,13 +36,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        <div className="mx-auto max-w-5xl px-4 py-8">
+        <div className="mx-auto max-w-6xl px-4 py-8">
           <header className="mb-8 flex items-baseline justify-between">
             <div className="flex items-baseline gap-8">
               <Link href="/" className="text-lg font-semibold tracking-tight">
                 AgenticFinance
               </Link>
-              <nav className="flex gap-5 text-sm">
+              <nav className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
                 {nav.map((n) => (
                   <Link
                     key={n.href}
@@ -55,12 +55,7 @@ export default function RootLayout({
                 ))}
               </nav>
             </div>
-            <span className="flex items-center gap-3">
-              <CommandPalette />
-              <span className="text-xs" style={{ color: "var(--muted)" }}>
-                workbench · demo
-              </span>
-            </span>
+            <CommandPalette />
           </header>
           {children}
         </div>

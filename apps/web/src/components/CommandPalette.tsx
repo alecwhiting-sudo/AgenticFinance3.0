@@ -85,7 +85,7 @@ export default function CommandPalette() {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="rounded-lg border px-2.5 py-1 text-xs"
+        className="whitespace-nowrap rounded-lg border px-2.5 py-1 text-xs"
         style={{ borderColor: "var(--border)", color: "var(--muted)" }}
         title="Search (⌘K)"
       >
@@ -98,7 +98,7 @@ export default function CommandPalette() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="rounded-lg border px-2.5 py-1 text-xs"
+        className="whitespace-nowrap rounded-lg border px-2.5 py-1 text-xs"
         style={{ borderColor: "var(--border)", color: "var(--muted)" }}
       >
         Search <kbd className="ml-1 rounded border px-1" style={{ borderColor: "var(--border)" }}>⌘K</kbd>
