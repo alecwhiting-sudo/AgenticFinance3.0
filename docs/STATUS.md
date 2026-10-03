@@ -50,6 +50,17 @@ _Last updated: 2026-10-03_
 - **Cost engineering (D15)**: prompt caching (raw token split stored,
   priced at read time per tier) + learned extraction templates (suppliers
   promote off the model after 3 validated extractions; savings measured).
+- **Central skill map (2026-10-03)**: `agent.agent_skill` (migration 0012)
+  holds which skills each agent is MEANT to carry — the curriculum, stored
+  once centrally. Releases stay the enforced snapshot: a rebuild without
+  explicit versions reads the map and pins each skill's latest version
+  (`PUT /agents/:slug/skill-map` replaces the map + drafts that release).
+  The library's "Mapped into" chips show both states: pinned vN (active)
+  or "awaiting release".
+- **Deploys are self-contained (2026-10-03)**: the api boot script applies
+  pending migrations and refreshes the registry seed (non-destructive) before
+  the server starts — new skills/agents/migrations land on push, no manual
+  `railway run`. Opt out: `MIGRATE_ON_BOOT=false`.
 - **Skills library v2 (2026-10-03)**: 21 skills clustered by topic (P2P,
   O2C, R2R, Analytics, Controls & audit, Planning & performance, Platform)
   in a master-detail page — read first, Edit as a separate step. Controls

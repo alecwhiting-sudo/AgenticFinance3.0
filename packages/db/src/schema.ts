@@ -187,6 +187,23 @@ export const skillVersion = ag.table(
   (t) => [unique("skill_version_unique").on(t.skillId, t.version)],
 );
 
+/** Central agent↔skill mapping (the CURRICULUM): which skills an agent is
+ * meant to carry, held once here rather than inside every agent. Releases
+ * remain the enforced snapshot (immutable pinned versions); when a release
+ * is rebuilt without explicit versions, it reads this table and pins each
+ * mapped skill's latest version. */
+export const agentSkill = ag.table(
+  "agent_skill",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    agentId: uuid("agent_id").notNull().references(() => agent.id),
+    skillId: uuid("skill_id").notNull().references(() => skill.id),
+    addedBy: text("added_by").notNull().default("seed"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [unique("agent_skill_unique").on(t.agentId, t.skillId)],
+);
+
 export const agentRelease = ag.table(
   "agent_release",
   {

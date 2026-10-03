@@ -9,6 +9,7 @@ import {
   evalRun,
   skill,
   skillVersion,
+  agentSkill,
   workItem,
 } from "@af/db";
 import {
@@ -243,18 +244,32 @@ export function agentRoutes(app: FastifyInstance): void {
     const activeReleases = await db.query.agentRelease.findMany({ where: (t) => eq(t.status, "active") });
     const agents = await db.query.agent.findMany();
     const agentById = new Map(agents.map((a) => [a.id, a]));
-    const usedBy = new Map<string, { agentSlug: string; agentName: string; pinnedVersion: number; stale: boolean }[]>();
+    // what each agent's ACTIVE release actually pins, per skill
+    const pinnedByAgentSkill = new Map<string, number>(); // `${agentId}:${skillId}` -> version
     for (const r of activeReleases) {
       for (const vid of r.skillVersionIds) {
         const v = versionById.get(vid);
-        if (!v) continue;
-        const a = agentById.get(r.agentId);
-        if (!a) continue;
-        const latest = latestBySkill.get(v.skillId);
-        const list = usedBy.get(v.skillId) ?? [];
-        list.push({ agentSlug: a.slug, agentName: a.name, pinnedVersion: v.version, stale: !!latest && v.version < latest.version });
-        usedBy.set(v.skillId, list);
+        if (v) pinnedByAgentSkill.set(`${r.agentId}:${v.skillId}`, v.version);
       }
+    }
+    // usedBy comes from the CENTRAL map (agent_skill — the curriculum);
+    // pinnedVersion is null when the agent is mapped but its active release
+    // has not picked the skill up yet
+    const mappings = await db.query.agentSkill.findMany();
+    const usedBy = new Map<string, { agentSlug: string; agentName: string; pinnedVersion: number | null; stale: boolean }[]>();
+    for (const m of mappings) {
+      const a = agentById.get(m.agentId);
+      if (!a) continue;
+      const latest = latestBySkill.get(m.skillId);
+      const pinned = pinnedByAgentSkill.get(`${m.agentId}:${m.skillId}`) ?? null;
+      const list = usedBy.get(m.skillId) ?? [];
+      list.push({
+        agentSlug: a.slug,
+        agentName: a.name,
+        pinnedVersion: pinned,
+        stale: pinned !== null && !!latest && pinned < latest.version,
+      });
+      usedBy.set(m.skillId, list);
     }
     return skills.map((s) => {
       const latest = latestBySkill.get(s.id);
@@ -328,6 +343,21 @@ export function agentRoutes(app: FastifyInstance): void {
     return created;
   });
 
+  /** Latest version id of every skill in the agent's central map — what a
+   * rebuilt release pins when no explicit versions are given. */
+  async function latestVersionIdsFromMap(db: ReturnType<typeof requireDb>, agentId: string): Promise<string[]> {
+    const mapped = await db.query.agentSkill.findMany({ where: (t) => eq(t.agentId, agentId) });
+    const ids: string[] = [];
+    for (const m of mapped) {
+      const latest = await db.query.skillVersion.findFirst({
+        where: (t) => eq(t.skillId, m.skillId),
+        orderBy: (t) => desc(t.version),
+      });
+      if (latest) ids.push(latest.id);
+    }
+    return ids;
+  }
+
   app.post<{ Params: { slug: string } }>("/agents/:slug/releases", async (req, reply) => {
     const db = requireDb();
     const body = createReleaseSchema.parse(req.body);
@@ -337,9 +367,15 @@ export function agentRoutes(app: FastifyInstance): void {
       where: (t) => eq(t.agentId, a.id),
       orderBy: (t) => desc(t.version),
     });
+    // a rebuild without explicit versions reads the central map (agent_skill)
+    // and pins each mapped skill's latest version
+    const skillVersionIds =
+      body.skillVersionIds && body.skillVersionIds.length > 0
+        ? body.skillVersionIds
+        : await latestVersionIdsFromMap(db, a.id);
     const [created] = await db
       .insert(agentRelease)
-      .values({ agentId: a.id, version: (latest?.version ?? 0) + 1, ...body })
+      .values({ agentId: a.id, version: (latest?.version ?? 0) + 1, ...body, skillVersionIds })
       .returning();
     await emitActivity({
       actorType: "human",
@@ -350,6 +386,70 @@ export function agentRoutes(app: FastifyInstance): void {
       summary: `${body.createdBy} drafted ${a.name} release v${created!.version}`,
     });
     return created;
+  });
+
+  /** Replace an agent's central skill map (the curriculum) and draft a
+   * release pinned to the latest version of each mapped skill. The release
+   * still goes through eval → promote; the map changes immediately. */
+  app.put<{ Params: { slug: string } }>("/agents/:slug/skill-map", async (req, reply) => {
+    const db = requireDb();
+    const body = z
+      .object({ skillSlugs: z.array(z.string()).max(30), updatedBy: z.string().min(1) })
+      .parse(req.body);
+    const a = await db.query.agent.findFirst({ where: (t) => eq(t.slug, req.params.slug) });
+    if (!a) return reply.code(404).send({ error: "agent not found" });
+    const skills = body.skillSlugs.length
+      ? await db.query.skill.findMany({ where: (t) => inArray(t.slug, body.skillSlugs) })
+      : [];
+    const missing = body.skillSlugs.filter((s) => !skills.some((k) => k.slug === s));
+    if (missing.length) return reply.code(400).send({ error: `unknown skills: ${missing.join(", ")}` });
+
+    const wantedIds = new Set(skills.map((s) => s.id));
+    const current = await db.query.agentSkill.findMany({ where: (t) => eq(t.agentId, a.id) });
+    for (const m of current) {
+      if (!wantedIds.has(m.skillId)) await db.delete(agentSkill).where(eq(agentSkill.id, m.id));
+    }
+    for (const id of wantedIds) {
+      if (!current.some((m) => m.skillId === id)) {
+        await db.insert(agentSkill).values({ agentId: a.id, skillId: id, addedBy: body.updatedBy });
+      }
+    }
+
+    // draft the rebuilt release from the active one's settings + the new map
+    const active = await db.query.agentRelease.findFirst({
+      where: (t) => and(eq(t.agentId, a.id), eq(t.status, "active")),
+    });
+    const latest = await db.query.agentRelease.findFirst({
+      where: (t) => eq(t.agentId, a.id),
+      orderBy: (t) => desc(t.version),
+    });
+    if (!active) return reply.code(409).send({ error: "no active release to base the draft on" });
+    const skillVersionIds = await latestVersionIdsFromMap(db, a.id);
+    const [draft] = await db
+      .insert(agentRelease)
+      .values({
+        agentId: a.id,
+        version: (latest?.version ?? 0) + 1,
+        instructions: active.instructions,
+        skillVersionIds,
+        commandPermissions: active.commandPermissions,
+        modelProfile: active.modelProfile,
+        maxModelCalls: active.maxModelCalls,
+        maxCostMinor: active.maxCostMinor,
+        status: "draft",
+        notes: `Skill map changed by ${body.updatedBy}: ${body.skillSlugs.join(", ") || "(none)"}`,
+        createdBy: body.updatedBy,
+      })
+      .returning();
+    await emitActivity({
+      actorType: "human",
+      actorId: body.updatedBy,
+      verb: "updated_skill_map",
+      objectType: "agent",
+      objectId: a.slug,
+      summary: `${body.updatedBy} set ${a.name}'s skill map (${body.skillSlugs.length} skills) — draft v${draft!.version}`,
+    });
+    return { skillSlugs: body.skillSlugs, draftRelease: { id: draft!.id, version: draft!.version } };
   });
 
   app.post<{ Params: { slug: string; version: string } }>(

@@ -3,10 +3,30 @@
  * Usage: tsx src/scripts/loadDataset.ts [--reset]   (needs DATABASE_URL)
  * RESET_DATASET=true also triggers a reset reload (Railway dashboard path).
  */
-import { createDb } from "@af/db";
+import { createDb, runMigrations, seedCore } from "@af/db";
 import { loadDemoDataset } from "../services/datasetLoader.js";
 
 const reset = process.argv.includes("--reset") || process.env.RESET_DATASET === "true";
+
+// Every boot: apply pending migrations and refresh the registry seed
+// (idempotent, non-destructive — master data, skills, agents, releases).
+// A deploy is then self-contained: new skills/agents appear without a
+// manual migrate or a dataset wipe. Opt out with MIGRATE_ON_BOOT=false.
+if (process.env.MIGRATE_ON_BOOT !== "false") {
+  const boot = createDb();
+  try {
+    await runMigrations(boot.db);
+    console.log("migrations applied");
+    await seedCore(boot.db);
+    console.log("registry seed refreshed");
+  } catch (err) {
+    // never block the API from starting; the admin panel can still load
+    console.error(`boot migrate/seed failed (non-fatal): ${err instanceof Error ? err.message : String(err)}`);
+  } finally {
+    await boot.pool.end();
+  }
+}
+
 // Container boot (Dockerfile CMD) only loads when opted in — otherwise a
 // restart would trample a month-by-month demo by refilling empty books.
 // The Admin panel is the normal way to load/reset data.

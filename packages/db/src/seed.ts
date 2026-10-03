@@ -15,6 +15,7 @@ import {
   account,
   agent,
   agentRelease,
+  agentSkill,
   company,
   customer,
   evalCase,
@@ -134,12 +135,13 @@ if (reset) {
   await db.execute(sql`
     truncate table agent.activity_event, agent.eval_run, agent.eval_case,
       agent.command, agent.agent_run, agent.work_item, agent.agent_release,
-      agent.skill_version, agent.skill, agent.agent,
+      agent.agent_skill, agent.skill_version, agent.skill, agent.agent,
       evidence.case_event, evidence.document, evidence."case" cascade
   `);
 }
 
 const skillVersionBySlug = new Map<string, string>();
+const skillIdBySlug = new Map<string, string>();
 for (const s of agentData.skills) {
   const [row] = await db
     .insert(skill)
@@ -189,6 +191,7 @@ for (const s of agentData.skills) {
           where: (t, { and, eq }) => and(eq(t.skillId, skillRow.id), eq(t.version, 1)),
         }))!;
   skillVersionBySlug.set(s.slug, v1.id);
+  skillIdBySlug.set(s.slug, skillRow.id);
 }
 
 for (const a of agentData.agents) {
@@ -227,6 +230,17 @@ for (const a of agentData.agents) {
       promotedBy: "seed",
       promotedAt: new Date(),
     });
+  }
+
+  // central curriculum map (agent_skill): the intended skill set, held once;
+  // releases pin exact versions from it when rebuilt
+  for (const slug of a.release.skills) {
+    const skillId = skillIdBySlug.get(slug);
+    if (!skillId) throw new Error(`unknown skill ${slug}`);
+    await db
+      .insert(agentSkill)
+      .values({ agentId: agentRow.id, skillId, addedBy: "seed" })
+      .onConflictDoNothing({ target: [agentSkill.agentId, agentSkill.skillId] });
   }
 
   for (const c of a.evalCases) {

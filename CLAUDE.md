@@ -68,7 +68,12 @@ For **Claude Code dev sessions on this repo** (human guidance, not enforced):
 Sonnet 5.5 for routine implementation and fixes; Opus 5.5 (default) for
 feature building; reserve Fable-class sessions for architecture/planning
 decisions; `/code-review` at medium effort for routine diffs, high for
-schema/gateway/posting changes.
+schema/gateway/posting changes. **Within a session**, apply the same routing
+by delegating: when a heavier session (Fable/Opus) has separable routine work
+(UI wiring to a fixed contract, mechanical sweeps, test scaffolding), spawn a
+subagent on Sonnet (or Haiku for pure mechanics) rather than doing it on the
+expensive model — the session model is the architect, subagents are the
+build crew.
 - Finance safety rule: anything that moves money, posts material journals, or
   sends external communications requires an explicit human-approval checkpoint
   through the command gateway. Agents propose; humans approve.
@@ -92,5 +97,9 @@ Railway CLI only: three services (web, api, worker) + Postgres plugin in one
 Railway project. Each service builds from the **repo root** with its
 `apps/<name>/Dockerfile` (config in `apps/<name>/railway.json`); deploy with
 `scripts/deploy.sh <name>` or `railway up` from the repo root with the service
-linked. Run migrations via `railway run pnpm db:migrate`. Don't introduce
-other deploy mechanisms without updating the architecture doc.
+linked. **Migrations and the registry seed run automatically on api boot**
+(`loadDataset.js` applies pending migrations + a non-destructive `seedCore`
+refresh before the server starts; opt out with `MIGRATE_ON_BOOT=false`) — so
+a push is a complete deploy; `railway run pnpm db:migrate` remains for manual
+use. Don't introduce other deploy mechanisms without updating the
+architecture doc.

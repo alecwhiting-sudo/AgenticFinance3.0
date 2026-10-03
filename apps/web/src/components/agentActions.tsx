@@ -170,27 +170,20 @@ export function RunEvalsButton({ agentSlug }: { agentSlug: string }) {
   );
 }
 
-/** Edit which library skills this agent carries. Version-controlled by
- * construction: saving creates a DRAFT release pinning each chosen skill's
- * latest version — eval and promote to make it live (§2.3). */
+/** Edit which library skills this agent carries. Writes the CENTRAL skill map
+ * (the curriculum); the API replaces the map and drafts a release pinned to
+ * the latest version of each mapped skill — eval and promote to make it live
+ * (§2.3). Nothing changes for the running agent until that promotion. */
 export function ManageSkills({
   agentSlug,
-  base,
   currentSkillSlugs,
 }: {
   agentSlug: string;
-  base: {
-    instructions: string;
-    commandPermissions: string[];
-    modelProfile: string;
-    maxModelCalls: number;
-    maxCostMinor: number;
-  };
   currentSkillSlugs: string[];
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [lib, setLib] = useState<{ slug: string; name: string; description: string; latestVersion: number; latestVersionId: string | null }[]>([]);
+  const [lib, setLib] = useState<{ slug: string; name: string; description: string; latestVersion: number }[]>([]);
   const [chosen, setChosen] = useState<Set<string>>(new Set(currentSkillSlugs));
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -207,14 +200,21 @@ export function ManageSkills({
 
   const save = async () => {
     setBusy(true);
-    const skillVersionIds = lib.filter((s) => chosen.has(s.slug) && s.latestVersionId).map((s) => s.latestVersionId as string);
-    const { ok, data } = await post(`/agents/${agentSlug}/releases`, {
-      ...base,
-      skillVersionIds,
-      notes: `Skill set changed: ${[...chosen].join(", ") || "none"}`,
-      createdBy: USER,
-    });
-    setMsg(ok ? `Draft v${(data as { version?: number })?.version} created with ${skillVersionIds.length} skills — run evals, then promote.` : "Draft failed.");
+    let text: string;
+    try {
+      const res = await fetch(`${apiUrl}/agents/${agentSlug}/skill-map`, {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ skillSlugs: [...chosen], updatedBy: "workbench-user" }),
+      });
+      const d = (await res.json().catch(() => null)) as { error?: string; draftRelease?: { version: number } } | null;
+      text = res.ok
+        ? `Skill map saved — draft release v${d?.draftRelease?.version} created from it. Run evals and promote to apply.`
+        : (d?.error ?? "Saving the skill map failed.");
+    } catch {
+      text = `Cannot reach the API at ${apiUrl}.`;
+    }
+    setMsg(text);
     setBusy(false);
     setOpen(false);
     router.refresh();
@@ -233,7 +233,7 @@ export function ManageSkills({
   return (
     <div className="w-full rounded-lg border p-3" style={{ borderColor: "var(--accent)" }}>
       <p className="mb-2 text-xs" style={{ color: "var(--muted)" }}>
-        Pick from the skills library — saving drafts a new release (latest version of each skill).
+        Pick from the skills library — saving updates the central skill map and drafts a new release (latest version of each skill).
       </p>
       <div className="space-y-1.5">
         {lib.map((s) => (
@@ -259,7 +259,7 @@ export function ManageSkills({
       </div>
       <div className="mt-3 flex gap-2">
         <button disabled={busy} onClick={save} className="rounded-lg px-3 py-1.5 text-sm font-medium text-white disabled:opacity-40" style={{ background: "var(--accent)" }}>
-          {busy ? "Drafting…" : "Save as draft release"}
+          {busy ? "Saving…" : "Save skill map"}
         </button>
         <button onClick={() => setOpen(false)} className="rounded-lg border px-3 py-1.5 text-sm" style={{ borderColor: "var(--border)" }}>
           Cancel

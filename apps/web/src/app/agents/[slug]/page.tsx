@@ -144,13 +144,6 @@ export default async function AgentDetail({ params }: { params: Promise<{ slug: 
             {active && (
               <ManageSkills
                 agentSlug={d.agent.slug}
-                base={{
-                  instructions: active.instructions,
-                  commandPermissions: active.commandPermissions,
-                  modelProfile: active.modelProfile,
-                  maxModelCalls: active.maxModelCalls,
-                  maxCostMinor: active.maxCostMinor,
-                }}
                 currentSkillSlugs={d.skills.map((s) => s.slug)}
               />
             )}

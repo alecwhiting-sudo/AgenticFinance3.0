@@ -23,7 +23,7 @@ type Row = {
   latestVersion: number;
   latestInstructions: string;
   versions: number;
-  usedBy: { agentSlug: string; agentName: string; pinnedVersion: number; stale: boolean }[];
+  usedBy: { agentSlug: string; agentName: string; pinnedVersion: number | null; stale: boolean }[];
 };
 
 const CLUSTERS: [string, string][] = [
@@ -218,26 +218,34 @@ export default function SkillsLibraryPage() {
               </div>
               <p className="mt-1 text-sm" style={{ color: "var(--muted)" }}>{sel.description}</p>
               <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-                <span style={{ color: "var(--muted)" }}>Used by:</span>
+                <span style={{ color: "var(--muted)" }}>Mapped into:</span>
                 {sel.usedBy.length === 0 && (
-                  <span style={{ color: "var(--muted)" }}>no active release — seeded ahead of need</span>
+                  <span style={{ color: "var(--muted)" }}>no agent mapping — seeded ahead of need</span>
                 )}
-                {sel.usedBy.map((u) => (
-                  <Link
-                    key={u.agentSlug}
-                    href={`/agents/${u.agentSlug}`}
-                    className="rounded-full border px-2 py-0.5 hover:underline"
-                    style={{ borderColor: u.stale ? "var(--warn)" : "var(--border)", color: u.stale ? "var(--warn)" : "var(--muted)" }}
-                    title={
-                      u.stale
-                        ? `pinned to v${u.pinnedVersion}; latest is v${sel.latestVersion} — draft a release to pick it up`
-                        : `pinned to v${u.pinnedVersion} (latest)`
-                    }
-                  >
-                    {u.agentName} · v{u.pinnedVersion}
-                    {u.stale ? " (stale)" : ""}
-                  </Link>
-                ))}
+                {sel.usedBy.map((u) => {
+                  // pinnedVersion null = mapped centrally, but the active release
+                  // hasn't picked it up yet (a draft release must be promoted).
+                  const awaiting = u.pinnedVersion === null;
+                  const warn = !awaiting && u.stale;
+                  return (
+                    <Link
+                      key={u.agentSlug}
+                      href={`/agents/${u.agentSlug}`}
+                      className="rounded-full border px-2 py-0.5 hover:underline"
+                      style={{ borderColor: warn ? "var(--warn)" : "var(--border)", color: warn ? "var(--warn)" : "var(--muted)" }}
+                      title={
+                        awaiting
+                          ? "mapped centrally — a draft release must be promoted before the agent carries this skill"
+                          : u.stale
+                            ? `pinned to v${u.pinnedVersion}; latest is v${sel.latestVersion} — draft a release to pick it up`
+                            : `pinned to v${u.pinnedVersion} (latest)`
+                      }
+                    >
+                      {awaiting ? `${u.agentName} · awaiting release` : `${u.agentName} · v${u.pinnedVersion}`}
+                      {warn ? " (stale)" : ""}
+                    </Link>
+                  );
+                })}
               </div>
               {!editing ? (
                 <pre
