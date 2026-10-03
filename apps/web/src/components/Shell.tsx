@@ -96,13 +96,15 @@ export default function Shell({ children }: { children: React.ReactNode }) {
         <nav className="flex-1 space-y-1">
           {NAV.map((p) => (
             <div key={p.href} className="pb-1">
+              {/* the filled highlight belongs to ONE row: the parent only when
+                  the active page isn't one of its listed children */}
               <Link
                 href={p.href}
                 className="block rounded-md px-2 py-1.5 text-sm font-medium transition-colors"
                 style={
-                  isActive(p)
+                  isActive(p) && !(p.children ?? []).some(isActive)
                     ? { background: "color-mix(in srgb, var(--accent) 10%, transparent)", color: "var(--accent)" }
-                    : { color: parentActive(p) ? "var(--foreground)" : "var(--foreground)" }
+                    : { color: "var(--foreground)" }
                 }
               >
                 {p.label}

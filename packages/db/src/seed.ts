@@ -105,7 +105,7 @@ console.log(
 
 // ---- agent framework seed (idempotent; reset truncates these too) ----
 type AgentSeed = {
-  skills: { slug: string; name: string; description: string; instructions: string }[];
+  skills: { slug: string; name: string; description: string; category?: string; instructions: string }[];
   agents: {
     slug: string;
     name: string;
@@ -143,23 +143,51 @@ const skillVersionBySlug = new Map<string, string>();
 for (const s of agentData.skills) {
   const [row] = await db
     .insert(skill)
-    .values({ slug: s.slug, name: s.name, description: s.description })
+    .values({ slug: s.slug, name: s.name, description: s.description, category: s.category ?? "platform" })
     .onConflictDoNothing({ target: skill.slug })
     .returning();
   const skillRow =
     row ?? (await db.query.skill.findFirst({ where: (t, { eq }) => eq(t.slug, s.slug) }));
   if (!skillRow) throw new Error(`skill ${s.slug} missing`);
-  const existingV1 = await db.query.skillVersion.findFirst({
-    where: (t, { and, eq }) => and(eq(t.skillId, skillRow.id), eq(t.version, 1)),
+  // name/description/category are metadata, not behaviour — keep them current
+  if (!row && (skillRow.name !== s.name || skillRow.description !== s.description || skillRow.category !== (s.category ?? "platform"))) {
+    await db
+      .update(skill)
+      .set({ name: s.name, description: s.description, category: s.category ?? "platform" })
+      .where(eq(skill.id, skillRow.id));
+  }
+  // Instructions ARE behaviour, and versions are immutable: when the seed
+  // text differs from the latest stored version, append a NEW version
+  // (idempotent — reseeding the same text adds nothing). Releases keep
+  // their pinned versions; the library shows them as stale until a new
+  // release picks the update up. That is the upgrade path, not a bug.
+  const latest = await db.query.skillVersion.findFirst({
+    where: (t, { eq }) => eq(t.skillId, skillRow.id),
+    orderBy: (t, { desc }) => desc(t.version),
   });
-  const v1 =
-    existingV1 ??
-    (
+  // once a human has authored the latest version, the seed backs off —
+  // it only ever upgrades its own lineage
+  let current = latest;
+  if (!latest || (latest.createdBy === "seed" && latest.instructions !== s.instructions)) {
+    current = (
       await db
         .insert(skillVersion)
-        .values({ skillId: skillRow.id, version: 1, instructions: s.instructions, createdBy: "seed" })
+        .values({
+          skillId: skillRow.id,
+          version: (latest?.version ?? 0) + 1,
+          instructions: s.instructions,
+          createdBy: "seed",
+        })
         .returning()
     )[0]!;
+  }
+  // releases seeded below pin v1 — keep that stable for fresh databases
+  const v1 =
+    current!.version === 1
+      ? current!
+      : (await db.query.skillVersion.findFirst({
+          where: (t, { and, eq }) => and(eq(t.skillId, skillRow.id), eq(t.version, 1)),
+        }))!;
   skillVersionBySlug.set(s.slug, v1.id);
 }
 

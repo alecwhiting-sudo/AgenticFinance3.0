@@ -263,6 +263,7 @@ export function agentRoutes(app: FastifyInstance): void {
         slug: s.slug,
         name: s.name,
         description: s.description,
+        category: s.category,
         latestVersion: latest?.version ?? 0,
         latestVersionId: latest?.id ?? null,
         latestInstructions: latest?.instructions ?? "",
@@ -282,13 +283,14 @@ export function agentRoutes(app: FastifyInstance): void {
         description: z.string().min(10).max(300),
         instructions: z.string().min(20),
         createdBy: z.string().min(1),
+        category: z.enum(["p2p", "o2c", "r2r", "analytics", "controls", "fpa", "platform"]).default("platform"),
       })
       .parse(req.body);
     const existing = await db.query.skill.findFirst({ where: (t) => eq(t.slug, body.slug) });
     if (existing) return reply.code(409).send({ error: `skill ${body.slug} already exists` });
     const [s] = await db
       .insert(skill)
-      .values({ slug: body.slug, name: body.name, description: body.description })
+      .values({ slug: body.slug, name: body.name, description: body.description, category: body.category })
       .returning();
     await db.insert(skillVersion).values({ skillId: s!.id, version: 1, instructions: body.instructions, createdBy: body.createdBy });
     await emitActivity({

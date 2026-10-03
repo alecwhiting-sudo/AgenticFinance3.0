@@ -168,6 +168,9 @@ export const skill = ag.table("skill", {
   slug: text("slug").notNull().unique(),
   name: text("name").notNull(),
   description: text("description").notNull(),
+  /** Library cluster the skill files under (p2p | o2c | r2r | analytics |
+   * controls | fpa | platform) — organisation only, no behaviour. */
+  category: text("category").notNull().default("platform"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

@@ -1,11 +1,13 @@
 "use client";
 
-/** The skills library: skills are shared assets, version-controlled; agents
- * reference them through releases. This page is the library's home — browse,
- * see which agents use each skill (and whether their pin is stale), edit
- * (every save is a new immutable version), and add new skills. Attaching a
- * skill to an agent happens on the agent's page, because that is a release
- * change (draft → eval → promote). */
+/** The skills library: shared, version-controlled skills, clustered by
+ * finance-function topic. Master-detail: the list on the left, the selected
+ * skill's full text on the right — click through skills and read them without
+ * entering edit mode. Editing is an explicit step and every save is a new
+ * immutable version; agents pick a new version up through a release
+ * (draft → eval → promote), never silently. The library deliberately holds
+ * more skills than today's agents use (controls, FP&A) — future-proofing for
+ * the performance-management and controls phases. */
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { PUBLIC_API_URL as apiUrl } from "@/lib/api";
@@ -17,17 +19,29 @@ type Row = {
   slug: string;
   name: string;
   description: string;
+  category: string;
   latestVersion: number;
   latestInstructions: string;
   versions: number;
   usedBy: { agentSlug: string; agentName: string; pinnedVersion: number; stale: boolean }[];
 };
 
+const CLUSTERS: [string, string][] = [
+  ["p2p", "Procure to Pay"],
+  ["o2c", "Order to Cash"],
+  ["r2r", "Record to Report"],
+  ["analytics", "Analytics"],
+  ["controls", "Controls & audit"],
+  ["fpa", "Planning & performance"],
+  ["platform", "Platform"],
+];
+
 export default function SkillsLibraryPage() {
   const [rows, setRows] = useState<Row[]>([]);
-  const [open, setOpen] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
   const [adding, setAdding] = useState(false);
-  const [form, setForm] = useState({ slug: "", name: "", description: "", instructions: "" });
+  const [form, setForm] = useState({ slug: "", name: "", description: "", instructions: "", category: "platform" });
   const [msg, setMsg] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -55,26 +69,29 @@ export default function SkillsLibraryPage() {
       else {
         setMsg(`Added ${form.name} (v1). Attach it to an agent from the agent's page.`);
         setAdding(false);
-        setForm({ slug: "", name: "", description: "", instructions: "" });
+        setForm({ slug: "", name: "", description: "", instructions: "", category: "platform" });
         await load();
+        setSelected(form.slug);
       }
     } catch {
       setMsg(`Cannot reach the API at ${apiUrl}.`);
     }
   };
 
+  const sel = rows.find((s) => s.slug === selected) ?? null;
+
   return (
     <main className="space-y-6">
       <PageHeader
         title="Skills library"
-        context="Shared, version-controlled skills. Editing saves a new immutable version; agents pick up a new version through a release (draft → eval → promote), never silently."
+        context="Shared, version-controlled skills, clustered by topic. The library holds more than today's agents use — controls and planning skills are seeded ahead of the phases that will need them. Editing saves a new immutable version; agents adopt it through a release, never silently."
         actions={<Button variant="outline" onClick={() => setAdding(!adding)}>{adding ? "Cancel" : "New skill"}</Button>}
       />
       {msg && <p className="text-sm" style={{ color: "var(--muted)" }}>{msg}</p>}
 
       {adding && (
         <div className="rounded-xl border p-4" style={{ borderColor: "var(--accent)", background: "var(--card)" }}>
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-4">
             <input
               placeholder="slug (kebab-case)"
               value={form.slug}
@@ -96,6 +113,16 @@ export default function SkillsLibraryPage() {
               className="rounded-lg border px-3 py-1.5 text-sm"
               style={{ borderColor: "var(--border)", background: "var(--background)" }}
             />
+            <select
+              value={form.category}
+              onChange={(e) => setForm({ ...form, category: e.target.value })}
+              className="rounded-lg border px-3 py-1.5 text-sm"
+              style={{ borderColor: "var(--border)", background: "var(--background)" }}
+            >
+              {CLUSTERS.map(([v, l]) => (
+                <option key={v} value={v}>{l}</option>
+              ))}
+            </select>
           </div>
           <textarea
             placeholder="Instructions (markdown) — what this skill teaches the agent to do"
@@ -113,44 +140,120 @@ export default function SkillsLibraryPage() {
         </div>
       )}
 
-      <div className="space-y-3">
-        {rows.map((s) => (
-          <div key={s.id} className="rounded-xl border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <div>
-                <span className="text-sm font-semibold">{s.name}</span>{" "}
-                <span className="num text-xs" style={{ color: "var(--muted)" }}>{s.slug}</span>{" "}
-                <Badge>v{s.latestVersion}</Badge>{" "}
-                <span className="text-xs" style={{ color: "var(--muted)" }}>{s.versions} version{s.versions === 1 ? "" : "s"}</span>
-              </div>
-              <Button variant="ghost" onClick={() => setOpen(open === s.id ? null : s.id)}>
-                {open === s.id ? "Close" : "Edit"}
-              </Button>
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+        {/* ---- master: clustered list ---- */}
+        <div className="space-y-5">
+          {CLUSTERS.map(([cat, label]) => {
+            const inCat = rows.filter((s) => (s.category ?? "platform") === cat);
+            if (inCat.length === 0) return null;
+            return (
+              <section key={cat}>
+                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--muted)" }}>
+                  {label} <span className="font-normal">· {inCat.length}</span>
+                </h3>
+                <div className="overflow-hidden rounded-xl border" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                  {inCat.map((s) => {
+                    const active = selected === s.slug;
+                    const stale = s.usedBy.some((u) => u.stale);
+                    return (
+                      <button
+                        key={s.id}
+                        onClick={() => {
+                          setSelected(active ? null : s.slug);
+                          setEditing(false);
+                        }}
+                        className="block w-full border-b px-4 py-2.5 text-left last:border-0"
+                        style={{
+                          borderColor: "var(--border)",
+                          background: active ? "color-mix(in srgb, var(--accent) 8%, transparent)" : "transparent",
+                        }}
+                      >
+                        <div className="flex items-baseline justify-between gap-2">
+                          <span className="text-sm font-medium" style={active ? { color: "var(--accent)" } : undefined}>
+                            {s.name}
+                          </span>
+                          <span className="flex shrink-0 items-center gap-1.5 text-xs" style={{ color: "var(--muted)" }}>
+                            {s.usedBy.length > 0 ? (
+                              <span>{s.usedBy.length} agent{s.usedBy.length === 1 ? "" : "s"}</span>
+                            ) : (
+                              <span>unattached</span>
+                            )}
+                            {stale && <span style={{ color: "var(--warn)" }}>stale pin</span>}
+                            <Badge>v{s.latestVersion}</Badge>
+                          </span>
+                        </div>
+                        <p className="mt-0.5 truncate text-xs" style={{ color: "var(--muted)" }}>{s.description}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            );
+          })}
+          {rows.length === 0 && <p className="text-sm" style={{ color: "var(--muted)" }}>No skills yet.</p>}
+        </div>
+
+        {/* ---- detail: the selected skill, read-first ---- */}
+        <div className="lg:sticky lg:top-16">
+          {!sel ? (
+            <div
+              className="rounded-xl border border-dashed p-8 text-center text-sm"
+              style={{ borderColor: "var(--border)", color: "var(--muted)" }}
+            >
+              Select a skill to read it. Click through the list — the text shows here; Edit is a separate step.
             </div>
-            <p className="mt-1 text-sm" style={{ color: "var(--muted)" }}>{s.description}</p>
-            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-              <span style={{ color: "var(--muted)" }}>Used by:</span>
-              {s.usedBy.length === 0 && <span style={{ color: "var(--muted)" }}>no active release — unattached</span>}
-              {s.usedBy.map((u) => (
-                <Link
-                  key={u.agentSlug}
-                  href={`/agents/${u.agentSlug}`}
-                  className="rounded-full border px-2 py-0.5 hover:underline"
-                  style={{ borderColor: u.stale ? "var(--warn)" : "var(--border)", color: u.stale ? "var(--warn)" : "var(--muted)" }}
-                  title={u.stale ? `pinned to v${u.pinnedVersion}; latest is v${s.latestVersion} — draft a release to pick it up` : `pinned to v${u.pinnedVersion} (latest)`}
+          ) : (
+            <div className="rounded-xl border p-5" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <div>
+                  <span className="text-base font-semibold">{sel.name}</span>{" "}
+                  <span className="num text-xs" style={{ color: "var(--muted)" }}>{sel.slug}</span>{" "}
+                  <Badge>v{sel.latestVersion}</Badge>{" "}
+                  <span className="text-xs" style={{ color: "var(--muted)" }}>
+                    {sel.versions} version{sel.versions === 1 ? "" : "s"}
+                  </span>
+                </div>
+                {!editing && <Button variant="ghost" onClick={() => setEditing(true)}>Edit</Button>}
+                {editing && <Button variant="ghost" onClick={() => setEditing(false)}>Cancel edit</Button>}
+              </div>
+              <p className="mt-1 text-sm" style={{ color: "var(--muted)" }}>{sel.description}</p>
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                <span style={{ color: "var(--muted)" }}>Used by:</span>
+                {sel.usedBy.length === 0 && (
+                  <span style={{ color: "var(--muted)" }}>no active release — seeded ahead of need</span>
+                )}
+                {sel.usedBy.map((u) => (
+                  <Link
+                    key={u.agentSlug}
+                    href={`/agents/${u.agentSlug}`}
+                    className="rounded-full border px-2 py-0.5 hover:underline"
+                    style={{ borderColor: u.stale ? "var(--warn)" : "var(--border)", color: u.stale ? "var(--warn)" : "var(--muted)" }}
+                    title={
+                      u.stale
+                        ? `pinned to v${u.pinnedVersion}; latest is v${sel.latestVersion} — draft a release to pick it up`
+                        : `pinned to v${u.pinnedVersion} (latest)`
+                    }
+                  >
+                    {u.agentName} · v{u.pinnedVersion}
+                    {u.stale ? " (stale)" : ""}
+                  </Link>
+                ))}
+              </div>
+              {!editing ? (
+                <pre
+                  className="mt-3 max-h-[60vh] overflow-y-auto whitespace-pre-wrap rounded-lg border px-3 py-2 font-mono text-xs leading-relaxed"
+                  style={{ borderColor: "var(--border)", background: "var(--background)" }}
                 >
-                  {u.agentName} · v{u.pinnedVersion}{u.stale ? " (stale)" : ""}
-                </Link>
-              ))}
+                  {sel.latestInstructions}
+                </pre>
+              ) : (
+                <div className="mt-3">
+                  <SkillEditor skillSlug={sel.slug} skillName={sel.name} latestInstructions={sel.latestInstructions} />
+                </div>
+              )}
             </div>
-            {open === s.id && (
-              <div className="mt-3">
-                <SkillEditor skillSlug={s.slug} skillName={s.name} latestInstructions={s.latestInstructions} />
-              </div>
-            )}
-          </div>
-        ))}
-        {rows.length === 0 && <p className="text-sm" style={{ color: "var(--muted)" }}>No skills yet.</p>}
+          )}
+        </div>
       </div>
     </main>
   );

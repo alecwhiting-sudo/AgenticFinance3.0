@@ -50,6 +50,15 @@ _Last updated: 2026-10-03_
 - **Cost engineering (D15)**: prompt caching (raw token split stored,
   priced at read time per tier) + learned extraction templates (suppliers
   promote off the model after 3 validated extractions; savings measured).
+- **Skills library v2 (2026-10-03)**: 21 skills clustered by topic (P2P,
+  O2C, R2R, Analytics, Controls & audit, Planning & performance, Platform)
+  in a master-detail page — read first, Edit as a separate step. Controls
+  and FP&A skills seeded ahead of need (controls map, controls testing
+  method, SoD, JE testing, payment fraud, variance method, driver
+  forecasting, budget cycle, close checklist, credit policy). Seed now
+  upgrades its own skill versions (new immutable version when text changes;
+  backs off once a human authored the latest) — stale release pins surface
+  in the library.
 
 - **App shell (2026-10-03)**: Mercury-style full-width layout — left
   sidebar with section/sub-navigation, slim top bar, mission control merged

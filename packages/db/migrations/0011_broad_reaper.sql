@@ -1,0 +1,1 @@
+ALTER TABLE "agent"."skill" ADD COLUMN "category" text DEFAULT 'platform' NOT NULL;

@@ -233,24 +233,6 @@ export default async function AnalyticsPage({
           <ChartCard
             title={`Month flux — ${monthName(flux.period)} vs ${monthName(flux.prior)}`}
             question="Why did the result move? Teal bars helped, amber bars hurt; grey anchors are each month's result."
-            controls={
-              <span className="flex max-w-56 flex-wrap justify-end gap-1">
-                {flux.periods.slice(-6).map((p) => (
-                  <Link
-                    key={p}
-                    href={p === flux.period ? "/analytics" : `/analytics?period=${p}`}
-                    className="rounded-full border px-2 py-0.5 text-[10px]"
-                    style={
-                      p === flux.period
-                        ? { borderColor: "var(--accent)", color: "var(--accent)" }
-                        : { borderColor: "var(--border)", color: "var(--muted)" }
-                    }
-                  >
-                    {new Date(`${p}-01T00:00:00Z`).toLocaleDateString("en-GB", { month: "short" })}
-                  </Link>
-                ))}
-              </span>
-            }
             table={
               <table className="w-full text-xs">
                 <thead>
@@ -280,6 +262,23 @@ export default async function AnalyticsPage({
               </table>
             }
           >
+            <div className="mb-2 flex flex-wrap items-center gap-1">
+              <span className="mr-1 text-[10px]" style={{ color: "var(--muted)" }}>Month:</span>
+              {flux.periods.map((p) => (
+                <Link
+                  key={p}
+                  href={p === flux.period ? "/analytics" : `/analytics?period=${p}`}
+                  className="rounded-full border px-2 py-0.5 text-[10px]"
+                  style={
+                    p === flux.period
+                      ? { borderColor: "var(--accent)", color: "var(--accent)", fontWeight: 500 }
+                      : { borderColor: "var(--border)", color: "var(--muted)" }
+                  }
+                >
+                  {new Date(`${p}-01T00:00:00Z`).toLocaleDateString("en-GB", { month: "short" })}
+                </Link>
+              ))}
+            </div>
             <Waterfall
               startLabel={monthName(flux.prior).slice(0, 3)}
               start={profitPrior}
