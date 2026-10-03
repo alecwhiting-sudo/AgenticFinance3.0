@@ -1,9 +1,12 @@
 "use client";
 
 /** Mission control (plans/DEMO_SCRIPTS.md §4): the demo pipeline dashboard.
- * Backlog by month draining live, elapsed/throughput counters, the control
- * split (straight-through vs needs-judgement vs awaiting-human), integrity,
- * and the remembered runs for the baseline-vs-10x side-by-side. */
+ * Three named lanes (supplier invoices / customer billing / bank feed)
+ * draining by month, a live ticker of real names and amounts, elapsed and
+ * throughput counters, the control split, a plain-English end-of-run
+ * receipt, and today's actual model spend (the big runs are deterministic —
+ * 0 model calls). */
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { PUBLIC_API_URL as apiUrl } from "@/lib/api";
 
@@ -24,6 +27,9 @@ type Pipeline = {
     awaiting_human: number;
   };
   integrity: { journals: number; events: number; balance: string };
+  nextMonth: string | null;
+  modelSpend: { runs: number; tokens: number; costCents: number };
+  recent: { at: string; summary: string }[];
   job: {
     running: boolean;
     mode: string;
@@ -35,6 +41,7 @@ type Pipeline = {
   };
   runs: {
     label: string;
+    mode: string;
     ms: number;
     items: number;
     monthLoaded: string | null;
@@ -44,11 +51,22 @@ type Pipeline = {
   }[];
 };
 
+const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const monthLabel = (ym: string) => {
+  const [y, m] = ym.split("-");
+  return `${MONTH_NAMES[Number(m) - 1]} ${y}`;
+};
 const mmss = (ms: number) => {
   const s = Math.floor(ms / 1000);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
 const perMin = (items: number, ms: number) => (ms > 0 ? Math.round((items / ms) * 60000) : 0);
+
+const LANES: { key: "ap" | "ar" | "bank"; label: string; blurb: string }[] = [
+  { key: "ap", label: "Supplier invoices", blurb: "captured, matched to PO + receipt, posted, paid" },
+  { key: "ar", label: "Customer billing", blurb: "invoices raised, revenue posted, receipts applied" },
+  { key: "bank", label: "Bank feed", blurb: "statement lines reconciled against the books" },
+];
 
 export default function PipelinePage() {
   const [p, setP] = useState<Pipeline | null>(null);
@@ -101,16 +119,15 @@ export default function PipelinePage() {
   };
 
   const busy = p?.job.running ?? false;
-  const btnStyle = { borderColor: "var(--border)" };
-  const btn = (label: string, onClick: () => void, opts?: { accent?: boolean; danger?: boolean; title?: string }) => (
+  const btn = (label: string, onClick: () => void, opts?: { accent?: boolean; danger?: boolean; title?: string; disabled?: boolean }) => (
     <button
       key={label}
-      disabled={busy}
+      disabled={busy || opts?.disabled}
       onClick={onClick}
       title={opts?.title}
       className="whitespace-nowrap rounded-lg border px-3 py-1.5 text-sm disabled:opacity-40"
       style={{
-        borderColor: opts?.danger ? "var(--bad)" : opts?.accent ? "var(--accent)" : btnStyle.borderColor,
+        borderColor: opts?.danger ? "var(--bad)" : opts?.accent ? "var(--accent)" : "var(--border)",
         color: opts?.danger ? "var(--bad)" : opts?.accent ? "var(--accent)" : undefined,
       }}
     >
@@ -119,9 +136,9 @@ export default function PipelinePage() {
   );
 
   const straight = p ? p.split.ap_straight + p.split.ar_posted : 0;
-  const maxMonth = p ? Math.max(...p.months.map((m) => m.dataset.total), 1) : 1;
   const totalDataset = p ? p.months.reduce((s, m) => s + m.dataset.total, 0) : 0;
   const totalLoaded = p ? p.months.reduce((s, m) => s + m.loaded.total, 0) : 0;
+  const lastRun = p?.runs[0] ?? null;
 
   return (
     <main className="space-y-6">
@@ -147,21 +164,30 @@ export default function PipelinePage() {
             >
               Yes, go
             </button>
-            <button onClick={() => setConfirm(null)} className="rounded-lg border px-3 py-1.5 text-sm" style={btnStyle}>
+            <button onClick={() => setConfirm(null)} className="rounded-lg border px-3 py-1.5 text-sm" style={{ borderColor: "var(--border)" }}>
               Cancel
             </button>
           </span>
         ) : (
           <>
-            {btn("Process next month", () => run("month", 60), {
-              accent: true,
-              title: "Loads the next unloaded dataset month through the full pipe",
+            {btn(
+              p?.nextMonth ? `Process ${monthLabel(p.nextMonth)} →` : "All months in the books ✓",
+              () => run("month", 60),
+              {
+                accent: true,
+                disabled: !p?.nextMonth,
+                title: "Loads the next month's transactions through the full pipe — no model calls",
+              },
+            )}
+            {btn("Run remaining months", () => run("months", 60), {
+              disabled: !p?.nextMonth,
+              title: "Processes every remaining month, pausing briefly at each month boundary — no model calls",
             })}
             {btn("Run everything — full speed", () => setConfirm("fullspeed"), {
-              title: "Wipes, then runs the whole dataset flat out with the timer on (the 10x run)",
+              title: "Wipes, then runs the whole dataset flat out with the timer on (the 10x run) — no model calls",
             })}
             <span className="flex items-center gap-2">
-              {btn("Replay all — paced", () => setConfirm("paced"), { title: "Wipes, then replays with live activity" })}
+              {btn("Replay all — paced", () => setConfirm("paced"), { title: "Wipes, then replays with live activity — no model calls" })}
               <select
                 value={pace}
                 onChange={(e) => setPace(Number(e.target.value))}
@@ -173,7 +199,7 @@ export default function PipelinePage() {
                 <option value={400}>deliberate</option>
               </select>
             </span>
-            {btn("Simulate a day", simulateDay, { title: "Drips a believable morning: clean, scan, exception, receipt" })}
+            {btn("Simulate a day", simulateDay, { title: "Drips a believable morning into the agent queue — a few Haiku-tier model calls, pennies" })}
             {btn("Clear to zero", () => setConfirm("zero"), { danger: true })}
           </>
         )}
@@ -182,64 +208,125 @@ export default function PipelinePage() {
       </section>
 
       {/* live run counters */}
-      {p && (busy || p.job.total > 0) && (
-        <section
-          className="rounded-xl border p-4"
-          style={{ borderColor: busy ? "var(--accent)" : "var(--border)", background: "var(--card)" }}
-        >
+      {p && busy && (
+        <section className="rounded-xl border p-4" style={{ borderColor: "var(--accent)", background: "var(--card)" }}>
           <div className="mb-2 flex flex-wrap items-baseline gap-x-6 gap-y-1">
-            <span className="text-sm font-medium">
-              {busy ? `Running — ${p.job.mode}` : `Last run — ${p.job.mode}`}
+            <span className="text-sm font-medium">Running — {p.job.mode}</span>
+            <span className="text-2xl font-semibold tabular-nums">
+              {p.job.done}
+              <span className="text-sm font-normal" style={{ color: "var(--muted)" }}>/{p.job.total || "…"} items</span>
             </span>
-            <span className="text-2xl font-semibold tabular-nums">{p.job.done}<span className="text-sm font-normal" style={{ color: "var(--muted)" }}>/{p.job.total || "…"} items</span></span>
-            <span className="text-2xl font-semibold tabular-nums">{mmss(p.job.elapsedMs)}<span className="text-sm font-normal" style={{ color: "var(--muted)" }}> elapsed</span></span>
-            <span className="text-2xl font-semibold tabular-nums">{perMin(p.job.done, p.job.elapsedMs)}<span className="text-sm font-normal" style={{ color: "var(--muted)" }}> items/min</span></span>
+            <span className="text-2xl font-semibold tabular-nums">
+              {mmss(p.job.elapsedMs)}
+              <span className="text-sm font-normal" style={{ color: "var(--muted)" }}> elapsed</span>
+            </span>
+            <span className="text-2xl font-semibold tabular-nums">
+              {perMin(p.job.done, p.job.elapsedMs)}
+              <span className="text-sm font-normal" style={{ color: "var(--muted)" }}> items/min</span>
+            </span>
             <span className="text-xs" style={{ color: "var(--muted)" }}>{p.job.message}</span>
           </div>
           <div className="h-2 overflow-hidden rounded-full" style={{ background: "var(--border)" }}>
             <div
               className="h-full rounded-full transition-all"
-              style={{ background: "var(--accent)", width: p.job.total ? `${(p.job.done / p.job.total) * 100}%` : busy ? "10%" : "100%" }}
+              style={{ background: "var(--accent)", width: p.job.total ? `${(p.job.done / p.job.total) * 100}%` : "10%" }}
             />
           </div>
         </section>
       )}
 
-      {/* backlog by month */}
-      {p && (
+      {/* end-of-run receipt (plain English) */}
+      {p && !busy && lastRun && (
         <section className="rounded-xl border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
-          <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide" style={{ color: "var(--muted)" }}>
-            Backlog by month — AP · AR · bank
+          <h3 className="mb-1 text-sm font-semibold uppercase tracking-wide" style={{ color: "var(--muted)" }}>
+            Last run — {lastRun.label}
           </h3>
-          <div className="space-y-2">
-            {p.months.map((m) => {
-              const pct = m.dataset.total ? (m.loaded.total / m.dataset.total) * 100 : 0;
+          <p className="text-sm leading-6">
+            <span className="font-semibold tabular-nums">{lastRun.items}</span> transactions processed in{" "}
+            <span className="font-semibold tabular-nums">{mmss(lastRun.ms)}</span>
+            {" "}({perMin(lastRun.items, lastRun.ms)} per minute, no model calls — the machine is deterministic code).{" "}
+            <span className="font-semibold tabular-nums">{(lastRun.stats.posted ?? 0) + (lastRun.stats.arInvoices ?? 0)}</span> went
+            straight through untouched. <span className="font-semibold tabular-nums">{lastRun.stats.exceptions ?? 0}</span> fired
+            exceptions that need judgement. The books balanced the whole way:{" "}
+            {lastRun.balance === 0 ? "✓ 0" : lastRun.balance}.
+          </p>
+          <p className="mt-2 text-sm">
+            <Link href="/p2p" className="hover:underline" style={{ color: "var(--accent)" }}>
+              {p.split.ap_exceptions} exceptions open →
+            </Link>
+            <span className="mx-3" style={{ color: "var(--muted)" }}>·</span>
+            <Link href="/decisions" className="hover:underline" style={{ color: "var(--accent)" }}>
+              {p.split.awaiting_human} waiting for your approval →
+            </Link>
+          </p>
+        </section>
+      )}
+
+      {/* three named lanes + live ticker */}
+      {p && (
+        <section className="grid gap-4 lg:grid-cols-3">
+          <div className="space-y-4 lg:col-span-2">
+            {LANES.map((lane) => {
+              const max = Math.max(...p.months.map((m) => m.dataset[lane.key]), 1);
               return (
-                <div key={m.month} className="flex items-center gap-3 text-sm">
-                  <span className="w-16 shrink-0 tabular-nums">{m.month}</span>
-                  <div className="h-4 flex-1 overflow-hidden rounded" style={{ background: "var(--border)" }}>
-                    <div
-                      className="h-full rounded transition-all"
-                      style={{
-                        background: pct >= 100 ? "var(--good)" : "var(--accent)",
-                        width: `${(m.dataset.total / maxMonth) * pct}%`,
-                        maxWidth: `${(m.dataset.total / maxMonth) * 100}%`,
-                      }}
-                    />
+                <div key={lane.key} className="rounded-xl border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                  <div className="mb-2 flex items-baseline gap-3">
+                    <h3 className="text-sm font-semibold uppercase tracking-wide">{lane.label}</h3>
+                    <span className="text-xs" style={{ color: "var(--muted)" }}>{lane.blurb}</span>
                   </div>
-                  <span className="w-40 shrink-0 text-right text-xs tabular-nums" style={{ color: "var(--muted)" }}>
-                    {m.loaded.total}/{m.dataset.total} · {m.dataset.ap} ap {m.dataset.ar} ar {m.dataset.bank} bk
-                  </span>
+                  <div className="space-y-1.5">
+                    {p.months.map((m) => {
+                      const total = m.dataset[lane.key];
+                      const loaded = m.loaded[lane.key];
+                      const pct = total ? Math.min(loaded / total, 1) : 0;
+                      return (
+                        <div key={m.month} className="flex items-center gap-3 text-sm">
+                          <span className="w-20 shrink-0 text-xs tabular-nums">{monthLabel(m.month)}</span>
+                          <div className="h-3.5 flex-1 overflow-hidden rounded" style={{ background: "var(--border)" }}>
+                            <div
+                              className="h-full rounded transition-all"
+                              style={{
+                                background: pct >= 1 ? "var(--good)" : "var(--accent)",
+                                width: `${(total / max) * pct * 100}%`,
+                              }}
+                            />
+                          </div>
+                          <span className="w-16 shrink-0 text-right text-xs tabular-nums" style={{ color: "var(--muted)" }}>
+                            {loaded}/{total}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               );
             })}
           </div>
+
+          <div className="rounded-xl border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+            <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide" style={{ color: "var(--muted)" }}>
+              Happening now
+            </h3>
+            <ul className="space-y-2">
+              {p.recent.map((e, i) => (
+                <li key={i} className="text-sm leading-5">
+                  <span className="text-xs tabular-nums" style={{ color: "var(--muted)" }}>
+                    {new Date(e.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                  </span>{" "}
+                  {e.summary}
+                </li>
+              ))}
+              {p.recent.length === 0 && (
+                <li className="text-sm" style={{ color: "var(--muted)" }}>Quiet — run something.</li>
+              )}
+            </ul>
+          </div>
         </section>
       )}
 
-      {/* control split + integrity */}
+      {/* control split + integrity + model spend */}
       {p && (
-        <section className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+        <section className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
           {[
             { v: straight, l: "straight through", hint: "posted untouched" },
             { v: p.split.ap_exceptions, l: "exceptions open", hint: "need judgement" },
@@ -248,6 +335,11 @@ export default function PipelinePage() {
             { v: `${p.split.bank_matched}/${p.split.bank_matched + p.split.bank_unmatched}`, l: "bank matched", hint: "" },
             { v: p.integrity.journals === p.integrity.events ? "✓" : `${p.integrity.journals}≠${p.integrity.events}`, l: "journals = events", hint: "" },
             { v: Number(p.integrity.balance) === 0 ? "✓ 0" : p.integrity.balance, l: "GL balance", hint: "" },
+            {
+              v: `$${(p.modelSpend.costCents / 100).toFixed(2)}`,
+              l: "model spend today",
+              hint: `${p.modelSpend.runs} agent runs · ${(p.modelSpend.tokens / 1000).toFixed(0)}k tok`,
+            },
           ].map((s) => (
             <div key={s.l} className="rounded-xl border p-3 text-center" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
               <div className="text-xl font-semibold tabular-nums">{s.v}</div>
@@ -262,7 +354,7 @@ export default function PipelinePage() {
       {p && p.runs.length > 0 && (
         <section className="rounded-xl border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
           <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide" style={{ color: "var(--muted)" }}>
-            Runs this session — baseline vs the 10x run (memory clears on redeploy)
+            Runs this session — baseline vs the 10x run · all 0 model calls (memory clears on redeploy)
           </h3>
           <table className="w-full text-sm">
             <thead>

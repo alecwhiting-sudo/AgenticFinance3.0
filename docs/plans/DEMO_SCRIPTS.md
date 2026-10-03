@@ -102,6 +102,17 @@ One screen, linked from Admin, presentable full-screen:
 3. ✅ `POST /admin/simulate-day`: clean + scan + one random exception
    dripped, plus a cash-application investigation when an unapplied receipt
    exists.
+3b. ✅ Tangibility pass (Alec, 2026-10-03): three named lanes (supplier
+   invoices / customer billing / bank feed) instead of one abstract bar;
+   "Process {month} →" names the next month and "Run remaining months"
+   auto-advances with a 4s pause at each boundary (reset mode `months`);
+   live ticker of real names/amounts; plain-English end-of-run receipt with
+   links to open exceptions and approvals; "model spend today" tile (actual
+   tokens priced on the rate card) with every loader button labelled "no
+   model calls" — the big runs are deterministic, only drips/agents/evals
+   spend tokens. Container boot no longer auto-fills empty books unless
+   `AUTO_LOAD_DATASET=true` (or `RESET_DATASET=true`), so month-by-month
+   demos survive restarts.
 4. Everything else reuses replay, drip, month-end, commentary, approvals as
    built. Measured on the dev box: full dataset (~1,200 transactions) in
    ~12s at full speed, 1,159 journals, balance 0.

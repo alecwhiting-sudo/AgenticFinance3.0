@@ -36,6 +36,8 @@ export type RunRecord = {
 };
 const runs: RunRecord[] = []; // newest first, capped
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 const jobWithElapsed = () => ({
   ...job,
   elapsedMs: job.startedAt
@@ -103,17 +105,47 @@ export function adminRoutes(app: FastifyInstance): void {
                (select coalesce(sum(amount_minor),0)::bigint from erp.journal_line) as balance
       `)
     ).rows;
-    return { months, split, integrity, job: jobWithElapsed(), runs };
+    // which month "Process next month" would load (mirrors the loader's boundary)
+    const lastLoaded = months.filter((m) => m.loaded.total > 0).map((m) => m.month).pop() ?? null;
+    const nextMonth = months.find((m) => !lastLoaded || m.month > lastLoaded)?.month ?? null;
+    // model spend today — the loader runs are deterministic (0 model calls);
+    // only agent runs (drips, exceptions, commentary, evals) appear here
+    const spendRows = (
+      await db.execute(sql`
+        select rel.model_profile, count(*)::int as runs,
+               coalesce(sum(r.input_tokens),0)::bigint as tin,
+               coalesce(sum(r.output_tokens),0)::bigint as tout
+        from agent.agent_run r join agent.agent_release rel on rel.id = r.release_id
+        where r.started_at::date = current_date
+        group by rel.model_profile
+      `)
+    ).rows as { model_profile: string; runs: number; tin: string; tout: string }[];
+    const { estimateCostCents } = await import("../services/rateCard.js");
+    const modelSpend = spendRows.reduce(
+      (acc, r) => ({
+        runs: acc.runs + r.runs,
+        tokens: acc.tokens + Number(r.tin) + Number(r.tout),
+        costCents: acc.costCents + estimateCostCents(r.model_profile, Number(r.tin), Number(r.tout)),
+      }),
+      { runs: 0, tokens: 0, costCents: 0 },
+    );
+    const recent = (
+      await db.execute(sql`
+        select at, summary from agent.activity_event order by seq desc limit 8
+      `)
+    ).rows as { at: string; summary: string }[];
+    return { months, split, integrity, nextMonth, modelSpend, recent, job: jobWithElapsed(), runs };
   });
 
   /** mode: "reload" (instant full), "zero" (truncate only), "replay" (full
    * from zero; paceMs 0 = flat out, timed), "month" (incremental: next
-   * unloaded month). Optional label names the run in the dashboard history. */
+   * unloaded month), "months" (all remaining months, pausing at each
+   * boundary). Optional label names the run in the dashboard history. */
   app.post<{ Body: { mode?: string; paceMs?: number; label?: string } }>("/admin/reset", async (req, reply) => {
     const db = requireDb();
     const mode = req.body?.mode ?? "reload";
-    if (!["reload", "zero", "replay", "month"].includes(mode))
-      return reply.code(400).send({ error: "mode must be reload | zero | replay | month" });
+    if (!["reload", "zero", "replay", "month", "months"].includes(mode))
+      return reply.code(400).send({ error: "mode must be reload | zero | replay | month | months" });
     if (job.running) return reply.code(409).send({ error: `a ${job.mode} job is already running` });
 
     job.running = true;
@@ -126,15 +158,56 @@ export function adminRoutes(app: FastifyInstance): void {
     job.error = null;
 
     const work = async () => {
+      const paceMs = Math.min(Math.max(Number(req.body?.paceMs ?? (mode === "replay" ? 120 : 0)), 0), 2000);
+      const record = (label: string, startedAt: string, items: number, result: { stats: Record<string, number>; journals: number; balance: number; monthLoaded?: string | null }) => {
+        const finishedAt = new Date().toISOString();
+        runs.unshift({
+          label,
+          mode,
+          startedAt,
+          finishedAt,
+          ms: new Date(finishedAt).getTime() - new Date(startedAt).getTime(),
+          items,
+          monthLoaded: result.monthLoaded ?? null,
+          journals: result.journals,
+          balance: result.balance,
+          stats: result.stats,
+        });
+        if (runs.length > 12) runs.pop();
+      };
       try {
         if (mode === "zero") {
           await truncateTransactions(db);
           job.message = "all transaction data cleared — the books are empty";
+        } else if (mode === "month" || mode === "months") {
+          // one month per pass; "months" keeps going with a pause at each boundary
+          for (;;) {
+            const startedAt = new Date().toISOString();
+            job.done = 0;
+            job.total = 0;
+            const result = await loadDemoDataset(db, {
+              nextMonthOnly: true,
+              paceMs,
+              onProgress: (done, total, message) => {
+                job.done = done;
+                job.total = total;
+                job.message = message;
+              },
+            });
+            if (result.skipped) {
+              job.message = result.reason ?? "nothing to do";
+              break;
+            }
+            record(req.body?.label?.slice(0, 60) ?? `month ${result.monthLoaded}`, startedAt, job.done, result);
+            job.message = `loaded ${result.monthLoaded} — ${result.journals} journals, balance ${result.balance}`;
+            if (mode === "month") break;
+            job.message = `${result.monthLoaded} in the books — pausing at the month boundary`;
+            await sleep(4000);
+          }
         } else {
-          const paceMs = Math.min(Math.max(Number(req.body?.paceMs ?? (mode === "replay" ? 120 : 0)), 0), 2000);
+          const startedAt = new Date().toISOString();
           const result = await loadDemoDataset(db, {
-            reset: mode !== "month",
-            nextMonthOnly: mode === "month",
+            reset: true,
             paceMs,
             onProgress: (done, total, message) => {
               job.done = done;
@@ -143,24 +216,15 @@ export function adminRoutes(app: FastifyInstance): void {
             },
           });
           if (result.skipped) {
-            job.message = result.reason ?? "nothing to do";
+            job.message = "nothing to do";
           } else {
-            job.message = `loaded${result.monthLoaded ? ` ${result.monthLoaded}` : ""} — ${result.journals} journals, balance ${result.balance}`;
-            job.finishedAt = new Date().toISOString();
-            const ms = new Date(job.finishedAt).getTime() - new Date(job.startedAt!).getTime();
-            runs.unshift({
-              label: req.body?.label?.slice(0, 60) ?? `${mode}${result.monthLoaded ? ` ${result.monthLoaded}` : ""}${mode === "replay" && paceMs === 0 ? " (full speed)" : ""}`,
-              mode,
-              startedAt: job.startedAt!,
-              finishedAt: job.finishedAt,
-              ms,
-              items: job.done,
-              monthLoaded: result.monthLoaded ?? null,
-              journals: result.journals,
-              balance: result.balance,
-              stats: result.stats,
-            });
-            if (runs.length > 12) runs.pop();
+            job.message = `loaded — ${result.journals} journals, balance ${result.balance}`;
+            record(
+              req.body?.label?.slice(0, 60) ?? `${mode}${mode === "replay" && paceMs === 0 ? " (full speed)" : ""}`,
+              startedAt,
+              job.done,
+              result,
+            );
           }
         }
         await emitActivity({
@@ -174,7 +238,7 @@ export function adminRoutes(app: FastifyInstance): void {
               ? "Demo data cleared — books at zero"
               : mode === "replay"
                 ? "Demo dataset replayed from zero"
-                : mode === "month"
+                : mode === "month" || mode === "months"
                   ? `Demo data: ${job.message}`
                   : "Demo dataset reset and reloaded",
         });
@@ -187,7 +251,7 @@ export function adminRoutes(app: FastifyInstance): void {
       }
     };
 
-    if (mode === "replay" || mode === "month") {
+    if (mode === "replay" || mode === "month" || mode === "months") {
       // potentially long-running: fire and forget; the UI polls /admin/status
       void work();
       return { started: true, mode };
