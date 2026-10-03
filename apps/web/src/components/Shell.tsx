@@ -41,6 +41,7 @@ const NAV: Parent[] = [
     href: "/agents",
     label: "Agents",
     children: [
+      { href: "/agents/skills", label: "Skills library" },
       { href: "/work", label: "Work queue" },
       { href: "/approvals", label: "Approvals" },
       { href: "/decisions", label: "Decisions" },
@@ -137,7 +138,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
           </div>
           <CommandPalette />
         </header>
-        <main className="px-5 py-6 lg:px-8">{children}</main>
+        <main className="mx-auto w-full max-w-[1760px] px-5 py-6 lg:px-8">{children}</main>
       </div>
     </div>
   );

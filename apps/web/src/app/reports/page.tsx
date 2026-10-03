@@ -30,7 +30,7 @@ export default async function ReportsPage({
 
   if (!s)
     return (
-      <main className="space-y-5">
+      <main className="max-w-4xl space-y-5">
         <h2 className="text-2xl font-semibold tracking-tight">Reports</h2>
         <ApiDownBanner show />
       </main>
@@ -100,7 +100,7 @@ export default async function ReportsPage({
   );
 
   return (
-    <main className="space-y-6">
+    <main className="max-w-4xl space-y-6">
       <section className="flex items-baseline justify-between">
         <div>
           <h2 className="text-2xl font-semibold tracking-tight">Financial statements — {s.year}</h2>

@@ -22,7 +22,7 @@ export default async function LedgerPage() {
   const nonZero = tb.accounts.filter((a) => a.balance_minor !== 0);
 
   return (
-    <main className="space-y-6">
+    <main className="max-w-4xl space-y-6">
       <section className="flex items-baseline justify-between">
         <div>
           <h2 className="text-2xl font-semibold tracking-tight">Trial balance</h2>

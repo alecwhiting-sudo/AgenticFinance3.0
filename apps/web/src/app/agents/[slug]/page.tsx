@@ -4,6 +4,7 @@ import { Badge, Card, SectionTitle, toneForStatus } from "@/components/ui";
 import {
   DraftReleaseButton,
   LatestSkillVersions,
+  ManageSkills,
   PromoteButton,
   RunEvalsButton,
   SkillEditor,
@@ -138,7 +139,22 @@ export default async function AgentDetail({ params }: { params: Promise<{ slug: 
 
       <section className="grid gap-4 md:grid-cols-2">
         <Card>
-          <SectionTitle>Skills (edit → saves a new version)</SectionTitle>
+          <div className="mb-3 flex items-center justify-between">
+            <SectionTitle>Skills (from the <Link href="/agents/skills" className="hover:underline" style={{ color: "var(--accent)" }}>library</Link> · edit → new version)</SectionTitle>
+            {active && (
+              <ManageSkills
+                agentSlug={d.agent.slug}
+                base={{
+                  instructions: active.instructions,
+                  commandPermissions: active.commandPermissions,
+                  modelProfile: active.modelProfile,
+                  maxModelCalls: active.maxModelCalls,
+                  maxCostMinor: active.maxCostMinor,
+                }}
+                currentSkillSlugs={d.skills.map((s) => s.slug)}
+              />
+            )}
+          </div>
           <div className="space-y-5">
             {d.skills.map((s) => {
               const latest = d.skillVersions

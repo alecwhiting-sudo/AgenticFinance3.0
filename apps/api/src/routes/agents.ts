@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import { z } from "zod";
 import { and, count, desc, eq, inArray, sql } from "drizzle-orm";
 import {
   agent,
@@ -223,6 +224,82 @@ export function agentRoutes(app: FastifyInstance): void {
           : null,
       },
     };
+  });
+
+  /** The skills library: every skill with its latest version and which
+   * agents' ACTIVE releases use it (and at which pinned version, so stale
+   * pins are visible). Skills are shared — agents reference them through
+   * releases, never own them. */
+  app.get("/skills", async () => {
+    const db = requireDb();
+    const skills = await db.query.skill.findMany({ orderBy: (t) => t.name });
+    const versions = await db.query.skillVersion.findMany();
+    const latestBySkill = new Map<string, { id: string; version: number; instructions: string }>();
+    for (const v of versions) {
+      const cur = latestBySkill.get(v.skillId);
+      if (!cur || v.version > cur.version) latestBySkill.set(v.skillId, { id: v.id, version: v.version, instructions: v.instructions });
+    }
+    const versionById = new Map(versions.map((v) => [v.id, v]));
+    const activeReleases = await db.query.agentRelease.findMany({ where: (t) => eq(t.status, "active") });
+    const agents = await db.query.agent.findMany();
+    const agentById = new Map(agents.map((a) => [a.id, a]));
+    const usedBy = new Map<string, { agentSlug: string; agentName: string; pinnedVersion: number; stale: boolean }[]>();
+    for (const r of activeReleases) {
+      for (const vid of r.skillVersionIds) {
+        const v = versionById.get(vid);
+        if (!v) continue;
+        const a = agentById.get(r.agentId);
+        if (!a) continue;
+        const latest = latestBySkill.get(v.skillId);
+        const list = usedBy.get(v.skillId) ?? [];
+        list.push({ agentSlug: a.slug, agentName: a.name, pinnedVersion: v.version, stale: !!latest && v.version < latest.version });
+        usedBy.set(v.skillId, list);
+      }
+    }
+    return skills.map((s) => {
+      const latest = latestBySkill.get(s.id);
+      return {
+        id: s.id,
+        slug: s.slug,
+        name: s.name,
+        description: s.description,
+        latestVersion: latest?.version ?? 0,
+        latestVersionId: latest?.id ?? null,
+        latestInstructions: latest?.instructions ?? "",
+        versions: versions.filter((v) => v.skillId === s.id).length,
+        usedBy: usedBy.get(s.id) ?? [],
+      };
+    });
+  });
+
+  /** Create a new library skill with its first version. */
+  app.post("/skills", async (req, reply) => {
+    const db = requireDb();
+    const body = z
+      .object({
+        slug: z.string().regex(/^[a-z0-9-]{3,60}$/),
+        name: z.string().min(3).max(80),
+        description: z.string().min(10).max(300),
+        instructions: z.string().min(20),
+        createdBy: z.string().min(1),
+      })
+      .parse(req.body);
+    const existing = await db.query.skill.findFirst({ where: (t) => eq(t.slug, body.slug) });
+    if (existing) return reply.code(409).send({ error: `skill ${body.slug} already exists` });
+    const [s] = await db
+      .insert(skill)
+      .values({ slug: body.slug, name: body.name, description: body.description })
+      .returning();
+    await db.insert(skillVersion).values({ skillId: s!.id, version: 1, instructions: body.instructions, createdBy: body.createdBy });
+    await emitActivity({
+      actorType: "human",
+      actorId: body.createdBy,
+      verb: "created_skill",
+      objectType: "skill",
+      objectId: body.slug,
+      summary: `${body.createdBy} added ${body.name} to the skills library`,
+    });
+    return { id: s!.id, slug: s!.slug };
   });
 
   app.post<{ Params: { slug: string } }>("/skills/:slug/versions", async (req, reply) => {
