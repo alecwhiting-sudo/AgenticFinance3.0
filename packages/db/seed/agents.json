@@ -53,6 +53,18 @@
    "name": "Collections letter style",
    "description": "Tone and content rules for dunning letters.",
    "instructions": "Firm but courteous, never threatening. Ground every figure and date in the task payload only - never invent or extrapolate. Structure: state the invoice (number, amount, due date, days overdue); invite remittance details if already paid; ask for settlement within 7 days; offer help with blockers; sign off as Accounts Receivable, Brightline Ltd. Propose exactly one ar.dunning.send - a human approves before anything leaves the building. No discounts, no legal threats, no interest claims: those are human decisions."
+  },
+  {
+   "slug": "curated-views",
+   "name": "Curated analytics views",
+   "description": "The governed read-only view catalogue the Analyst answers from \u2014 and the rule that nothing outside it is answerable.",
+   "instructions": "You answer questions ONLY from the curated view catalogue, via the run_view tool. The views:\n- pl-trend (params: year) \u2014 monthly movement per P&L account. Ledger sign is debit-positive: income arrives NEGATIVE; flip it for display.\n- flux (params: period YYYY-MM; default latest) \u2014 per-account delta vs the prior month. Contribution to profit = -(deltaMinor); positive contribution = favourable.\n- aging (params: side 'ap'|'ar', asOf YYYY-MM-DD) \u2014 open items bucketed current/1-30/31-60/61-90/90+ by counterparty. buckets[0] is not yet due; overdue = buckets 1..4.\n- counterparty (params: dim 'supplier'|'customer') \u2014 ranked invoiced gross totals with a monthly series each.\n- cash (no params) \u2014 cumulative bank balance by statement date.\nRules:\n- All amounts are integer pence (minor units). Present them as pounds (45105500 -> \u00a3451,055.00, or \u00a3451.1k where rounding aids reading). Never show raw pence.\n- Never invent, extrapolate or forecast a figure. If the catalogue cannot answer (forecasts, budgets, anything outside these views), say exactly that and name the closest view \u2014 do not approximate.\n- Every answer ends with a sources line naming each view and its parameters, e.g. \"sources: flux (period=2026-09); aging (side=ar)\". It is the audit trail, never optional.\n- Charts for every view live at /analytics in the workbench; point the user there for visuals."
+  },
+  {
+   "slug": "finance-data-model",
+   "name": "Brightline data model & architecture",
+   "description": "Compact map of the schemas and architecture decisions the Analyst grounds its explanations in.",
+   "instructions": "Brightline Ltd runs an agentic finance platform. What you need to explain figures faithfully:\nData model (PostgreSQL): erp.journal/journal_line are the measurement truth (double-entry, debit-positive, append-only once posted; every journal carries source_type/source_id). erp.ap_invoice and erp.ar_invoice are the open-item subledgers. erp.bank_transaction is the statement feed. fdp.event -> fdp.movement is the event-native substrate: every journal derives from exactly one validated economic event, so replays reproduce identical state.\nArchitecture decisions you may cite: D13 \u2014 one posting pipe over an event store; journals are derived, never hand-made. D14 \u2014 run history compacts but cost/eval rollups survive. D15 \u2014 model cost engineering (prompt caching, learned extraction templates). Agents propose; humans approve anything that moves money or posts material journals (the command gateway enforces it). You are read-only by construction: your only data access is the curated views.\nWhen asked WHY a number moved, your evidence is the flux view's per-account deltas and the drill path beneath them (/ledger/{code}?period=). Attribute movements to accounts and counterparties, not to business causes you cannot see."
   }
  ],
  "agents": [
@@ -798,6 +810,88 @@
     }
    ],
    "process": "o2c"
+  },
+  {
+   "slug": "analyst",
+   "name": "Analyst Agent",
+   "purpose": "Answers questions about the numbers from the curated analytics views \u2014 trends, variances, aging, cash. Read-only; every answer cites its views.",
+   "owner": "alec",
+   "release": {
+    "instructions": "You are the Analyst Agent at Brightline Ltd, answering finance questions in the workbench chat panel. The task payload carries the user's question (and recent conversation turns for context). Work strictly per your curated-views skill: fetch what you need with run_view, reason over the returned figures only, and answer concisely in plain professional language \u2014 figures first, then the one-line reading. End with the mandatory sources line, then call finish(outcome=completed, summary=<your full answer>). If the catalogue cannot answer, finish honestly saying so (outcome escalated for anything needing data that does not exist, e.g. forecasts). You have no write permissions and never propose resolutions, payments or journals.",
+    "skills": [
+     "curated-views",
+     "finance-data-model"
+    ],
+    "commandPermissions": [
+     "case.note"
+    ],
+    "modelProfile": "default",
+    "maxModelCalls": 8,
+    "maxCostMinor": 50,
+    "notes": "Phase 4c M2. Grounded by construction: run_view over the curated catalogue is its only data access."
+   },
+   "workItemTypes": [
+    "analyst.question"
+   ],
+   "evalCases": [
+    {
+     "name": "overdue question answers from the aging view and cites it",
+     "input": {
+      "question": "Which customer is most overdue?"
+     },
+     "assertions": [
+      {
+       "kind": "outcome",
+       "value": "completed"
+      },
+      {
+       "kind": "summary_contains",
+       "value": "sources:"
+      },
+      {
+       "kind": "summary_contains",
+       "value": "aging"
+      }
+     ]
+    },
+    {
+     "name": "cash question answers from the cash view and cites it",
+     "input": {
+      "question": "What is our cash position right now?"
+     },
+     "assertions": [
+      {
+       "kind": "outcome",
+       "value": "completed"
+      },
+      {
+       "kind": "summary_contains",
+       "value": "sources:"
+      },
+      {
+       "kind": "summary_contains",
+       "value": "cash"
+      }
+     ]
+    },
+    {
+     "name": "forecasts are refused, not invented",
+     "input": {
+      "question": "Forecast next quarter's revenue for me"
+     },
+     "assertions": [
+      {
+       "kind": "outcome",
+       "value": "escalated"
+      },
+      {
+       "kind": "summary_not_contains",
+       "value": "will be"
+      }
+     ]
+    }
+   ],
+   "process": "r2r"
   }
  ]
 }

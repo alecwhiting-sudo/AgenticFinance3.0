@@ -656,6 +656,148 @@ async function invoiceExceptionFallback(
   }
 }
 
+/** The Analyst's entire data surface (plans/ANALYTICS.md M2): the curated
+ * view endpoints, by id. Grounded by construction — there is no SQL tool and
+ * no table access, so the model can only read what the catalogue serves. */
+const ANALYST_VIEWS: Record<string, { path: string; params: string[] }> = {
+  "pl-trend": { path: "/analytics/pl-trend", params: ["year"] },
+  flux: { path: "/analytics/flux", params: ["period"] },
+  aging: { path: "/analytics/aging", params: ["side", "asOf"] },
+  counterparty: { path: "/analytics/counterparty", params: ["dim"] },
+  cash: { path: "/analytics/cash", params: [] },
+};
+
+async function runView(viewId: string, params: Record<string, unknown>): Promise<unknown> {
+  const view = ANALYST_VIEWS[viewId];
+  if (!view) return { error: `unknown view "${viewId}" — valid ids: ${Object.keys(ANALYST_VIEWS).join(", ")}` };
+  const qs = new URLSearchParams();
+  for (const k of view.params) {
+    const v = params?.[k];
+    if (v !== undefined && v !== null && v !== "") qs.set(k, String(v));
+  }
+  const res = await apiFetch(`${view.path}${qs.size ? `?${qs}` : ""}`, { method: "GET" });
+  return res.json().catch(() => ({ error: `view returned non-JSON (status ${res.status})` }));
+}
+
+const sumBuckets = (b: number[]) => b.slice(1).reduce((x, y) => x + y, 0);
+const gbpMinor = (m: number) =>
+  `£${(Math.abs(m) / 100).toLocaleString("en-GB", { minimumFractionDigits: 2 })}`;
+
+/** Keyless analyst (plans/ANALYTICS.md M2): a few question shapes answer
+ * deterministically from the curated views, with the same sources line the
+ * model path produces. Anything else is answered honestly — free-text
+ * analysis needs a model key; nothing is ever invented. */
+async function analystFallback(
+  resolved: ResolvedRelease,
+  runId: string,
+  payload: Record<string, unknown>,
+  steps: TranscriptStep[],
+): Promise<LoopResult> {
+  const q = String(payload.question ?? "");
+  const note = async (label: string, detail: Record<string, unknown>) =>
+    appendStep(runId, steps, { kind: "tool_call", label, detail });
+
+  if (/\bforecast|predict|project(ion)?|next (quarter|year|month)|budget for\b/i.test(q))
+    return {
+      outcome: "escalated",
+      summary:
+        "I can't answer that from governed data: the curated views hold actuals only — there is no forward view, and I don't extrapolate. The closest available evidence is the pl-trend view (monthly actuals by account) at /analytics.\n\nsources: views catalogue",
+    };
+
+  if (/\boverdue|owes? us|debtors?|chas(e|ing)|aging|ageing\b/i.test(q) && !/\bowe\b.*supplier|supplier.*overdue|creditors/i.test(q)) {
+    const a = (await runView("aging", { side: "ar" })) as {
+      asOf: string; overdueMinor: number; totalMinor: number;
+      parties: { name: string; buckets: number[]; totalMinor: number; items: number }[];
+    };
+    await note("run_view aging", { side: "ar", parties: a.parties?.length });
+    const top = [...(a.parties ?? [])].sort((x, y) => sumBuckets(y.buckets) - sumBuckets(x.buckets))[0];
+    if (!top) return { outcome: "completed", summary: "Nothing is open on the AR ledger — no customer is overdue.\n\nsources: aging (side=ar)" };
+    return {
+      outcome: "completed",
+      summary: `${top.name} is the most overdue customer: ${gbpMinor(sumBuckets(top.buckets))} past due of ${gbpMinor(top.totalMinor)} open (${top.items} invoices), at ${a.asOf}. Across all customers ${gbpMinor(a.overdueMinor)} of ${gbpMinor(a.totalMinor)} open is past due. Charts and the full list: /analytics.\n\nsources: aging (side=ar, asOf=${a.asOf})`,
+    };
+  }
+
+  if (/\bwe owe|creditors?|payables?|suppliers? .*(overdue|owed)\b/i.test(q)) {
+    const a = (await runView("aging", { side: "ap" })) as {
+      asOf: string; overdueMinor: number; totalMinor: number;
+      parties: { name: string; buckets: number[]; totalMinor: number; items: number }[];
+    };
+    await note("run_view aging", { side: "ap", parties: a.parties?.length });
+    const top = a.parties?.[0];
+    if (!top) return { outcome: "completed", summary: "Nothing is open on the AP ledger.\n\nsources: aging (side=ap)" };
+    return {
+      outcome: "completed",
+      summary: `Open AP is ${gbpMinor(a.totalMinor)} (${gbpMinor(a.overdueMinor)} past due) at ${a.asOf}. Largest balance: ${top.name} at ${gbpMinor(top.totalMinor)} (${top.items} invoices). Detail: /analytics.\n\nsources: aging (side=ap, asOf=${a.asOf})`,
+    };
+  }
+
+  if (/\bcash|bank balance|liquidity\b/i.test(q)) {
+    const c = (await runView("cash", {})) as { points: { date: string; balanceMinor: number }[] };
+    await note("run_view cash", { points: c.points?.length });
+    const last = c.points?.at(-1);
+    if (!last) return { outcome: "completed", summary: "No bank activity recorded yet.\n\nsources: cash" };
+    const monthAgo = c.points.filter((p) => p.date <= addDays(last.date, -30)).at(-1);
+    const change = monthAgo ? last.balanceMinor - monthAgo.balanceMinor : null;
+    return {
+      outcome: "completed",
+      summary: `Cash is ${gbpMinor(last.balanceMinor)} as of ${last.date} (latest statement line)${
+        change !== null ? `, ${change >= 0 ? "up" : "down"} ${gbpMinor(change)} over the last 30 statement days` : ""
+      }. Trend chart: /analytics.\n\nsources: cash`,
+    };
+  }
+
+  if (/\bwhy|moved?|flux|change[ds]?|increase|decrease|jump|drop|variance\b/i.test(q)) {
+    const f = (await runView("flux", {})) as {
+      period: string; prior: string;
+      rows: { code: string; name: string; thisMinor: number; prevMinor: number; deltaMinor: number }[];
+    };
+    await note("run_view flux", { period: f.period, rows: f.rows?.length });
+    const items = (f.rows ?? [])
+      .map((r) => ({ ...r, contrib: -r.deltaMinor }))
+      .sort((a, b) => Math.abs(b.contrib) - Math.abs(a.contrib));
+    const profitThis = (f.rows ?? []).reduce((n, r) => n - r.thisMinor, 0);
+    const profitPrev = (f.rows ?? []).reduce((n, r) => n - r.prevMinor, 0);
+    const movers = items.slice(0, 3).filter((m) => m.contrib !== 0);
+    if (movers.length === 0)
+      return { outcome: "completed", summary: `No P&L movement between ${f.prior} and ${f.period}.\n\nsources: flux (period=${f.period})` };
+    return {
+      outcome: "completed",
+      summary: `${f.period} result ${gbpMinor(profitThis)} vs ${gbpMinor(profitPrev)} in ${f.prior}. Biggest contributions: ${movers
+        .map((m) => `${m.name} (${m.code}) ${m.contrib >= 0 ? "helped" : "hurt"} by ${gbpMinor(m.contrib)}`)
+        .join("; ")}. Waterfall and drill-to-postings: /analytics.\n\nsources: flux (period=${f.period} vs ${f.prior})`,
+    };
+  }
+
+  if (/\btop|biggest|largest|concentrat|spend|revenue by\b/i.test(q)) {
+    const dim = /supplier|spend|vendor/i.test(q) ? "supplier" : "customer";
+    const c = (await runView("counterparty", { dim })) as {
+      parties: { name: string; totalMinor: number; invoices: number }[];
+    };
+    await note("run_view counterparty", { dim, parties: c.parties?.length });
+    const top3 = (c.parties ?? []).slice(0, 3);
+    if (top3.length === 0) return { outcome: "completed", summary: `No ${dim} invoices on the books yet.\n\nsources: counterparty (dim=${dim})` };
+    return {
+      outcome: "completed",
+      summary: `Top ${dim}s by invoiced gross: ${top3
+        .map((p, i) => `${i + 1}. ${p.name} ${gbpMinor(p.totalMinor)} (${p.invoices} invoices)`)
+        .join("; ")}. Full ranking: /analytics.\n\nsources: counterparty (dim=${dim})`,
+    };
+  }
+
+  return {
+    outcome: "completed",
+    summary:
+      "I can't do free-text analysis without a model configured — in keyless mode I answer set question shapes from the curated views: overdue customers/suppliers (aging), cash position (cash), why the result moved (flux), top customers/suppliers (counterparty). The charts for all of these are at /analytics.\n\nsources: views catalogue",
+  };
+}
+
+function addDays(iso: string, days: number): string {
+  const d = new Date(`${iso}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
 /** Deterministic fallback so the framework runs end-to-end without a model. */
 async function deterministicHandler(
   resolved: ResolvedRelease,
@@ -690,6 +832,9 @@ async function deterministicHandler(
   }
   if (taskType === "r2r.commentary" || (taskType === "eval.case" && Array.isArray(payload.figures))) {
     return commentaryFallback(resolved, runId, payload, steps);
+  }
+  if (taskType === "analyst.question" || (taskType === "eval.case" && typeof payload.question === "string")) {
+    return analystFallback(resolved, runId, payload, steps);
   }
   if (taskType === "hello.greet" || taskType === "eval.case") {
     const topic = String(payload.topic ?? "the business");
@@ -811,6 +956,20 @@ export async function runAgentLoop(
         additionalProperties: false,
       },
       strict: true,
+    },
+    {
+      name: "run_view",
+      description:
+        "Run one curated analytics view (read-only, governed — the only way to read figures). Views: pl-trend (params: year), flux (params: period YYYY-MM, default latest), aging (params: side 'ap'|'ar', asOf YYYY-MM-DD), counterparty (params: dim 'supplier'|'customer'), cash (no params). All amounts return as integer pence.",
+      input_schema: {
+        type: "object",
+        properties: {
+          viewId: { type: "string", enum: ["pl-trend", "flux", "aging", "counterparty", "cash"] },
+          params: { type: "object", description: "View parameters, see the description" },
+        },
+        required: ["viewId"],
+        additionalProperties: false,
+      },
     },
     {
       name: "propose_command",
@@ -1017,6 +1176,17 @@ export async function runAgentLoop(
           await recordLearning(templateSupplier, totals.input + totals.output + totals.cacheWrite + totals.cacheRead);
         await appendStep(runId, steps, { kind: "outcome", label: result.outcome, detail: { summary: result.summary } });
         return result;
+      }
+      if (tu.name === "run_view") {
+        const q = input as { viewId: string; params?: Record<string, unknown> };
+        const result = await runView(String(q.viewId), q.params ?? {});
+        await appendStep(runId, steps, {
+          kind: "tool_call",
+          label: `run_view ${String(q.viewId)}`,
+          detail: { input, preview: JSON.stringify(result).slice(0, 500) },
+        });
+        toolResults.push({ type: "tool_result", tool_use_id: tu.id, content: JSON.stringify(result) });
+        continue;
       }
       if (tu.name === "get_invoice_context") {
         let result: unknown = { error: "database unavailable" };

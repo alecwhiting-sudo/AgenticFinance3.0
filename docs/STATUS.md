@@ -18,7 +18,7 @@ _Last updated: 2026-10-03_
 | 2b — FDP substrate (D13 steps 1–2) | ✅ built | event store → deltas → movements + journals + LES, one validated pipe (`fdpPost`), immutability triggers, deferred balance constraint, replay verified |
 | 3 — R2R | ✅ built minus deferral | bank rec + Reconciliation Agent, accruals/prepayments engine, recurring journals, P&L/BS, month-end dashboard, Close Agent commentary. **Deferred:** LRS lock → certify → supersede (D13 step 3) |
 | 4 — O2C | ✅ built | AR invoices through the pipe, cash application + agent, collections agent + dunning approval |
-| 4c — Analytics + NL reporting | 🔨 in progress | plan: `plans/ANALYTICS.md`. **M1 built** (`/analytics`: flux waterfall, P&L trend, AP/AR aging, counterparty, cash — all drill, all have table views). M2 Analyst Agent + right-hand chat panel next |
+| 4c — Analytics + Analyst | ✅ built | plan: `plans/ANALYTICS.md`. M1 `/analytics` (flux waterfall, P&L trend, AP/AR aging, counterparty, cash — all drill, all have table views). M2 Analyst Agent + right-hand chat panel (top-bar toggle): answers from the curated views only, cites sources, keyless fallback for set question shapes. Remaining 4c ideas: saved views/dashboard |
 | 5 — Performance Management | 📋 planned | user: not ready yet |
 | 6 — Demo polish | 🔶 partial | agent staff strip, release pipeline, permissions matrix, decision history, per-agent period cost (D14), admin reset/replay done; guided tour + cross-process dashboard outstanding |
 | P — Production | ⬜ stub | deliberately undesigned |
@@ -34,8 +34,8 @@ _Last updated: 2026-10-03_
   508 bank lines, 110 UBL e-invoices, 50 scan-style PDFs. All committed in
   `packages/db/seed/generated/` — internal docs (PO/GRN) are schema rows;
   only supplier-facing artefacts are rendered PDFs.
-- **Agents (9, by family):** p2p: purchase-request, invoice-extraction
-  (Haiku), invoice-exception · r2r: reconciliation, close · o2c:
+- **Agents (10, by family):** p2p: purchase-request, invoice-extraction
+  (Haiku), invoice-exception · r2r: reconciliation, close, analyst · o2c:
   cash-application, collections · platform: hello-finance,
   transaction-generator. All evals green at last run.
 - **Invariants proven:** fresh load = 1159 events = 1159 journals, GL balance
@@ -64,10 +64,9 @@ _Last updated: 2026-10-03_
 
 ## Backlog (agreed, not yet built)
 
-1. **Phase 4c** analytics layer + NL Analyst Agent — **in progress**, plan
-   written (`plans/ANALYTICS.md`): M1 curated read-only views + SVG charting
-   with drill-to-source; M2 the right-hand analyst chat panel, grounded in
-   the curated views + the data model + D1–D15 (never model-written SQL).
+1. **Phase 4c follow-ons** — saved views on a dashboard; grow the view
+   catalogue as questions demand (the Analyst names the missing view when it
+   can't answer). Core 4c built 2026-10-03 (`plans/ANALYTICS.md`).
 2. **LRS lock/certify/supersede** — lands as the month-end dashboard's lock
    button + snapshot tables.
 3. **Commentary quality** — Close Agent output is too bland; skills +

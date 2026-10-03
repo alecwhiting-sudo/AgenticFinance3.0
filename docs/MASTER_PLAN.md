@@ -161,7 +161,7 @@ ANTHROPIC_API_KEY is configured; daily drip wires in with P2P M5.)*
   contracts/billing push the business event and its accounting together
   through the one pipe.
 
-### Phase 4c — Analytics & natural-language reporting (in progress; plan: plans/ANALYTICS.md)
+### Phase 4c — Analytics & natural-language reporting (built 2026-10-03 minus saved views; plan: plans/ANALYTICS.md)
 - A reporting layer for exploring ALL platform data, not just the fixed
   statements: pick any dimension (account, supplier, customer, period,
   object, agent), slice/pivot, and chart it (trend, bar, waterfall for flux,

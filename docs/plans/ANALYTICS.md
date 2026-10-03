@@ -123,3 +123,13 @@ standard release rule.
   Verified against the full replay (1159 journals): flux profit ties to
   `/erp/statements` exactly; drill lands on the filtered postings; light +
   dark themes screenshot-checked.
+- M2 built (2026-10-03): `analyst` agent seeded (agents.json: release +
+  `curated-views` and `finance-data-model` skills + 3 eval cases, all green
+  keyless); worker `run_view` tool (the catalogue is the agent's entire data
+  surface) + `analystFallback` (overdue/cash/flux/counterparty question
+  shapes answered deterministically, forecasts refused, everything cited);
+  API `POST /analyst/ask` → `analyst.question` work item + `GET
+  /analyst/answer/:id`; `AnalystPanel` in the Shell (toggle in the top bar,
+  open state persisted, suggestions, sources line rendered as the audit
+  trail with a charts link). Verified end to end keyless: six question
+  shapes answered correctly against the full replay.

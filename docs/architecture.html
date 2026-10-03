@@ -154,7 +154,7 @@
     <div class="boxes c3">
       <div class="box" data-info="statements"><b>Statements</b><span>monthly P&amp;L + balance sheet, every number drills: statement → account → journal → movement → event → document/agent run</span></div>
       <div class="box" data-info="live"><b>Live experience</b><span>SSE activity stream powers the live feed, P2P flow view, and the test panel's replay-from-zero</span></div>
-      <div class="box future" data-info="analytics"><b>Analytics layer</b><span>self-serve exploration + charting over the platform, with a natural-language query interface — planned (MASTER_PLAN Phase 4c)</span></div>
+      <div class="box" data-info="analytics"><b>Analytics + Analyst <span class="tag">4c</span></b><span>curated read-only views charted at /analytics (flux waterfall, trends, aging, cash — every figure drills) · Analyst Agent chat panel answers from those views only, citing its sources</span></div>
     </div>
   </div>
 
@@ -305,9 +305,9 @@ const INFO = {
     how: "activity_event table + server-sent events; the replay-from-zero runs paced so you can watch the books being built.",
   },
   analytics: {
-    t: "Analytics layer (planned)",
-    what: "Self-serve slicing of everything on the platform — any account, supplier, customer or period, charted — plus an Analyst Agent that answers questions in plain English and cites its drill path. Before Performance Management on the roadmap.",
-    how: "Governed read-only queries over curated views; the model never writes SQL against raw tables (Phase 4c).",
+    t: "Analytics + Analyst Agent (4c)",
+    what: "Curated read-only views over the ledger and open items, charted at /analytics — month flux waterfall, P&L trend, AP/AR aging, counterparty concentration, cash position. Every figure drills to its postings and every chart has a table view. The Analyst Agent sits in a right-hand chat panel and answers questions from those same views, ending every answer with a sources line (its audit trail).",
+    how: "Views are plain SQL in the API (never separate measurement); the agent's only data tool is run_view over the catalogue — no SQL from the model, no table access, no write permissions. Keyless mode answers set question shapes deterministically.",
   },
   "s-core": {
     t: "core schema",

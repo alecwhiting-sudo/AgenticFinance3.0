@@ -7,7 +7,9 @@
  * (Stripe/GitHub), not duplication. Content uses the full viewport width. */
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import CommandPalette from "@/components/CommandPalette";
+import AnalystPanel from "@/components/AnalystPanel";
 
 type Item = { href: string; label: string; exact?: boolean };
 type Parent = Item & { short?: string; children?: Item[] };
@@ -59,6 +61,24 @@ const NAV: Parent[] = [
 
 export default function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  // the Analyst chat panel (plans/ANALYTICS.md M2) — open state survives
+  // navigation and reloads; the conversation itself lives in the panel
+  const [analystOpen, setAnalystOpen] = useState(false);
+  useEffect(() => {
+    try {
+      if (localStorage.getItem("analystPanel") === "open") setAnalystOpen(true);
+    } catch {
+      /* storage unavailable */
+    }
+  }, []);
+  const toggleAnalyst = (open: boolean) => {
+    setAnalystOpen(open);
+    try {
+      localStorage.setItem("analystPanel", open ? "open" : "closed");
+    } catch {
+      /* storage unavailable */
+    }
+  };
   const isActive = (it: Item) =>
     it.exact ? pathname === it.href : pathname === it.href || pathname.startsWith(it.href + "/");
   // a parent lights up for itself or any of its children
@@ -137,10 +157,30 @@ export default function Shell({ children }: { children: React.ReactNode }) {
               ))}
             </nav>
           </div>
-          <CommandPalette />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => toggleAnalyst(!analystOpen)}
+              className="hidden whitespace-nowrap rounded-lg border px-3 py-1 text-sm transition-colors md:block"
+              style={
+                analystOpen
+                  ? { borderColor: "var(--accent)", color: "var(--accent)" }
+                  : { borderColor: "var(--border)", color: "var(--muted)" }
+              }
+              title="Ask the Analyst about the numbers — read-only, answers cite their views"
+            >
+              Analyst
+            </button>
+            <CommandPalette />
+          </div>
         </header>
         <main className="mx-auto w-full max-w-[1760px] px-5 py-6 lg:px-8">{children}</main>
       </div>
+
+      {analystOpen && (
+        <div className="hidden md:block">
+          <AnalystPanel onClose={() => toggleAnalyst(false)} />
+        </div>
+      )}
     </div>
   );
 }
