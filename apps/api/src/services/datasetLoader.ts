@@ -133,6 +133,40 @@ export type LoadResult =
 
 const monthOf = (d: string) => d.slice(0, 7);
 
+/** Full profile of the committed test dataset (static — cached): what the
+ * Test panel shows before any scenario runs, so the audience knows exactly
+ * what data exists. */
+let profileCache: Record<string, unknown> | null = null;
+export function datasetProfile(): Record<string, unknown> {
+  if (profileCache) return profileCache;
+  const d: StudioDataset & { suppliers?: unknown[]; customers?: unknown[] } = JSON.parse(
+    readFileSync(path.join(seedDir, "generated/dataset.json"), "utf8"),
+  );
+  const formats: Record<string, number> = {};
+  const exceptions: Record<string, number> = {};
+  let grns = 0;
+  for (const c of d.ap) {
+    const f = c.invoice.format ?? "text_pdf";
+    formats[f] = (formats[f] ?? 0) + 1;
+    if (c.grn) grns++;
+    if (c.exception) exceptions[c.exception] = (exceptions[c.exception] ?? 0) + 1;
+  }
+  const bankKinds: Record<string, number> = {};
+  for (const b of d.bank) bankKinds[b.kind] = (bankKinds[b.kind] ?? 0) + 1;
+  profileCache = {
+    months: datasetMonthTotals(),
+    ap: { chains: d.ap.length, goodsReceipts: grns, formats, plantedExceptions: exceptions },
+    ar: {
+      invoices: d.ar.length,
+      contracts: d.ar.filter((a) => a.contractFile).length,
+      remittances: d.ar.filter((a) => a.remittanceFile).length,
+    },
+    bank: { lines: d.bank.length, kinds: bankKinds },
+    masters: { suppliers: (d.suppliers ?? []).length, customers: d.customers.length },
+  };
+  return profileCache;
+}
+
 /** Per-month transaction totals of the committed dataset (static — cached). */
 let monthTotalsCache: { month: string; ap: number; ar: number; bank: number }[] | null = null;
 export function datasetMonthTotals(): { month: string; ap: number; ar: number; bank: number }[] {

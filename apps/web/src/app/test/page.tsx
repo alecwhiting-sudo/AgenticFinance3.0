@@ -21,9 +21,21 @@ type Pipeline = {
 
 type Action = {
   label: string;
-  run: { kind: "reset"; mode: string; paceMs?: number } | { kind: "day" } | { kind: "drip"; scenario: string };
+  run: { kind: "reset"; mode: string; paceMs?: number } | { kind: "day"; scope: string } | { kind: "drip"; scenario: string };
   danger?: boolean;
   needsNextMonth?: boolean;
+  /** true = wipes the books first; false = builds on what's already loaded */
+  wipes?: boolean;
+};
+
+type NextStep = { label: string; href: string; count?: "exceptions" | "approvals" | "queue" };
+
+type Dataset = {
+  months: { month: string; ap: number; ar: number; bank: number }[];
+  ap: { chains: number; goodsReceipts: number; formats: Record<string, number>; plantedExceptions: Record<string, number> };
+  ar: { invoices: number; contracts: number; remittances: number };
+  bank: { lines: number; kinds: Record<string, number> };
+  masters: { suppliers: number; customers: number };
 };
 
 type Scenario = {
@@ -37,6 +49,8 @@ type Scenario = {
   proves: string[];
   notProves: string[];
   actions: Action[];
+  /** the anticlimax fix: after the run, this is where the show continues */
+  next: NextStep[];
 };
 
 const SCENARIOS: Scenario[] = [
@@ -60,8 +74,14 @@ const SCENARIOS: Scenario[] = [
       "Agent decision-making — this is the deterministic machine; agents act on exceptions you hand them",
     ],
     actions: [
-      { label: "Process next month", run: { kind: "reset", mode: "month", paceMs: 60 }, needsNextMonth: true },
-      { label: "Run remaining months (auto)", run: { kind: "reset", mode: "months", paceMs: 60 }, needsNextMonth: true },
+      { label: "Process next month", run: { kind: "reset", mode: "month", paceMs: 60 }, needsNextMonth: true, wipes: false },
+      { label: "Run remaining months (auto)", run: { kind: "reset", mode: "months", paceMs: 60 }, needsNextMonth: true, wipes: false },
+    ],
+    next: [
+      { label: "Run month-end: accruals post, then read the close dashboard", href: "/r2r" },
+      { label: "The statements now reflect exactly what's processed", href: "/reports" },
+      { label: "Exceptions waiting for judgement", href: "/p2p", count: "exceptions" },
+      { label: "Approvals waiting for you", href: "/approvals", count: "approvals" },
     ],
   },
   {
@@ -83,8 +103,14 @@ const SCENARIOS: Scenario[] = [
       "Absolute speed — demo infrastructure; the honest claim is the shape, not the number",
     ],
     actions: [
-      { label: "1 · Baseline month", run: { kind: "reset", mode: "month", paceMs: 0 }, needsNextMonth: true },
-      { label: "2 · Run 10x — wipes, full speed", run: { kind: "reset", mode: "replay", paceMs: 0 }, danger: true },
+      { label: "1 · Baseline month", run: { kind: "reset", mode: "month", paceMs: 0 }, needsNextMonth: true, wipes: false },
+      { label: "2 · Run 10x — full speed", run: { kind: "reset", mode: "replay", paceMs: 0 }, danger: true, wipes: true },
+    ],
+    next: [
+      { label: "The side-by-side: baseline vs 10x in the runs table", href: "/admin/pipeline" },
+      { label: "The human workload that didn't scale — exceptions", href: "/p2p", count: "exceptions" },
+      { label: "Approvals waiting — still a human-sized queue", href: "/approvals", count: "approvals" },
+      { label: "Books balanced the whole way — drill any number", href: "/reports" },
     ],
   },
   {
@@ -107,8 +133,15 @@ const SCENARIOS: Scenario[] = [
       "Bank reconciliation of those payments until you run them",
     ],
     actions: [
-      { label: "From scratch: next month", run: { kind: "reset", mode: "cold", paceMs: 0 }, needsNextMonth: true },
-      { label: "Everything from scratch", run: { kind: "reset", mode: "cold-all", paceMs: 0 }, danger: true },
+      { label: "From scratch: next month", run: { kind: "reset", mode: "cold", paceMs: 0 }, needsNextMonth: true, wipes: false },
+      { label: "Everything from scratch", run: { kind: "reset", mode: "cold-all", paceMs: 0 }, danger: true, wipes: true },
+    ],
+    next: [
+      { label: "Watch the agents read the queue down", href: "/work", count: "queue" },
+      { label: "Learned templates building on the P2P page — repeat suppliers go free", href: "/p2p" },
+      { label: "Exceptions the extraction surfaced", href: "/p2p", count: "exceptions" },
+      { label: "Then release the payments yourself", href: "/p2p/payments" },
+      { label: "What it actually cost — model spend tile", href: "/admin/pipeline" },
     ],
   },
   {
@@ -126,7 +159,12 @@ const SCENARIOS: Scenario[] = [
       "All controls live under continuous load: immutability, balance enforcement, idempotency",
     ],
     notProves: ["Document extraction (structured data)", "Anything about day-to-day operations pacing — it's history at demo speed"],
-    actions: [{ label: "Replay everything — paced", run: { kind: "reset", mode: "replay", paceMs: 120 }, danger: true }],
+    actions: [{ label: "Replay everything — paced", run: { kind: "reset", mode: "replay", paceMs: 120 }, danger: true, wipes: true }],
+    next: [
+      { label: "Drill any statement number to its source event", href: "/reports" },
+      { label: "Trial balance — journals = events, GL to zero", href: "/ledger" },
+      { label: "Run it again from the board: identical books, every time", href: "/admin/pipeline" },
+    ],
   },
   {
     id: "day",
@@ -143,7 +181,17 @@ const SCENARIOS: Scenario[] = [
       "Your whole involvement in a day is a couple of clicks",
     ],
     notProves: ["Volume (that's the 10x run)", "The close (that's month by month)"],
-    actions: [{ label: "Simulate a day", run: { kind: "day" } }],
+    actions: [
+      { label: "Simulate a day — everything", run: { kind: "day", scope: "all" }, wipes: false },
+      { label: "Just P2P", run: { kind: "day", scope: "p2p" }, wipes: false },
+      { label: "Just O2C", run: { kind: "day", scope: "o2c" }, wipes: false },
+    ],
+    next: [
+      { label: "Watch the invoices travel on the live flow", href: "/p2p/flow" },
+      { label: "Agents working now", href: "/work", count: "queue" },
+      { label: "The exception's case — explore and resolve it", href: "/p2p", count: "exceptions" },
+      { label: "Approve or reject what reached your inbox (incl. the dunning letter)", href: "/approvals", count: "approvals" },
+    ],
   },
   {
     id: "drip",
@@ -165,6 +213,11 @@ const SCENARIOS: Scenario[] = [
       { label: "No purchase record", run: { kind: "drip", scenario: "no_purchase" } },
       { label: "Bank-detail change (fraud screen)", run: { kind: "drip", scenario: "bank_detail_change" } },
     ],
+    next: [
+      { label: "Follow it on the live flow", href: "/p2p/flow" },
+      { label: "The agent's run transcript", href: "/work" },
+      { label: "If it fired an exception, resolve it", href: "/p2p", count: "exceptions" },
+    ],
   },
   {
     id: "zero",
@@ -177,7 +230,8 @@ const SCENARIOS: Scenario[] = [
     uses: "Nothing — it removes.",
     proves: ["Nothing — it's the reset lever"],
     notProves: [],
-    actions: [{ label: "Clear to zero", run: { kind: "reset", mode: "zero" }, danger: true }],
+    actions: [{ label: "Clear to zero", run: { kind: "reset", mode: "zero" }, danger: true, wipes: true }],
+    next: [{ label: "Pick a scenario above and build the books back up", href: "/test" }],
   },
 ];
 
@@ -190,9 +244,13 @@ const monthLabel = (ym: string) => `${MONTH_NAMES[Number(ym.split("-")[1]) - 1]}
 
 export default function TestPage() {
   const [p, setP] = useState<Pipeline | null>(null);
+  const [ds, setDs] = useState<Dataset | null>(null);
+  const [showData, setShowData] = useState(false);
   const [sel, setSel] = useState<string>(SCENARIOS[0]!.id);
   const [confirm, setConfirm] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
+  const [justFinished, setJustFinished] = useState(false);
+  const [wasRunning, setWasRunning] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -204,9 +262,20 @@ export default function TestPage() {
   }, []);
   useEffect(() => {
     void load();
+    void fetch(`${apiUrl}/admin/dataset`)
+      .then((r) => r.json())
+      .then((d) => setDs(d as Dataset))
+      .catch(() => {});
     const t = setInterval(load, 2000);
     return () => clearInterval(t);
   }, [load]);
+
+  // run just completed → light up the "where to go next" guidance
+  useEffect(() => {
+    const running = p?.job.running ?? false;
+    if (wasRunning && !running && !p?.job.error) setJustFinished(true);
+    setWasRunning(running);
+  }, [p?.job.running, p?.job.error, wasRunning]);
 
   const fire = async (a: Action) => {
     setConfirm(null);
@@ -221,9 +290,16 @@ export default function TestPage() {
         if (!res.ok) setMsg(((await res.json()) as { error?: string }).error ?? "failed");
         else setMsg("Started — follow it below or on the mission control board.");
       } else if (a.run.kind === "day") {
-        const res = await fetch(`${apiUrl}/admin/simulate-day`, { method: "POST" });
-        const d = (await res.json()) as { dripped: { scenario: string }[]; receipt: string | null };
-        setMsg(`Morning landed: ${d.dripped.map((x) => x.scenario).join(", ")}${d.receipt ? ` + receipt ${d.receipt}` : ""} — watch the P2P live flow.`);
+        const res = await fetch(`${apiUrl}/admin/simulate-day`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ scope: a.run.scope }),
+        });
+        const d = (await res.json()) as { dripped: { scenario: string }[]; receipt: string | null; chased: string | null };
+        setMsg(
+          `Morning landed${d.dripped.length ? `: ${d.dripped.map((x) => x.scenario).join(", ")}` : ""}${d.receipt ? ` + receipt ${d.receipt}` : ""}${d.chased ? ` + chasing ${d.chased}` : ""}.`,
+        );
+        setJustFinished(true);
       } else {
         const res = await fetch(`${apiUrl}/p2p/drip`, {
           method: "POST",
@@ -232,6 +308,7 @@ export default function TestPage() {
         });
         const d = (await res.json()) as { supplier?: string; invoiceNumber?: string; error?: string };
         setMsg(res.ok ? `${d.supplier} ${d.invoiceNumber} landed in the capture queue — watch the live flow.` : (d.error ?? "failed"));
+        if (res.ok) setJustFinished(true);
       }
     } catch {
       setMsg(`Cannot reach the API at ${apiUrl}.`);
@@ -277,6 +354,54 @@ export default function TestPage() {
         </section>
       )}
 
+      {/* what test data exists — before anything runs */}
+      {ds && (
+        <section className="rounded-xl border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+          <button onClick={() => setShowData(!showData)} className="flex w-full items-baseline justify-between text-left">
+            <span className="text-sm font-semibold uppercase tracking-wide" style={{ color: "var(--muted)" }}>
+              Test data available
+            </span>
+            <span className="text-xs" style={{ color: "var(--accent)" }}>{showData ? "hide" : "show detail"}</span>
+          </button>
+          <p className="mt-1 text-sm" style={{ color: "var(--muted)" }}>
+            {ds.months.length} months ({monthLabel(ds.months[0]!.month)} – {monthLabel(ds.months[ds.months.length - 1]!.month)}) ·{" "}
+            {ds.ap.chains} supplier invoice chains (each a requisition+PO{ds.ap.goodsReceipts ? `, ${ds.ap.goodsReceipts} with goods receipts` : ""}) ·{" "}
+            {ds.ar.invoices} customer invoices ({ds.ar.contracts} with contracts) · {ds.bank.lines} bank lines ·{" "}
+            {Object.values(ds.ap.plantedExceptions).reduce((a, b) => a + b, 0)} planted exceptions ·{" "}
+            {ds.masters.suppliers} suppliers, {ds.masters.customers} customers. Generated once by the Transaction
+            Generator Agent, committed, deterministic — every run sees the same world.
+          </p>
+          {showData && (
+            <div className="mt-3 grid gap-4 text-sm sm:grid-cols-3">
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--muted)" }}>Invoice formats</div>
+                <ul className="mt-1 space-y-0.5">
+                  {Object.entries(ds.ap.formats).map(([k, v]) => (
+                    <li key={k} className="tabular-nums">{v} × {k === "text_pdf" ? "text-layer PDF" : k === "ubl_xml" ? "UBL e-invoice (parsed, no model)" : "scanned image (vision)"}</li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--muted)" }}>Planted exceptions</div>
+                <ul className="mt-1 space-y-0.5">
+                  {Object.entries(ds.ap.plantedExceptions).map(([k, v]) => (
+                    <li key={k} className="tabular-nums">{v} × {k.replace(/_/g, " ")}</li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--muted)" }}>Bank feed</div>
+                <ul className="mt-1 space-y-0.5">
+                  {Object.entries(ds.bank.kinds).map(([k, v]) => (
+                    <li key={k} className="tabular-nums">{v} × {k.replace(/_/g, " ")}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+
       {/* live run banner */}
       {p && busy && (
         <section className="rounded-xl border p-4" style={{ borderColor: "var(--accent)", background: "var(--card)" }}>
@@ -303,7 +428,7 @@ export default function TestPage() {
           {SCENARIOS.map((s) => (
             <button
               key={s.id}
-              onClick={() => { setSel(s.id); setConfirm(null); setMsg(null); }}
+              onClick={() => { setSel(s.id); setConfirm(null); setMsg(null); setJustFinished(false); }}
               className="block w-full rounded-xl border p-3 text-left transition-transform hover:-translate-y-0.5"
               style={{
                 borderColor: sel === s.id ? "var(--accent)" : "var(--border)",
@@ -367,9 +492,43 @@ export default function TestPage() {
                   style={{ borderColor: a.danger ? "var(--bad)" : "var(--accent)", color: a.danger ? "var(--bad)" : "var(--accent)" }}
                 >
                   {a.needsNextMonth && p?.nextMonth ? a.label.replace("next month", monthLabel(p.nextMonth)) : a.label}
+                  {a.wipes !== undefined && (
+                    <span className="ml-2 text-[10px] uppercase tracking-wide" style={{ color: "var(--muted)" }}>
+                      {a.wipes ? "wipes first" : "adds to books"}
+                    </span>
+                  )}
                 </button>
               ),
             )}
+          </div>
+
+          {/* where the show continues — the counters are live */}
+          <div
+            className="mt-4 rounded-lg border p-3"
+            style={{ borderColor: justFinished ? "var(--accent)" : "var(--border)", background: "var(--background)" }}
+          >
+            <h4 className="text-xs font-semibold uppercase tracking-wide" style={{ color: justFinished ? "var(--accent)" : "var(--muted)" }}>
+              {justFinished ? "Done — this is where the show continues" : "After it runs — where to go"}
+            </h4>
+            <ul className="mt-2 space-y-1.5 text-sm">
+              {scenario.next.map((n, i) => {
+                const count =
+                  n.count === "exceptions" ? p?.split.ap_exceptions : n.count === "approvals" ? p?.split.awaiting_human : n.count === "queue" ? p?.split.agent_queue : null;
+                return (
+                  <li key={i}>
+                    <Link href={n.href} className="hover:underline" style={{ color: "var(--accent)" }}>
+                      {n.label}
+                      {count !== null && count !== undefined && (
+                        <span className="ml-1.5 rounded-full border px-1.5 text-xs tabular-nums" style={{ borderColor: "var(--border)", color: "var(--muted)" }}>
+                          {count}
+                        </span>
+                      )}
+                      {" →"}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
           </div>
         </div>
       </section>

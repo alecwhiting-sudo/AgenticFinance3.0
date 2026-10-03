@@ -194,3 +194,26 @@ re-approval of already-approved spend. The demo narrates this absence.
    bank feed + reconciliation matcher; demonstrate the zero-touch clean path.
 5. **M5 — Polish:** ✅ P2P flow view wired to live events, drip button, eval
    suites per §7.
+
+## 10. Backlog — exceptions management build-out (Alec, 2026-10-03)
+
+The exception experience is currently a stub relative to its demo weight:
+cases open, the Exception Agent investigates, a human approves a typed
+resolution — but the *resolution options* are thin. Build out:
+
+- **Grounded resolution proposals (model calls):** for each exception the
+  agent assembles full context — the approved purchase (lines, prices,
+  approver), goods receipts (quantities, dates), the invoice as captured,
+  supplier history (prior invoices, duplicates, payment behaviour) — and
+  proposes 2–3 concrete, costed options (e.g. "accept price variance £84,
+  within tolerance, post" / "short-pay to PO price, draft supplier email" /
+  "reject as duplicate of IOP-15787"). Every option maps to a typed command;
+  humans pick, never free-text.
+- **Exception workbench UI:** a dedicated queue view per exception kind with
+  the evidence side-by-side (PO vs GRN vs invoice line diff), the agent's
+  options as buttons, and the case timeline.
+- **O2C mirror:** the same pattern for unapplied receipts (part-payments,
+  overpayments, unknown payers) and disputed invoices — grounded in the
+  contract, the invoice and the remittance.
+- **Evals:** per exception kind, assert the agent proposes the right option
+  family and never proposes paying an unverified bank-detail change.

@@ -186,6 +186,17 @@ ANTHROPIC_API_KEY is configured; daily drip wires in with P2P M5.)*
 - Guided demo script/tour, one-click seed reset, cross-process dashboard
   ("the finance function at a glance"), cost/usage reporting per agent.
 
+### Phase 7 — A2R: Acquire to Retire (low priority)
+- Full fixed-asset lifecycle as the fourth-and-a-half process family:
+  asset acquisition from P2P purchases (capitalise instead of expense),
+  asset register, depreciation runs as period-tick events through the one
+  pipe (engine-derived deltas from versioned depreciation parameter sets —
+  the business-initiated posture D13 was designed for), revaluations,
+  disposals/retirements with gain/loss. Agents: asset classification
+  (capitalise vs expense at invoice capture), depreciation review.
+- Deliberately low priority (Alec, 2026-10-03) — after analytics (4c) and
+  the exceptions build-out; before or alongside PM as appetite dictates.
+
 ### Phase P — Production version (stub)
 - Real auth and role separation, security review, backups/DR, real bank/payment
   rails, data migration from demo, go-live checklist. **Deliberately not

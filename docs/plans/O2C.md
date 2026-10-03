@@ -76,3 +76,11 @@ templated letter from the payload facts.
    an odd remittance goes to the Cash Application Agent → approval → applied.
 3. An overdue invoice → Chase → Collections Agent's letter in the approvals
    inbox → approve → recorded as sent.
+
+## 9. Backlog — receipt/dispute exception management (Alec, 2026-10-03)
+
+Mirror of plans/P2P.md §10 for the AR side: the Cash Application Agent
+should propose grounded options for part-payments, overpayments and unknown
+payers (apply-with-residual, refund, hold-and-query letter), and Collections
+should escalate disputes with the contract + invoice + remittance evidence
+assembled. Options map to typed commands; humans decide.

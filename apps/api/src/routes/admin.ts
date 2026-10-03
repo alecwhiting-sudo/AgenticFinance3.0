@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { sql } from "drizzle-orm";
 import { requireDb } from "../lib/db.js";
 import { emitActivity } from "../lib/activity.js";
-import { datasetMonthTotals, loadDemoDataset, truncateTransactions } from "../services/datasetLoader.js";
+import { datasetMonthTotals, datasetProfile, loadDemoDataset, truncateTransactions } from "../services/datasetLoader.js";
 
 /** Admin panel backend (demo control room — not part of the finance product).
  * Reset/reload the demo data, replay it live from zero, process it month by
@@ -60,6 +60,9 @@ export function adminRoutes(app: FastifyInstance): void {
     ).rows;
     return { counts, job: jobWithElapsed() };
   });
+
+  /** What test data exists, before anything runs (Test panel inventory). */
+  app.get("/admin/dataset", async () => datasetProfile());
 
   /** The mission-control feed (plans/DEMO_SCRIPTS.md §4): dataset backlog vs
    * loaded per month, the control split, integrity, job state, past runs. */
@@ -281,26 +284,46 @@ export function adminRoutes(app: FastifyInstance): void {
   /** Scenario C (plans/DEMO_SCRIPTS.md §3): one believable morning's inbox —
    * a clean e-invoice, a scanned PDF, one exception, and (when an unapplied
    * receipt exists) a cash-application investigation. */
-  app.post("/admin/simulate-day", async (_req, reply) => {
+  app.post<{ Body: { scope?: string } }>("/admin/simulate-day", async (req, reply) => {
     const db = requireDb();
-    const exceptionPool = ["price_variance", "qty_short_receipt", "missing_receipt", "no_purchase", "bank_detail_change"];
-    const scenarios = ["clean", "scan_document", exceptionPool[Math.floor(Math.random() * exceptionPool.length)]!];
+    const scope = req.body?.scope ?? "all";
+    if (!["all", "p2p", "o2c"].includes(scope)) return reply.code(400).send({ error: "scope must be all | p2p | o2c" });
     const dripped: { scenario: string; summary: string }[] = [];
-    for (const scenario of scenarios) {
-      const res = await app.inject({ method: "POST", url: "/p2p/drip", payload: { scenario } });
-      const body = res.json() as { supplier?: string; invoiceNumber?: string; error?: string };
-      dripped.push({
-        scenario,
-        summary: res.statusCode === 200 ? `${body.supplier} ${body.invoiceNumber}` : `skipped: ${body.error}`,
-      });
+    if (scope !== "o2c") {
+      const exceptionPool = ["price_variance", "qty_short_receipt", "missing_receipt", "no_purchase", "bank_detail_change"];
+      const scenarios = ["clean", "scan_document", exceptionPool[Math.floor(Math.random() * exceptionPool.length)]!];
+      for (const scenario of scenarios) {
+        const res = await app.inject({ method: "POST", url: "/p2p/drip", payload: { scenario } });
+        const body = res.json() as { supplier?: string; invoiceNumber?: string; error?: string };
+        dripped.push({
+          scenario,
+          summary: res.statusCode === 200 ? `${body.supplier} ${body.invoiceNumber}` : `skipped: ${body.error}`,
+        });
+      }
     }
     let receipt: string | null = null;
-    const txn = await db.query.bankTransaction.findFirst({
-      where: (t, { and: a, eq: e }) => a(e(t.status, "unmatched"), e(t.kind, "ar_receipt")),
-    });
-    if (txn) {
-      const res = await app.inject({ method: "POST", url: "/o2c/investigate-receipt", payload: { bankTransactionId: txn.id } });
-      receipt = res.statusCode === 200 ? txn.reference : null;
+    let chased: string | null = null;
+    if (scope !== "p2p") {
+      const txn = await db.query.bankTransaction.findFirst({
+        where: (t, { and: a, eq: e }) => a(e(t.status, "unmatched"), e(t.kind, "ar_receipt")),
+      });
+      if (txn) {
+        const res = await app.inject({ method: "POST", url: "/o2c/investigate-receipt", payload: { bankTransactionId: txn.id } });
+        receipt = res.statusCode === 200 ? txn.reference : null;
+      }
+      // chase the most overdue open customer invoice — the Collections Agent
+      // drafts a letter that lands in Approvals
+      const [overdue] = (
+        await db.execute(sql`
+          select id, number from erp.ar_invoice
+          where status = 'posted' and due_date < current_date
+          order by due_date asc limit 1
+        `)
+      ).rows as { id: string; number: string }[];
+      if (overdue) {
+        const res = await app.inject({ method: "POST", url: "/o2c/chase", payload: { invoiceId: overdue.id } });
+        chased = res.statusCode === 200 ? overdue.number : null;
+      }
     }
     await emitActivity({
       actorType: "human",
@@ -308,9 +331,9 @@ export function adminRoutes(app: FastifyInstance): void {
       verb: "simulated_day",
       objectType: "dataset",
       objectId: "day",
-      summary: `Simulated a morning: ${dripped.length} invoices landed${receipt ? `, receipt ${receipt} under investigation` : ""}`,
+      summary: `Simulated a morning (${scope}): ${dripped.length} invoices landed${receipt ? `, receipt ${receipt} under investigation` : ""}${chased ? `, chasing ${chased}` : ""}`,
     });
-    return reply.send({ dripped, receipt });
+    return reply.send({ dripped, receipt, chased });
   });
 
   /** Flush agent history to keep the demo cheap (D14): strip run transcripts
