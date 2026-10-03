@@ -53,7 +53,9 @@ _Last updated: 2026-10-02_
 3. **Commentary quality** — Close Agent output is too bland; skills +
    evals that fail bland output (`plans/R2R.md` §9); reasoning tier only on
    eval evidence.
-4. **Phase 6 remainder** — guided demo tour, cross-process dashboard.
+4. **Phase 6 remainder** — guided demo tour, cross-process dashboard;
+   demo scenarios + pipeline "mission control" dashboard planned in
+   `plans/DEMO_SCRIPTS.md` (build items §5 not started).
 5. **Phase 5 PM** — parked on user's call.
 
 ## How to resume a session
