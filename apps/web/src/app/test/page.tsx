@@ -80,7 +80,7 @@ const SCENARIOS: Scenario[] = [
     next: [
       { label: "Run month-end: accruals post, then read the close dashboard", href: "/r2r" },
       { label: "The statements now reflect exactly what's processed", href: "/reports" },
-      { label: "Exceptions waiting for judgement", href: "/p2p", count: "exceptions" },
+      { label: "Exceptions waiting for judgement — open the workbench", href: "/p2p/exceptions", count: "exceptions" },
       { label: "Approvals waiting for you", href: "/approvals", count: "approvals" },
     ],
   },
@@ -108,7 +108,7 @@ const SCENARIOS: Scenario[] = [
     ],
     next: [
       { label: "The side-by-side: baseline vs 10x in the runs table", href: "/admin/pipeline" },
-      { label: "The human workload that didn't scale — exceptions", href: "/p2p", count: "exceptions" },
+      { label: "The human workload that didn't scale — the exceptions workbench", href: "/p2p/exceptions", count: "exceptions" },
       { label: "Approvals waiting — still a human-sized queue", href: "/approvals", count: "approvals" },
       { label: "Books balanced the whole way — drill any number", href: "/reports" },
     ],
@@ -139,7 +139,7 @@ const SCENARIOS: Scenario[] = [
     next: [
       { label: "Watch the agents read the queue down", href: "/work", count: "queue" },
       { label: "Learned templates building on the P2P page — repeat suppliers go free", href: "/p2p" },
-      { label: "Exceptions the extraction surfaced", href: "/p2p", count: "exceptions" },
+      { label: "Exceptions the extraction surfaced — resolve them in the workbench", href: "/p2p/exceptions", count: "exceptions" },
       { label: "Then release the payments yourself", href: "/p2p/payments" },
       { label: "What it actually cost — model spend tile", href: "/admin/pipeline" },
     ],
@@ -189,7 +189,7 @@ const SCENARIOS: Scenario[] = [
     next: [
       { label: "Watch the invoices travel on the live flow", href: "/p2p/flow" },
       { label: "Agents working now", href: "/work", count: "queue" },
-      { label: "The exception's case — explore and resolve it", href: "/p2p", count: "exceptions" },
+      { label: "The exception's case — explore and resolve it in the workbench", href: "/p2p/exceptions", count: "exceptions" },
       { label: "Approve or reject what reached your inbox (incl. the dunning letter)", href: "/approvals", count: "approvals" },
     ],
   },
@@ -216,7 +216,7 @@ const SCENARIOS: Scenario[] = [
     next: [
       { label: "Follow it on the live flow", href: "/p2p/flow" },
       { label: "The agent's run transcript", href: "/work" },
-      { label: "If it fired an exception, resolve it", href: "/p2p", count: "exceptions" },
+      { label: "If it fired an exception, resolve it in the workbench", href: "/p2p/exceptions", count: "exceptions" },
     ],
   },
   {

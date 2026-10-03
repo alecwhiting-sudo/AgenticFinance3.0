@@ -141,7 +141,12 @@ export default async function P2PPage() {
 
       <section className="grid gap-4 md:grid-cols-2">
         <Card>
-          <SectionTitle>Open exceptions ({exceptions?.length ?? 0})</SectionTitle>
+          <div className="flex items-center justify-between">
+            <SectionTitle>Open exceptions ({exceptions?.length ?? 0})</SectionTitle>
+            <Link href="/p2p/exceptions" className="text-xs hover:underline" style={{ color: "var(--accent)" }}>
+              open the workbench →
+            </Link>
+          </div>
           <ul className="space-y-2">
             {(exceptions ?? []).map((i) => (
               <li key={i.id} className="flex items-center justify-between text-sm">

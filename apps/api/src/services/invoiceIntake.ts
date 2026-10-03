@@ -85,7 +85,14 @@ async function openExceptionCase(
       type: "invoice.exception",
       agentId: exceptionAgent.id,
       caseId: c!.id,
-      payload: { invoiceId: inv.id, caseId: c!.id, exceptionCode: code, detail },
+      payload: {
+        invoiceId: inv.id,
+        caseId: c!.id,
+        exceptionCode: code,
+        detail,
+        objective:
+          "Investigate using get_invoice_context, then (1) propose case.options with 2-3 grounded, costed resolution options (params: caseId, options[{resolution: approve_adjusted|part_approve|record_receipt|reject|retro_purchase|human_verify, label, rationale, costedNote?, adjustedQuantities?}]) and (2) propose ap.invoice.resolve for your single recommended option. Never resolve bank_detail_change — options there are human_verify guidance only.",
+      },
       priority: 3,
     });
   }

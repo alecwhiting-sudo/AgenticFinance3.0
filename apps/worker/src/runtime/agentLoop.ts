@@ -495,14 +495,133 @@ async function invoiceExceptionFallback(
   const code = String(payload.exceptionCode ?? "");
   const detail = String(payload.detail ?? "");
   const invoiceId = String(payload.invoiceId ?? "");
+  const caseId = typeof payload.caseId === "string" ? payload.caseId : null;
   await appendStep(runId, steps, { kind: "note", label: `playbook: ${code}`, detail: { detail } });
 
+  // Ground the options in the actual records (plans/P2P.md §10): the approved
+  // purchase, what was received, what was invoiced — so every option is
+  // specific and costed, never generic.
+  type Opt = {
+    resolution: string;
+    label: string;
+    rationale: string;
+    costedNote?: string;
+    adjustedQuantities?: { lineNo: number; qty: number }[];
+  };
+  const gbp = (m: number) => `£${(Math.abs(m) / 100).toLocaleString("en-GB", { minimumFractionDigits: 2 })}`;
+  let inv: { lines: { lineNo: number; qty: number; unitPriceMinor: number; description: string }[]; grossMinor: number; purchaseId: string | null } | null = null;
+  let po: { lines: { lineNo: number; qty: number; unitPriceMinor: number }[]; totalMinor: number } | null = null;
+  let receivedBy: Map<number, number> | null = null;
+  if (db && invoiceId) {
+    const row = await db.query.apInvoice.findFirst({ where: (t, { eq: e }) => e(t.id, invoiceId) });
+    if (row) {
+      inv = { lines: row.lines, grossMinor: row.grossMinor, purchaseId: row.purchaseId };
+      if (row.purchaseId) {
+        const p = await db.query.purchase.findFirst({ where: (t, { eq: e }) => e(t.id, row.purchaseId!) });
+        if (p) po = { lines: p.lines, totalMinor: p.totalMinor };
+        const grns = await db.query.goodsReceipt.findMany({ where: (t, { eq: e }) => e(t.purchaseId, row.purchaseId!) });
+        receivedBy = new Map();
+        for (const g of grns) for (const q of g.quantities) receivedBy.set(q.lineNo, (receivedBy.get(q.lineNo) ?? 0) + q.qtyReceived);
+      }
+    }
+  }
+  const varianceMinor =
+    inv && po
+      ? inv.lines.reduce((s, l) => {
+          const pl = po!.lines.find((x) => x.lineNo === l.lineNo);
+          return s + (pl ? l.qty * l.unitPriceMinor - pl.qty * pl.unitPriceMinor : l.qty * l.unitPriceMinor);
+        }, 0)
+      : null;
+
+  const options: Opt[] = [];
+  if (code === "price_variance") {
+    options.push(
+      {
+        resolution: "approve_adjusted",
+        label: `Accept the variance and post at invoiced amounts`,
+        rationale: `Invoiced price exceeds the approved purchase${varianceMinor !== null ? ` by ${gbp(varianceMinor)} net` : ""} (${detail}). No agreed increase on file; accepting this once and flagging the supplier for a rate review.`,
+        costedNote: varianceMinor !== null ? `costs ${gbp(varianceMinor)} more than approved` : undefined,
+      },
+      {
+        resolution: "reject",
+        label: "Reject and ask the supplier to re-bill at the agreed price",
+        rationale: `The purchase was approved at a lower price (${detail}); the supplier should re-issue at the agreed rate.`,
+        costedNote: varianceMinor !== null ? `saves ${gbp(varianceMinor)}, delays settlement` : undefined,
+      },
+    );
+  } else if (code === "qty_short_receipt") {
+    const adjusted =
+      inv && receivedBy
+        ? inv.lines.map((l) => ({ lineNo: l.lineNo, qty: Math.min(l.qty, receivedBy!.get(l.lineNo) ?? l.qty) }))
+        : undefined;
+    const partGross =
+      inv && adjusted
+        ? Math.round(adjusted.reduce((s, a) => s + a.qty * (inv!.lines.find((l) => l.lineNo === a.lineNo)?.unitPriceMinor ?? 0), 0) * 1.2)
+        : null;
+    options.push(
+      {
+        resolution: "part_approve",
+        label: "Pay for what actually arrived",
+        rationale: `Invoiced quantity exceeds goods received (${detail}). Part-approve for the received quantities; the shortfall re-bills on delivery.`,
+        costedNote: partGross !== null && inv ? `pays ${gbp(partGross)} of ${gbp(inv.grossMinor)}` : undefined,
+        adjustedQuantities: adjusted,
+      },
+      {
+        resolution: "record_receipt",
+        label: "The goods did arrive — record the receipt and pay in full",
+        rationale: `If ops confirm the delivery landed but was never booked, record the receipt and the invoice matches (${detail}).`,
+        costedNote: inv ? `pays ${gbp(inv.grossMinor)} in full` : undefined,
+      },
+      { resolution: "reject", label: "Reject — dispute the billed quantity", rationale: `The supplier billed more than was delivered (${detail}) and no delivery is expected.` },
+    );
+  } else if (code === "missing_receipt") {
+    options.push(
+      {
+        resolution: "record_receipt",
+        label: "Goods confirmed arrived — record the receipt and post",
+        rationale: `The purchase exists but no goods receipt was booked (${detail}). Once a human confirms arrival, record it and the 3-way match completes.`,
+        costedNote: inv ? `pays ${gbp(inv.grossMinor)}` : undefined,
+      },
+      { resolution: "reject", label: "Nothing arrived — reject the invoice", rationale: `No goods receipt and no confirmation of delivery (${detail}).` },
+    );
+  } else if (code === "no_purchase") {
+    options.push(
+      {
+        resolution: "retro_purchase",
+        label: "Raise a retro purchase to put the commitment on the books",
+        rationale: `Invoice arrived without a purchase record (${detail}). A retro purchase restores the control trail; band approval applies automatically.`,
+        costedNote: inv ? `commits ${gbp(inv.grossMinor)}` : undefined,
+      },
+      { resolution: "reject", label: "Unapproved spend — reject", rationale: `No purchase record and no approver on file (${detail}).` },
+    );
+  } else if (code === "duplicate_suspect") {
+    options.push(
+      {
+        resolution: "reject",
+        label: "Reject as a duplicate",
+        rationale: `Duplicate billing detected (${detail}). The original invoice stands; notify the supplier.`,
+        costedNote: inv ? `avoids paying ${gbp(inv.grossMinor)} twice` : undefined,
+      },
+      { resolution: "approve_adjusted", label: "Not a duplicate — post it", rationale: `If review shows this is a genuinely separate charge (${detail}), post at invoiced amounts.` },
+    );
+  } else if (code === "bank_detail_change") {
+    options.push({
+      resolution: "human_verify",
+      label: "Verify with the supplier out of band — never from this email",
+      rationale: `The covering email requests a bank detail change (${detail}). Call the supplier on the number already on file; if genuine, update details through master data, then release. If not, reject and report.`,
+    });
+  }
+
+  if (caseId && options.length > 0) {
+    await proposeCommand(runId, 1, "case.options", { caseId, options }, steps);
+  }
+
   const propose = async (resolution: string, rationale: string, extra: Record<string, unknown> = {}) => {
-    const { ok, data } = await proposeCommand(runId, 1, "ap.invoice.resolve", { invoiceId, resolution, rationale, ...extra }, steps);
+    const { ok, data } = await proposeCommand(runId, 2, "ap.invoice.resolve", { invoiceId, resolution, rationale, ...extra }, steps);
     if (!ok) return { outcome: "failed" as const, summary: `Gateway rejected resolution: ${String((data as { error?: string }).error ?? "unknown")}` };
     return {
       outcome: "completed" as const,
-      summary: `Investigated ${code}: proposed ${resolution} — awaiting human approval in the inbox. Rationale: ${rationale}`,
+      summary: `Investigated ${code}: ${options.length} grounded options on the case; recommended ${resolution} — awaiting human approval. Rationale: ${rationale}`,
     };
   };
 
@@ -525,12 +644,12 @@ async function invoiceExceptionFallback(
     case "missing_receipt":
       return {
         outcome: "escalated",
-        summary: `Invoice references its purchase but no goods receipt exists (${detail}). Only a human can confirm the goods actually arrived — once confirmed, resolve with record_receipt.`,
+        summary: `Invoice references its purchase but no goods receipt exists (${detail}). Only a human can confirm the goods actually arrived — both options are on the case in the exceptions workbench.`,
       };
     case "bank_detail_change":
       return {
         outcome: "abstained",
-        summary: "Fraud-risk case: the covering email requests a bank detail change. I will not action or recommend any resolution — verify with the supplier via a known channel, out of band. The invoice stays held.",
+        summary: "Fraud-risk case: the covering email requests a bank detail change. I will not action or recommend any resolution — verify with the supplier via a known channel, out of band (guidance is on the case). The invoice stays held.",
       };
     default:
       return { outcome: "escalated", summary: `No playbook for exception code "${code}" — human triage needed.` };

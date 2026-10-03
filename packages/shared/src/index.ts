@@ -133,6 +133,38 @@ export const commandDefs = {
       rationale: z.string().min(10).max(2000),
     }),
   },
+  /** Attach grounded resolution OPTIONS to an exception case (plans/P2P.md
+   * §10): the agent's 2–3 alternatives, each mapping to a typed resolution a
+   * human can apply from the exceptions workbench. Display-only — writing
+   * options moves no money, so standing authority. "human_verify" marks a
+   * guidance-only option (e.g. bank-detail-change: verify out of band). */
+  "case.options": {
+    requiresApproval: false,
+    params: z.object({
+      caseId: z.string().uuid(),
+      options: z
+        .array(
+          z.object({
+            resolution: z.enum([
+              "approve_adjusted",
+              "part_approve",
+              "record_receipt",
+              "reject",
+              "retro_purchase",
+              "human_verify",
+            ]),
+            label: z.string().min(3).max(140),
+            rationale: z.string().min(10).max(1000),
+            costedNote: z.string().max(200).optional(),
+            adjustedQuantities: z
+              .array(z.object({ lineNo: z.number().int().positive(), qty: z.number().int().min(0) }))
+              .optional(),
+          }),
+        )
+        .min(1)
+        .max(4),
+    }),
+  },
   /** Resolve an invoice exception — ALWAYS a human approval (plans/P2P.md §6). */
   "ap.invoice.resolve": {
     requiresApproval: true,

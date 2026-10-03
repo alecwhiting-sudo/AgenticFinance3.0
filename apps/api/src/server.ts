@@ -18,6 +18,7 @@ import { paymentRoutes } from "./routes/payments.js";
 import { r2rRoutes } from "./routes/r2r.js";
 import { adminRoutes } from "./routes/admin.js";
 import { o2cRoutes } from "./routes/o2c.js";
+import { exceptionRoutes } from "./routes/exceptions.js";
 
 const VERSION = "0.2.0";
 const SERVICE = "api";
@@ -102,6 +103,7 @@ workRoutes(app);
 commandRoutes(app);
 activityRoutes(app);
 p2pRoutes(app);
+exceptionRoutes(app);
 dripRoutes(app);
 paymentRoutes(app);
 r2rRoutes(app);

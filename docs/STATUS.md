@@ -63,9 +63,10 @@ _Last updated: 2026-10-03_
    (Demo scenarios + mission control at `/admin/pipeline` built 2026-10-03:
    month-by-month processing, timed full-speed 10x run with remembered
    side-by-side, simulate-a-day — `plans/DEMO_SCRIPTS.md`.)
-5. **Exceptions management build-out** — grounded, costed resolution
-   options from the agent (model calls over PO/GRN/invoice/supplier
-   history), exception workbench UI, O2C mirror (`plans/P2P.md` §10,
+5. **Exceptions management M2** — M1 built 2026-10-03 (`/p2p/exceptions`
+   workbench: grounded costed options via `case.options`, 3-way diff,
+   one-click apply). Remaining: supplier email drafts on options, tolerance
+   parameter sets, option evals, O2C mirror (`plans/P2P.md` §10,
    `plans/O2C.md` §9).
 6. **A2R — Acquire to Retire** (fixed assets: capitalise from P2P,
    depreciation as engine-derived period ticks, disposals) — low priority

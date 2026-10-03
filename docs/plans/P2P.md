@@ -195,23 +195,22 @@ re-approval of already-approved spend. The demo narrates this absence.
 5. **M5 — Polish:** ✅ P2P flow view wired to live events, drip button, eval
    suites per §7.
 
-## 10. Backlog — exceptions management build-out (Alec, 2026-10-03)
+## 10. Exceptions management build-out (Alec, 2026-10-03) — M1 ✅ built 2026-10-03
 
-The exception experience is currently a stub relative to its demo weight:
-cases open, the Exception Agent investigates, a human approves a typed
-resolution — but the *resolution options* are thin. Build out:
+M1 shipped: `case.options` command (display-only, standing; any release may
+write to its own cases), Exception Agent attaches 2–3 grounded, costed
+options per case (deterministic fallback computes them from the actual
+purchase/receipt rows; LLM path gets the same objective + get_invoice_context),
+the `/p2p/exceptions` workbench (queue by kind, approved-vs-received-vs-
+invoiced line diff, supplier history, document links, one-click apply with
+pending-proposal supersede, case timeline), on-demand "ask the agent"
+investigation (model spend only when requested). Remaining below.
 
-- **Grounded resolution proposals (model calls):** for each exception the
-  agent assembles full context — the approved purchase (lines, prices,
-  approver), goods receipts (quantities, dates), the invoice as captured,
-  supplier history (prior invoices, duplicates, payment behaviour) — and
-  proposes 2–3 concrete, costed options (e.g. "accept price variance £84,
-  within tolerance, post" / "short-pay to PO price, draft supplier email" /
-  "reject as duplicate of IOP-15787"). Every option maps to a typed command;
-  humans pick, never free-text.
-- **Exception workbench UI:** a dedicated queue view per exception kind with
-  the evidence side-by-side (PO vs GRN vs invoice line diff), the agent's
-  options as buttons, and the case timeline.
+Remaining (M2):
+
+- **Richer model-path options:** supplier email drafts attached to options
+  (short-pay letter, duplicate notification), tolerance policy as a
+  parameter set, option quality evals per exception kind.
 - **O2C mirror:** the same pattern for unapplied receipts (part-payments,
   overpayments, unknown payers) and disputed invoices — grounded in the
   contract, the invoice and the remittance.
