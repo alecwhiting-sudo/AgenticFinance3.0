@@ -730,7 +730,51 @@ export async function runAgentLoop(
   const system = buildSystemPrompt(resolved);
   let modelCalls = 0;
   let commandSeq = 0;
-  let totals = { input: 0, output: 0 };
+  let totals = { input: 0, output: 0, cacheWrite: 0, cacheRead: 0 };
+
+  /* Prompt caching (cost control, 2026-10-03). The cache is a PREFIX match
+   * over tools → system → messages; the API allows at most 4 breakpoints per
+   * request. We use exactly two:
+   *   1. the system prompt block — caches tools+system, identical for every
+   *      run of the same agent release, shared across a whole batch;
+   *   2. the LAST user message's last block — so the 2nd+ model call inside
+   *      one run doesn't re-pay the conversation so far (vision PDFs are the
+   *      big win: a scanned document is thousands of tokens per call).
+   * Honest expectations: each model has a MINIMUM cacheable prefix (Haiku
+   * 4.5: 4096 tokens; Sonnet/Opus tiers lower). A short extraction prompt on
+   * the Haiku tier may be under the minimum — the API then silently caches
+   * nothing (cache_creation_input_tokens: 0, no error). The reliable wins
+   * are long prompts (Sonnet-tier agents) and multi-call runs carrying a
+   * document. Cache read prices are PER TIER (Opus reads are 0.05× input,
+   * not 0.1×) — priced in the API's rateCard, never here.
+   * Rules that keep this from becoming a bug source:
+   *   - NEVER mutate `messages` to add cache_control: `cachedMessages` builds
+   *     a shallow copy per call, so a stale breakpoint can't accumulate on an
+   *     old message (breakpoints >4 would 400 the request).
+   *   - Only user-role messages get the breakpoint (assistant turns are
+   *     echoed response blocks and must go back unmodified).
+   *   - Anything that varies per run must sit AFTER the system block — never
+   *     interpolate timestamps/ids into buildSystemPrompt, or every run
+   *     misses the cache and silently pays full price.
+   *   - TTL is 5 min; a batch keeps itself warm, a lone drip may re-create.
+   *   - Caches are model-scoped: per-profile tiers never share entries.
+   *   - Token columns on agent_run stay RAW (uncached in / out / cache
+   *     written / cache read); pricing is read-time only (rateCard.ts). */
+  const systemBlocks: Anthropic.TextBlockParam[] = [
+    { type: "text", text: system, cache_control: { type: "ephemeral" } },
+  ];
+  const cachedMessages = (): Anthropic.MessageParam[] =>
+    messages.map((m, i) => {
+      if (i !== messages.length - 1 || m.role !== "user" || !Array.isArray(m.content) || m.content.length === 0)
+        return m;
+      const blocks = m.content;
+      const content = blocks.map((b, j) =>
+        j === blocks.length - 1 && (b.type === "text" || b.type === "tool_result" || b.type === "document" || b.type === "image")
+          ? { ...b, cache_control: { type: "ephemeral" as const } }
+          : b,
+      );
+      return { ...m, content };
+    });
 
   while (modelCalls < resolved.release.maxModelCalls) {
     modelCalls++;
@@ -739,9 +783,9 @@ export async function runAgentLoop(
       response = await client.messages.create({
         model,
         max_tokens: 4096,
-        system,
+        system: systemBlocks,
         tools,
-        messages,
+        messages: cachedMessages(),
       });
     } catch (err) {
       if (err instanceof Anthropic.RateLimitError) {
@@ -755,14 +799,27 @@ export async function runAgentLoop(
       return { outcome: "failed", summary: `Model call failed: ${message}` };
     }
 
+    /* usage.input_tokens EXCLUDES cached tokens. Store the raw split — the
+     * API's rateCard prices each bucket at read time (per-tier cache rates). */
+    const u = response.usage;
+    const cacheWrite = u.cache_creation_input_tokens ?? 0;
+    const cacheRead = u.cache_read_input_tokens ?? 0;
     totals = {
-      input: totals.input + response.usage.input_tokens,
-      output: totals.output + response.usage.output_tokens,
+      input: totals.input + u.input_tokens,
+      output: totals.output + u.output_tokens,
+      cacheWrite: totals.cacheWrite + cacheWrite,
+      cacheRead: totals.cacheRead + cacheRead,
     };
     if (db) {
       await db
         .update(agentRun)
-        .set({ modelCalls, inputTokens: totals.input, outputTokens: totals.output })
+        .set({
+          modelCalls,
+          inputTokens: totals.input,
+          outputTokens: totals.output,
+          cacheWriteTokens: totals.cacheWrite,
+          cacheReadTokens: totals.cacheRead,
+        })
         .where(eq(agentRun.id, runId));
     }
 
@@ -773,7 +830,11 @@ export async function runAgentLoop(
     await appendStep(runId, steps, {
       kind: "model_call",
       label: `model call ${modelCalls}`,
-      detail: { stop_reason: response.stop_reason, text: text.slice(0, 2000) },
+      detail: {
+        stop_reason: response.stop_reason,
+        text: text.slice(0, 2000),
+        usage: { input: u.input_tokens, output: u.output_tokens, cacheWrite, cacheRead },
+      },
     });
 
     if (response.stop_reason === "refusal") {

@@ -233,8 +233,13 @@ export const agentRun = ag.table("agent_run", {
   /** ordered steps: {kind: note|model_call|tool_call|command|outcome, ...} */
   transcript: jsonb("transcript").$type<Record<string, unknown>[]>().notNull().default([]),
   modelCalls: integer("model_calls").notNull().default(0),
-  inputTokens: integer("input_tokens").notNull().default(0),
+  inputTokens: integer("input_tokens").notNull().default(0), // uncached input only
   outputTokens: integer("output_tokens").notNull().default(0),
+  // Prompt-caching split, stored RAW — all pricing (rates and cache
+  // multipliers) is applied at read time by the API's rateCard, so price
+  // moves never require rewriting history.
+  cacheWriteTokens: integer("cache_write_tokens").notNull().default(0),
+  cacheReadTokens: integer("cache_read_tokens").notNull().default(0),
   outcome: runOutcome("outcome"),
   resultSummary: text("result_summary"),
   startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),

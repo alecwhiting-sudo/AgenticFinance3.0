@@ -114,18 +114,20 @@ export function adminRoutes(app: FastifyInstance): void {
       await db.execute(sql`
         select rel.model_profile, count(*)::int as runs,
                coalesce(sum(r.input_tokens),0)::bigint as tin,
-               coalesce(sum(r.output_tokens),0)::bigint as tout
+               coalesce(sum(r.output_tokens),0)::bigint as tout,
+               coalesce(sum(r.cache_write_tokens),0)::bigint as tcw,
+               coalesce(sum(r.cache_read_tokens),0)::bigint as tcr
         from agent.agent_run r join agent.agent_release rel on rel.id = r.release_id
         where r.started_at::date = current_date
         group by rel.model_profile
       `)
-    ).rows as { model_profile: string; runs: number; tin: string; tout: string }[];
+    ).rows as { model_profile: string; runs: number; tin: string; tout: string; tcw: string; tcr: string }[];
     const { estimateCostCents } = await import("../services/rateCard.js");
     const modelSpend = spendRows.reduce(
       (acc, r) => ({
         runs: acc.runs + r.runs,
-        tokens: acc.tokens + Number(r.tin) + Number(r.tout),
-        costCents: acc.costCents + estimateCostCents(r.model_profile, Number(r.tin), Number(r.tout)),
+        tokens: acc.tokens + Number(r.tin) + Number(r.tout) + Number(r.tcw) + Number(r.tcr),
+        costCents: acc.costCents + estimateCostCents(r.model_profile, Number(r.tin), Number(r.tout), Number(r.tcw), Number(r.tcr)),
       }),
       { runs: 0, tokens: 0, costCents: 0 },
     );

@@ -41,20 +41,22 @@ export function agentRoutes(app: FastifyInstance): void {
         await db.execute(sql`
           select rel.model_profile, count(*)::int as items,
                  coalesce(sum(r.input_tokens),0)::bigint as tin,
-                 coalesce(sum(r.output_tokens),0)::bigint as tout
+                 coalesce(sum(r.output_tokens),0)::bigint as tout,
+                 coalesce(sum(r.cache_write_tokens),0)::bigint as tcw,
+                 coalesce(sum(r.cache_read_tokens),0)::bigint as tcr
           from agent.agent_run r
           join agent.agent_release rel on rel.id = r.release_id
           where r.agent_id = ${a.id} and r.finished_at is not null
             and to_char(r.started_at, 'YYYY-MM') = ${period}
           group by rel.model_profile
         `)
-      ).rows as { model_profile: string; items: number; tin: string; tout: string }[];
+      ).rows as { model_profile: string; items: number; tin: string; tout: string; tcw: string; tcr: string }[];
       const { estimateCostCents } = await import("../services/rateCard.js");
       const month = monthRows.reduce(
         (acc, r) => ({
           items: acc.items + r.items,
-          tokens: acc.tokens + Number(r.tin) + Number(r.tout),
-          costCents: acc.costCents + estimateCostCents(r.model_profile, Number(r.tin), Number(r.tout)),
+          tokens: acc.tokens + Number(r.tin) + Number(r.tout) + Number(r.tcw) + Number(r.tcr),
+          costCents: acc.costCents + estimateCostCents(r.model_profile, Number(r.tin), Number(r.tout), Number(r.tcw), Number(r.tcr)),
         }),
         { items: 0, tokens: 0, costCents: 0 },
       );
@@ -137,7 +139,7 @@ export function agentRoutes(app: FastifyInstance): void {
           count(*) filter (where outcome in ('escalated', 'abstained'))::int as handed_back,
           count(*) filter (where outcome = 'failed')::int as failed,
           count(*)::int as total,
-          coalesce(sum(input_tokens + output_tokens), 0)::bigint as tokens
+          coalesce(sum(input_tokens + output_tokens + cache_write_tokens + cache_read_tokens), 0)::bigint as tokens
         from agent.agent_run where agent_id = ${a.id} and finished_at is not null
       `)
     ).rows as { completed: number; handed_back: number; failed: number; total: number; tokens: string }[];
@@ -158,13 +160,15 @@ export function agentRoutes(app: FastifyInstance): void {
         select to_char(r.started_at, 'YYYY-MM') as period, rel.model_profile,
                count(*)::int as items,
                coalesce(sum(r.input_tokens),0)::bigint as tin,
-               coalesce(sum(r.output_tokens),0)::bigint as tout
+               coalesce(sum(r.output_tokens),0)::bigint as tout,
+               coalesce(sum(r.cache_write_tokens),0)::bigint as tcw,
+               coalesce(sum(r.cache_read_tokens),0)::bigint as tcr
         from agent.agent_run r
         join agent.agent_release rel on rel.id = r.release_id
         where r.agent_id = ${a.id} and r.finished_at is not null
         group by 1, 2 order by 1 desc limit 24
       `)
-    ).rows as { period: string; model_profile: string; items: number; tin: string; tout: string }[];
+    ).rows as { period: string; model_profile: string; items: number; tin: string; tout: string; tcw: string; tcr: string }[];
     const evalHistory = (
       await db.execute(sql`
         select period_code as period, sum(passed)::int as passed, sum(failed)::int as failed
@@ -187,8 +191,8 @@ export function agentRoutes(app: FastifyInstance): void {
     for (const r of runHistory) {
       const row = byPeriod.get(r.period) ?? { period: r.period, items: 0, tokens: 0, costCents: 0, evalPassed: null, evalFailed: null };
       row.items += r.items;
-      row.tokens += Number(r.tin) + Number(r.tout);
-      row.costCents += estimateCostCents(r.model_profile, Number(r.tin), Number(r.tout));
+      row.tokens += Number(r.tin) + Number(r.tout) + Number(r.tcw) + Number(r.tcr);
+      row.costCents += estimateCostCents(r.model_profile, Number(r.tin), Number(r.tout), Number(r.tcw), Number(r.tcr));
       byPeriod.set(r.period, row);
     }
     for (const e of evalHistory) {
