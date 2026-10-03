@@ -35,6 +35,7 @@ const NAV: Parent[] = [
     children: [
       { href: "/ledger", label: "Ledger" },
       { href: "/reports", label: "Reports" },
+      { href: "/analytics", label: "Analytics" },
     ],
   },
   {

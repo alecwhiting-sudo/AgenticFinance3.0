@@ -18,7 +18,7 @@ _Last updated: 2026-10-03_
 | 2b — FDP substrate (D13 steps 1–2) | ✅ built | event store → deltas → movements + journals + LES, one validated pipe (`fdpPost`), immutability triggers, deferred balance constraint, replay verified |
 | 3 — R2R | ✅ built minus deferral | bank rec + Reconciliation Agent, accruals/prepayments engine, recurring journals, P&L/BS, month-end dashboard, Close Agent commentary. **Deferred:** LRS lock → certify → supersede (D13 step 3) |
 | 4 — O2C | ✅ built | AR invoices through the pipe, cash application + agent, collections agent + dunning approval |
-| 4c — Analytics + NL reporting | 🔨 in progress | plan: `plans/ANALYTICS.md`. M1 curated views + charts, M2 Analyst Agent + right-hand chat panel |
+| 4c — Analytics + NL reporting | 🔨 in progress | plan: `plans/ANALYTICS.md`. **M1 built** (`/analytics`: flux waterfall, P&L trend, AP/AR aging, counterparty, cash — all drill, all have table views). M2 Analyst Agent + right-hand chat panel next |
 | 5 — Performance Management | 📋 planned | user: not ready yet |
 | 6 — Demo polish | 🔶 partial | agent staff strip, release pipeline, permissions matrix, decision history, per-agent period cost (D14), admin reset/replay done; guided tour + cross-process dashboard outstanding |
 | P — Production | ⬜ stub | deliberately undesigned |

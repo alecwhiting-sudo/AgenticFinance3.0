@@ -17,9 +17,19 @@ type Detail = {
   }[];
 };
 
-export default async function AccountPage({ params }: { params: Promise<{ code: string }> }) {
+export default async function AccountPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ code: string }>;
+  searchParams: Promise<{ period?: string }>;
+}) {
   const { code } = await params;
-  const d = await getJson<Detail>(`/erp/accounts/${code}`);
+  const { period } = await searchParams;
+  // analytics charts drill here with ?period= so a bar lands on exactly the
+  // postings behind one month's figure
+  const q = period && /^\d{4}-\d{2}$/.test(period) ? `?period=${period}` : "";
+  const d = await getJson<Detail>(`/erp/accounts/${code}${q}`);
   if (!d) return <main>Account not found.</main>;
   const balance = d.lines.reduce((n, l) => n + l.amount_minor, 0);
 
@@ -31,7 +41,15 @@ export default async function AccountPage({ params }: { params: Promise<{ code: 
           {d.account.code} · {d.account.name}
         </h2>
         <p className="mt-1 text-sm" style={{ color: "var(--muted)" }}>
-          {d.account.type} · balance {money(balance)} · {d.lines.length} postings shown
+          {d.account.type} · {q ? `${period} movement` : "balance"} {money(balance)} · {d.lines.length} postings shown
+          {q && (
+            <>
+              {" · filtered to "}{period}{" — "}
+              <Link href={`/ledger/${code}`} className="hover:underline" style={{ color: "var(--accent)" }}>
+                show all
+              </Link>
+            </>
+          )}
         </p>
       </section>
       <Card>

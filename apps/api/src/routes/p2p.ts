@@ -186,21 +186,28 @@ export function p2pRoutes(app: FastifyInstance): void {
   });
 
   /** Ledger drill: all journal lines for an account. */
-  app.get<{ Params: { code: string } }>("/erp/accounts/:code", async (req, reply) => {
-    const db = requireDb();
-    const acct = await db.query.account.findFirst({ where: (t) => eq(t.code, req.params.code) });
-    if (!acct) return reply.code(404).send({ error: "account not found" });
-    const rows = (
-      await db.execute(sql`
-        select jl.amount_minor, jl.memo as line_memo, j.id as journal_id, j.number,
-               j.journal_date, j.memo, j.source_type, j.source_id
-        from erp.journal_line jl join erp.journal j on j.id = jl.journal_id
-        where jl.account_code = ${req.params.code}
-        order by j.journal_date desc, j.number desc limit 200
-      `)
-    ).rows;
-    return { account: acct, lines: rows };
-  });
+  app.get<{ Params: { code: string }; Querystring: { period?: string } }>(
+    "/erp/accounts/:code",
+    async (req, reply) => {
+      const db = requireDb();
+      const acct = await db.query.account.findFirst({ where: (t) => eq(t.code, req.params.code) });
+      if (!acct) return reply.code(404).send({ error: "account not found" });
+      // optional period filter so analytics charts drill to exactly the
+      // postings behind one month's figure
+      const period = /^\d{4}-\d{2}$/.test(req.query.period ?? "") ? req.query.period! : null;
+      const rows = (
+        await db.execute(sql`
+          select jl.amount_minor, jl.memo as line_memo, j.id as journal_id, j.number,
+                 j.journal_date, j.memo, j.source_type, j.source_id
+          from erp.journal_line jl join erp.journal j on j.id = jl.journal_id
+          where jl.account_code = ${req.params.code}
+            and (${period}::text is null or j.period_code = ${period})
+          order by j.journal_date desc, j.number desc limit 200
+        `)
+      ).rows;
+      return { account: acct, period, lines: rows };
+    },
+  );
 
   app.get<{ Params: { id: string } }>("/erp/journals/:id", async (req, reply) => {
     const db = requireDb();

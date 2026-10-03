@@ -115,4 +115,11 @@ standard release rule.
 
 ## 6. Build log
 
-- M1 started: plan committed, analytics routes + charts + page next.
+- M1 built (2026-10-03): `apps/api/src/routes/analytics.ts` (views catalogue +
+  pl-trend, flux, aging, counterparty, cash), `/erp/accounts/:code?period=`
+  drill filter, `apps/web/src/components/charts.tsx` (ChartCard with
+  chart/table toggle, TrendChart, Waterfall, HBars, AreaTrend — inline SVG,
+  teal ramp / teal↔amber diverging per §4.7), `/analytics` page under R2R.
+  Verified against the full replay (1159 journals): flux profit ties to
+  `/erp/statements` exactly; drill lands on the filtered postings; light +
+  dark themes screenshot-checked.
