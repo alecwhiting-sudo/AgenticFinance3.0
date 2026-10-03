@@ -51,6 +51,10 @@ _Last updated: 2026-10-03_
   priced at read time per tier) + learned extraction templates (suppliers
   promote off the model after 3 validated extractions; savings measured).
 
+- **App shell (2026-10-03)**: Mercury-style full-width layout — left
+  sidebar with section/sub-navigation, slim top bar, mission control merged
+  into the Test panel (board renders beside the scenario), system/light/
+  dark theme toggle in Admin (pre-paint script, localStorage).
 - **Design system v2 (UI_CONVENTIONS Part 4, 2026-10-03)**: Inter + IBM Plex
   Mono (table numerics/money/IDs render mono automatically via the
   tabular-nums convention; KPI values proportional sans), money precision
@@ -60,7 +64,10 @@ _Last updated: 2026-10-03_
 
 ## Backlog (agreed, not yet built)
 
-1. **Phase 4c** analytics layer + NL Analyst Agent (before PM).
+1. **Phase 4c** analytics layer + NL Analyst Agent (before PM), including
+   the right-hand analyst chat panel in the workbench (MASTER_PLAN 4c) —
+   chat with the data, grounded in curated views + the data model +
+   architecture decisions.
 2. **LRS lock/certify/supersede** — lands as the month-end dashboard's lock
    button + snapshot tables.
 3. **Commentary quality** — Close Agent output is too bland; skills +

@@ -19,8 +19,11 @@
   --good: #0d9488;
 }
 
+:root:not([data-theme="light"]) { color-scheme: light dark; }
+
+/* system dark, unless the Admin toggle forces light */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --background: #0c0a09;
     --foreground: #e7e5e4;
     --muted: #a8a29e;
@@ -31,6 +34,19 @@
     --bad: #f87171;
     --good: #2dd4bf;
   }
+}
+
+/* Admin toggle forces dark */
+:root[data-theme="dark"] {
+    --background: #0c0a09;
+    --foreground: #e7e5e4;
+    --muted: #a8a29e;
+    --accent: #2dd4bf;
+    --card: #1c1917;
+    --border: #292524;
+    --warn: #f59e0b;
+    --bad: #f87171;
+    --good: #2dd4bf;
 }
 
 body {

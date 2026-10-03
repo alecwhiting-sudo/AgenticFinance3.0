@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import FlushHistory from "@/components/FlushHistory";
+import ThemeToggle from "@/components/ThemeToggle";
 import { Card, SectionTitle } from "@/components/ui";
 
 export const metadata: Metadata = { title: "Admin" };
@@ -31,13 +32,11 @@ export default function AdminPage() {
       </Card>
 
       <Card>
-        <SectionTitle>Mission control</SectionTitle>
-        <p className="text-sm" style={{ color: "var(--muted)" }}>
-          The live pipeline board — backlog lanes, throughput, control split, run history —{" "}
-          <Link href="/admin/pipeline" className="hover:underline" style={{ color: "var(--accent)" }}>
-            open the board →
-          </Link>
+        <SectionTitle>Appearance</SectionTitle>
+        <p className="mb-3 text-sm" style={{ color: "var(--muted)" }}>
+          Theme for this browser. System follows the OS setting.
         </p>
+        <ThemeToggle />
       </Card>
 
       <Card>

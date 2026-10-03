@@ -10,15 +10,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { PUBLIC_API_URL as apiUrl } from "@/lib/api";
 import { Button } from "@/components/ui";
-
-type Pipeline = {
-  months: { month: string; dataset: { total: number }; loaded: { total: number } }[];
-  split: { ap_exceptions: number; agent_queue: number; awaiting_human: number };
-  integrity: { journals: number; events: number; balance: string };
-  nextMonth: string | null;
-  modelSpend: { runs: number; tokens: number; costCents: number };
-  job: { running: boolean; mode: string; done: number; total: number; message: string; error: string | null; elapsedMs: number };
-};
+import { BoardLanes, BoardRuns, BoardTicker, BoardTiles, monthLabel, mmss, type Pipeline } from "@/components/MissionBoard";
 
 type Action = {
   label: string;
@@ -108,7 +100,7 @@ const SCENARIOS: Scenario[] = [
       { label: "2 · Run 10x — full speed", run: { kind: "reset", mode: "replay", paceMs: 0 }, danger: true, wipes: true },
     ],
     next: [
-      { label: "Baseline vs full run, side by side in the runs table", href: "/admin/pipeline" },
+      { label: "Baseline vs full run, side by side in the runs table below", href: "/test" },
       { label: "Open exceptions — review in the workbench", href: "/p2p/exceptions", count: "exceptions" },
       { label: "Approvals awaiting decision", href: "/approvals", count: "approvals" },
       { label: "Statements — every figure drills to its source", href: "/reports" },
@@ -142,7 +134,7 @@ const SCENARIOS: Scenario[] = [
       { label: "Learned templates forming on the P2P page", href: "/p2p" },
       { label: "Exceptions raised by extraction — review in the workbench", href: "/p2p/exceptions", count: "exceptions" },
       { label: "Run the resulting payments", href: "/p2p/payments" },
-      { label: "Measured model cost — the spend tile", href: "/admin/pipeline" },
+      { label: "Measured model cost — the spend tile", href: "/test" },
     ],
   },
   {
@@ -164,7 +156,7 @@ const SCENARIOS: Scenario[] = [
     next: [
       { label: "Drill any statement number to its source event", href: "/reports" },
       { label: "Trial balance — journals = events, GL to zero", href: "/ledger" },
-      { label: "Re-run from the board to verify identical results", href: "/admin/pipeline" },
+      { label: "Re-run from the board to verify identical results", href: "/test" },
     ],
   },
   {
@@ -236,12 +228,6 @@ const SCENARIOS: Scenario[] = [
   },
 ];
 
-const mmss = (ms: number) => {
-  const s = Math.floor(ms / 1000);
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
-};
-const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const monthLabel = (ym: string) => `${MONTH_NAMES[Number(ym.split("-")[1]) - 1]} ${ym.split("-")[0]}`;
 
 export default function TestPage() {
   const [p, setP] = useState<Pipeline | null>(null);
@@ -332,9 +318,6 @@ export default function TestPage() {
             data it uses, and what it does and does not demonstrate.
           </p>
         </div>
-        <Link href="/admin/pipeline" className="rounded-lg border px-3 py-1.5 text-sm" style={{ borderColor: "var(--accent)", color: "var(--accent)" }}>
-          Mission control board →
-        </Link>
       </section>
 
       {/* current state strip */}
@@ -411,9 +394,6 @@ export default function TestPage() {
             <span className="tabular-nums">{p.job.done}/{p.job.total || "…"} items</span>
             <span className="tabular-nums">{mmss(p.job.elapsedMs)} elapsed</span>
             <span className="text-xs" style={{ color: "var(--muted)" }}>{p.job.message}</span>
-            <Link href="/admin/pipeline" className="text-xs hover:underline" style={{ color: "var(--accent)" }}>
-              watch on the board →
-            </Link>
           </div>
           <div className="h-2 overflow-hidden rounded-full" style={{ background: "var(--border)" }}>
             <div className="h-full rounded-full transition-all" style={{ background: "var(--accent)", width: p.job.total ? `${(p.job.done / p.job.total) * 100}%` : "10%" }} />
@@ -423,8 +403,8 @@ export default function TestPage() {
       {msg && <p className="text-sm" style={{ color: "var(--muted)" }}>{msg}</p>}
       {p?.job.error && !busy && <p className="text-sm" style={{ color: "var(--bad)" }}>Last run failed: {p.job.error.slice(0, 140)}</p>}
 
-      {/* catalog + detail */}
-      <section className="grid gap-4 lg:grid-cols-[320px_1fr]">
+      {/* catalog + detail + live board */}
+      <section className="grid gap-4 lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[280px_minmax(0,5fr)_minmax(0,4fr)]">
         <div className="space-y-2">
           {SCENARIOS.map((s) => (
             <button
@@ -531,7 +511,24 @@ export default function TestPage() {
             </ul>
           </div>
         </div>
+
+        {/* the live board, alongside the scenario being run */}
+        <div className="space-y-3">
+          {p ? (
+            <>
+              <BoardLanes p={p} />
+              <BoardTicker p={p} />
+            </>
+          ) : (
+            <div className="rounded-xl border p-4 text-sm" style={{ borderColor: "var(--border)", background: "var(--card)", color: "var(--muted)" }}>
+              Loading the board…
+            </div>
+          )}
+        </div>
       </section>
+
+      {p && <BoardTiles p={p} />}
+      {p && <BoardRuns p={p} />}
     </main>
   );
 }

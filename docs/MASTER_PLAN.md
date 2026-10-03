@@ -176,6 +176,15 @@ ANTHROPIC_API_KEY is configured; daily drip wires in with P2P M5.)*
   from the model against the platform).
 - Saved views land on a dashboard; the Close Agent's commentary upgrade
   (plans/R2R.md §9) feeds off the same layer.
+- **Analyst chat panel (Alec, 2026-10-03):** a persistent right-hand chat
+  surface in the workbench where the user talks to their data — trends,
+  variances, "why did X move" — answered by the Analyst Agent with charts
+  and figures plus the drill path. Grounded by construction: it reads the
+  curated views (never raw SQL from the model), and its context includes
+  the data model, the architecture decisions (D1–D15) and any saved
+  analyses, so it can explain how a number was produced, not just what it
+  is. Same gateway rules as every agent: read-only, attributable, every
+  answer cites its sources.
 
 ### Phase 5 — Performance Management
 - Per its own plan: driver-based budget and forecast on the EPM tables,
