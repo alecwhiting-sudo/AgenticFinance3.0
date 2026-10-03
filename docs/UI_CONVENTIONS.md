@@ -568,6 +568,25 @@ view region), `outline` (border accent, accent text — secondary actions),
 behind a named confirm, §1.7.8). Fixed paddings; `whitespace-nowrap`;
 disabled at 40%. Hand-rolled button styling is a defect.
 
+### 4.5b Action vocabulary (Alec, 2026-10-03)
+
+Buttons carry a VERB + OBJECT and map to exactly one variant by what the
+action does — never restyled per page:
+
+| Action kind | Variant | Label pattern | Rules |
+|---|---|---|---|
+| Run / process (demo & system runs) | `primary` for the scenario's lead action, `outline` for alternatives | "Process May 2026", "Run evals" | The one thing the user most likely came to press is filled; there is at most one filled button per region |
+| Commit money / judgement (approve, apply, resolve) | `primary` | "Approve", "Apply — part approve" | Two-step confirm naming the object and amount (§1.7.8); reject requires a reason |
+| Destructive (wipe, reject, delete) | `danger` | "Clear to zero", "Reject INV-0231" | Always behind a named confirm |
+| Edit / configure | `ghost` | "Edit", "Draft release" | Edits create versions where the object is versioned |
+| Ask an agent | `outline`, agent named | "Ask the agent for options", "Re-investigate" | Model-spending actions say so in the tooltip |
+| Navigate | never a button | link + "→" (in-app), "↗" (new tab/external) | Links navigate; buttons act |
+
+**A disabled button always says why, next to it** — a greyed button with no
+explanation is a defect (the "all months loaded" case: the hint names the
+blocker and links the unblocking action). While a run is in progress,
+actions disable with a one-line "re-enables when it finishes".
+
 ### 4.6 Motion correction
 
 §1.5 already forbids hover lifts; the `hover:-translate-y` instances that

@@ -202,6 +202,14 @@
 </aside>
 
 <script>
+/* Theme: when embedded in the workbench the current theme arrives as
+ * ?theme=light|dark (the iframe is cross-origin and cannot read the app's
+ * storage); standalone, the prefers-color-scheme blocks above apply. */
+try {
+  const t = new URLSearchParams(location.search).get("theme");
+  if (t === "dark" || t === "light") document.documentElement.dataset.theme = t;
+} catch { /* no-op */ }
+
 /* Feature explainer. Each entry: what (plain English, for a CFO) and how
  * (one technical sentence, for the person next to the CFO). Keep this in
  * step with ARCHITECTURE.md decisions when components change. */

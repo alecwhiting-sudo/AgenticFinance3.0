@@ -1,22 +1,25 @@
 "use client";
 
-/** The app shell (UI_CONVENTIONS §1.1 v2): a fixed left sidebar for areas and
- * their sub-sections — the Mercury/Linear app idiom — with a slim top bar for
- * search. Content uses the full viewport width; centered max-width layouts
- * are a website convention, not an application one. */
+/** The app shell (UI_CONVENTIONS §1.1 v2): a fixed left sidebar carrying the
+ * full navigation tree — parents as strong rows, children indented beneath —
+ * plus a top bar with the area (parent) links and the command palette. Top
+ * bar for areas, sidebar for the tree: the standard two-level app pattern
+ * (Stripe/GitHub), not duplication. Content uses the full viewport width. */
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import CommandPalette from "@/components/CommandPalette";
 
 type Item = { href: string; label: string; exact?: boolean };
-type Group = { label: string | null; items: Item[] };
+type Parent = Item & { short?: string; children?: Item[] };
 
-const NAV: Group[] = [
-  { label: null, items: [{ href: "/", label: "Dashboard", exact: true }] },
+const NAV: Parent[] = [
+  { href: "/", label: "Dashboard", exact: true },
   {
+    href: "/p2p",
     label: "Procure to Pay",
-    items: [
-      { href: "/p2p", label: "Overview", exact: true },
+    short: "P2P",
+    exact: true,
+    children: [
       { href: "/p2p/purchases", label: "Purchases" },
       { href: "/p2p/invoices", label: "Invoices" },
       { href: "/p2p/exceptions", label: "Exceptions" },
@@ -24,76 +27,83 @@ const NAV: Group[] = [
       { href: "/p2p/flow", label: "Live flow" },
     ],
   },
+  { href: "/o2c", label: "Order to Cash", short: "O2C" },
   {
-    label: "Order to Cash",
-    items: [{ href: "/o2c", label: "Overview" }],
-  },
-  {
+    href: "/r2r",
     label: "Record to Report",
-    items: [
-      { href: "/r2r", label: "Month end" },
+    short: "R2R",
+    children: [
       { href: "/ledger", label: "Ledger" },
       { href: "/reports", label: "Reports" },
     ],
   },
   {
+    href: "/agents",
     label: "Agents",
-    items: [
-      { href: "/agents", label: "Roster" },
+    children: [
       { href: "/work", label: "Work queue" },
       { href: "/approvals", label: "Approvals" },
       { href: "/decisions", label: "Decisions" },
     ],
   },
+  { href: "/test", label: "Test panel", short: "Test" },
   {
-    label: "System",
-    items: [
-      { href: "/test", label: "Test panel" },
-      { href: "/admin", label: "Admin", exact: true },
-      { href: "/admin/architecture", label: "Architecture" },
-    ],
+    href: "/admin",
+    label: "Admin",
+    exact: true,
+    children: [{ href: "/admin/architecture", label: "Architecture" }],
   },
 ];
 
 export default function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const active = (it: Item) =>
+  const isActive = (it: Item) =>
     it.exact ? pathname === it.href : pathname === it.href || pathname.startsWith(it.href + "/");
+  // a parent lights up for itself or any of its children
+  const parentActive = (p: Parent) => isActive(p) || (p.children ?? []).some(isActive);
 
   return (
     <div className="flex min-h-screen">
       <aside
-        className="sticky top-0 hidden h-screen w-52 shrink-0 flex-col overflow-y-auto border-r px-3 py-5 md:flex"
+        className="sticky top-0 hidden h-screen w-56 shrink-0 flex-col overflow-y-auto border-r px-3 py-5 md:flex"
         style={{ borderColor: "var(--border)", background: "var(--card)" }}
       >
-        <Link href="/" className="mb-5 px-2 text-base font-semibold tracking-tight">
+        <Link href="/" className="mb-6 px-2 text-base font-semibold tracking-tight">
           AgenticFinance
         </Link>
-        <nav className="flex-1 space-y-4">
-          {NAV.map((g, gi) => (
-            <div key={gi}>
-              {g.label && (
-                <div className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--muted)" }}>
-                  {g.label}
-                </div>
+        <nav className="flex-1 space-y-1">
+          {NAV.map((p) => (
+            <div key={p.href} className="pb-1">
+              <Link
+                href={p.href}
+                className="block rounded-md px-2 py-1.5 text-sm font-medium transition-colors"
+                style={
+                  isActive(p)
+                    ? { background: "color-mix(in srgb, var(--accent) 10%, transparent)", color: "var(--accent)" }
+                    : { color: parentActive(p) ? "var(--foreground)" : "var(--foreground)" }
+                }
+              >
+                {p.label}
+              </Link>
+              {p.children && (
+                <ul className="ml-3 border-l pl-3" style={{ borderColor: "var(--border)" }}>
+                  {p.children.map((c) => (
+                    <li key={c.href}>
+                      <Link
+                        href={c.href}
+                        className="block rounded-md px-2 py-1 text-[13px] transition-colors"
+                        style={
+                          isActive(c)
+                            ? { background: "color-mix(in srgb, var(--accent) 10%, transparent)", color: "var(--accent)", fontWeight: 500 }
+                            : { color: "var(--muted)" }
+                        }
+                      >
+                        {c.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
               )}
-              <ul className="space-y-0.5">
-                {g.items.map((it) => (
-                  <li key={it.href}>
-                    <Link
-                      href={it.href}
-                      className="block rounded-md px-2 py-1 text-sm transition-colors"
-                      style={
-                        active(it)
-                          ? { background: "color-mix(in srgb, var(--accent) 10%, transparent)", color: "var(--accent)", fontWeight: 500 }
-                          : { color: "var(--muted)" }
-                      }
-                    >
-                      {it.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
             </div>
           ))}
         </nav>
@@ -104,12 +114,27 @@ export default function Shell({ children }: { children: React.ReactNode }) {
 
       <div className="min-w-0 flex-1">
         <header
-          className="sticky top-0 z-20 flex items-center justify-between border-b px-5 py-2.5 backdrop-blur md:justify-end"
+          className="sticky top-0 z-20 flex items-center justify-between gap-4 border-b px-5 py-2.5 backdrop-blur"
           style={{ borderColor: "var(--border)", background: "color-mix(in srgb, var(--background) 85%, transparent)" }}
         >
-          <Link href="/" className="text-sm font-semibold md:hidden">
-            AgenticFinance
-          </Link>
+          <div className="flex min-w-0 items-center gap-4">
+            <Link href="/" className="text-sm font-semibold md:hidden">
+              AgenticFinance
+            </Link>
+            {/* area links mirror the sidebar parents — quick jumps on wide screens */}
+            <nav className="hidden items-center gap-4 overflow-x-auto text-sm md:flex">
+              {NAV.map((p) => (
+                <Link
+                  key={p.href}
+                  href={p.href}
+                  className="whitespace-nowrap transition-colors hover:underline"
+                  style={parentActive(p) ? { color: "var(--accent)", fontWeight: 500 } : { color: "var(--muted)" }}
+                >
+                  {p.short ?? p.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
           <CommandPalette />
         </header>
         <main className="px-5 py-6 lg:px-8">{children}</main>

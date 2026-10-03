@@ -451,7 +451,7 @@ export default function TestPage() {
           </div>
 
           <div className="mt-5 flex flex-wrap items-center gap-2 border-t pt-4" style={{ borderColor: "var(--border)" }}>
-            {scenario.actions.map((a) =>
+            {scenario.actions.map((a, ai) =>
               confirm === a.label ? (
                 <span key={a.label} className="flex items-center gap-2">
                   <span className="text-xs" style={{ color: "var(--bad)" }}>
@@ -469,7 +469,7 @@ export default function TestPage() {
                   key={a.label}
                   disabled={busy || (a.needsNextMonth && !p?.nextMonth)}
                   onClick={() => (a.danger ? setConfirm(a.label) : fire(a))}
-                  variant={a.danger ? "danger" : "outline"}
+                  variant={a.danger ? "danger" : ai === 0 ? "primary" : "outline"}
                 >
                   {a.needsNextMonth && p?.nextMonth ? a.label.replace("next month", monthLabel(p.nextMonth)) : a.label}
                   {a.wipes !== undefined && (
@@ -481,6 +481,18 @@ export default function TestPage() {
               ),
             )}
           </div>
+          {!busy && scenario.actions.some((a) => a.needsNextMonth) && !p?.nextMonth && (
+            <p className="mt-2 text-xs" style={{ color: "var(--warn)" }}>
+              All dataset months are already loaded, so there is nothing left for this scenario to
+              process — run <button onClick={() => { setSel("zero"); setConfirm(null); }} className="underline">Clear to zero</button> first,
+              then come back here.
+            </p>
+          )}
+          {busy && (
+            <p className="mt-2 text-xs" style={{ color: "var(--muted)" }}>
+              A run is in progress — actions re-enable when it finishes.
+            </p>
+          )}
 
           {/* post-run guidance — live counters */}
           <div
