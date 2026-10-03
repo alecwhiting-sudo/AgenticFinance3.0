@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import DripButton from "@/components/DripButton";
-import AdminData from "@/components/AdminData";
+import FlushHistory from "@/components/FlushHistory";
 import { Card, SectionTitle } from "@/components/ui";
 
 export const metadata: Metadata = { title: "Admin" };
@@ -12,28 +11,19 @@ export default function AdminPage() {
       <section>
         <h2 className="text-2xl font-semibold tracking-tight">Admin</h2>
         <p className="mt-1 text-sm" style={{ color: "var(--muted)" }}>
-          The demo control room — none of this exists for the finance users.
+          Platform housekeeping. Demo scenarios and data controls live on the{" "}
+          <Link href="/test" className="hover:underline" style={{ color: "var(--accent)" }}>
+            Test panel
+          </Link>
+          .
         </p>
       </section>
-
-      <AdminData />
-
-      <Card>
-        <SectionTitle>Pipeline — mission control</SectionTitle>
-        <p className="text-sm" style={{ color: "var(--muted)" }}>
-          The demo backlog by month and the machine working through it: process
-          month by month, replay everything, or run the timed full-speed 10x —{" "}
-          <Link href="/admin/pipeline" className="hover:underline" style={{ color: "var(--accent)" }}>
-            open mission control →
-          </Link>
-        </p>
-      </Card>
 
       <Card>
         <SectionTitle>Architecture</SectionTitle>
         <p className="text-sm" style={{ color: "var(--muted)" }}>
           The living system diagram and schema map, maintained alongside the
-          architecture doc —{" "}
+          architecture doc — click any component for what it is and why it matters —{" "}
           <Link href="/admin/architecture" className="hover:underline" style={{ color: "var(--accent)" }}>
             view the diagram →
           </Link>
@@ -41,12 +31,22 @@ export default function AdminPage() {
       </Card>
 
       <Card>
-        <SectionTitle>Drip a transaction</SectionTitle>
-        <p className="mb-3 text-sm" style={{ color: "var(--muted)" }}>
-          Lands a fresh invoice in the capture queue, exactly as inbound mail
-          would — then watch it travel on the P2P live flow.
+        <SectionTitle>Mission control</SectionTitle>
+        <p className="text-sm" style={{ color: "var(--muted)" }}>
+          The live pipeline board — backlog lanes, throughput, control split, run history —{" "}
+          <Link href="/admin/pipeline" className="hover:underline" style={{ color: "var(--accent)" }}>
+            open the board →
+          </Link>
         </p>
-        <DripButton />
+      </Card>
+
+      <Card>
+        <SectionTitle>Maintenance</SectionTitle>
+        <p className="mb-3 text-sm" style={{ color: "var(--muted)" }}>
+          Keep the demo cheap (D14): strip old run transcripts, prune old eval runs — their
+          summaries and the agents&apos; learned templates survive. Economic data is never touched.
+        </p>
+        <FlushHistory />
       </Card>
     </main>
   );

@@ -6,7 +6,7 @@ decision. Detail lives in `MASTER_PLAN.md` (phases), `ARCHITECTURE.md`
 (decisions D1–D14), `docs/plans/*` (per-process), and the living diagram
 `docs/architecture.html` (in-app at `/admin/architecture`).
 
-_Last updated: 2026-10-02_
+_Last updated: 2026-10-03_
 
 ## Phase tracker
 
@@ -41,9 +41,15 @@ _Last updated: 2026-10-02_
 - **Invariants proven:** fresh load = 1159 events = 1159 journals, GL balance
   0; replay from zero reproduces identical state; immutability + balance
   controls attack-tested; 30 unit tests.
-- **Admin panel** (`/admin`): reset/reload, clear-to-zero, live replay
-  (paced), drip scenarios, flush-history (economic data + eval summaries
-  survive), architecture diagram.
+- **Test panel** (`/test`, in the nav): the scenario catalog — each scenario
+  states what it does, what data it uses, what it proves and what it does
+  NOT prove, cost and duration, before you run it (month-by-month, 10x,
+  cold-start agent extraction, replay, simulate-a-day, drips, clear-to-zero).
+  Mission control board at `/admin/pipeline`. Admin keeps maintenance
+  (flush-history) + the clickable architecture diagram (component explainer).
+- **Cost engineering (D15)**: prompt caching (raw token split stored,
+  priced at read time per tier) + learned extraction templates (suppliers
+  promote off the model after 3 validated extractions; savings measured).
 
 ## Backlog (agreed, not yet built)
 

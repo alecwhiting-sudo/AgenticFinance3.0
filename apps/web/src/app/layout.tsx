@@ -18,6 +18,7 @@ const nav = [
   { href: "/reports", label: "Reports" },
   { href: "/work", label: "Work" },
   { href: "/approvals", label: "Approvals" },
+  { href: "/test", label: "Test" },
   { href: "/admin", label: "Admin" },
 ];
 
