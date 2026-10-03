@@ -61,6 +61,11 @@ _Last updated: 2026-10-03_
   pending migrations and refreshes the registry seed (non-destructive) before
   the server starts — new skills/agents/migrations land on push, no manual
   `railway run`. Opt out: `MIGRATE_ON_BOOT=false`.
+- **Skill template (2026-10-03)**: all 21 skills follow seven standard
+  headings — Purpose & trigger / Inputs / Grounding / Method / Outputs &
+  format / Escalation & never-do / Quality bar (UI_CONVENTIONS §5.1); the
+  New-skill form carries the skeleton; rolled out as new skill versions via
+  the seed upgrade path.
 - **Skills library v2 (2026-10-03)**: 21 skills clustered by topic (P2P,
   O2C, R2R, Analytics, Controls & audit, Planning & performance, Platform)
   in a master-detail page — read first, Edit as a separate step. Controls

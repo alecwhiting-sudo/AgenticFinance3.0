@@ -125,10 +125,19 @@ export default function SkillsLibraryPage() {
             </select>
           </div>
           <textarea
-            placeholder="Instructions (markdown) — what this skill teaches the agent to do"
+            placeholder={
+              "Instructions — follow the skill template (UI_CONVENTIONS §5.1):\n" +
+              "## Purpose & trigger\nWhat this skill is for; which task types / situations invoke it.\n" +
+              "## Inputs\nWhat the task payload provides; preconditions.\n" +
+              "## Grounding — tools & data\nWhat records to pull before forming a view. The live tool list is authoritative.\n" +
+              "## Method\nThe rules, decision tree, thresholds — the meat.\n" +
+              "## Outputs & format\nCommands to propose; what finished work looks like; money as £ with pence.\n" +
+              "## Escalation & never-do\nWhen to stop and hand to a human; hard prohibitions.\n" +
+              "## Quality bar\n2-4 bullets a reviewer or the eval suite checks."
+            }
             value={form.instructions}
             onChange={(e) => setForm({ ...form, instructions: e.target.value })}
-            rows={6}
+            rows={12}
             className="mt-3 w-full rounded-lg border px-3 py-2 font-mono text-xs"
             style={{ borderColor: "var(--border)", background: "var(--background)" }}
           />

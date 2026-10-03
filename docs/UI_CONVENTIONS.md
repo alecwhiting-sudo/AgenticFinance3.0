@@ -604,3 +604,33 @@ categorical order fixed when the first multi-series chart lands (validated,
 not eyeballed); surfaces = `--card` light/dark. Sparklines in Kpi `trend`
 slots use the muted ink with the current period in accent. One axis, always;
 every chart drills (§1.2); a table view exists for every chart.
+
+## Part 5 — Content conventions
+
+### 5.1 The skill template (2026-10-03)
+
+Every skill in the library follows seven headings, in order — a skill
+missing one is incomplete, not minimalist:
+
+1. **Purpose & trigger** — what it is for; which task types / situations
+   invoke it (unattached skills name the future capability they are seeded
+   for).
+2. **Inputs** — what the task payload provides; preconditions.
+3. **Grounding — tools & data** — what records to pull before forming a
+   view. Reference, don't duplicate: tool schemas live in the worker,
+   permissions on the release, payload shapes in intake code — the live
+   tool list is authoritative, so skills name *what to ground on*, never a
+   frozen tool inventory.
+4. **Method** — the meat: ground rules, decision trees, thresholds,
+   ladders. Operative values are written out ("2% or £25 per line"), never
+   implied.
+5. **Outputs & format** — the commands to propose and what finished work
+   looks like; money always £ with pence from integer minor units; exactly
+   one `finish` with outcome completed | escalated | abstained.
+6. **Escalation & never-do** — when to stop and hand to a human; the hard
+   prohibitions.
+7. **Quality bar** — 2–4 bullets the eval suite (or a reviewer) checks;
+   this is the contract eval cases encode.
+
+The New-skill form carries this skeleton as its placeholder. Edits that
+restructure a skill are ordinary new versions through the library.
