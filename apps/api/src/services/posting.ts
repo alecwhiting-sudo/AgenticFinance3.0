@@ -54,6 +54,10 @@ export async function postJournal(
   if (!co) throw new Error("no company");
 
   return db.transaction(async (tx) => {
+    // Gapless journal numbering needs max()+1, which races when the loader
+    // and worker-driven commands post concurrently (cold-start demo). The
+    // advisory xact lock serialises allocation; it releases on commit.
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext('erp.journal.number'))`);
     const [{ next }] = (
       await tx.execute(sql`select coalesce(max(number), 0) + 1 as next from erp.journal`)
     ).rows as { next: number }[];

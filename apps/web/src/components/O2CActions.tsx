@@ -53,7 +53,17 @@ export function ChaseButton({ invoiceId }: { invoiceId: string }) {
     setBusy(false);
     router.refresh();
   };
-  if (sent) return <span className="text-xs" style={{ color: "var(--muted)" }}>drafting…</span>;
+  // The Collections Agent drafts the letter, then proposes ar.dunning.send —
+  // external comms always need a human, so the draft lands in Approvals.
+  if (sent)
+    return (
+      <span className="whitespace-nowrap text-xs" style={{ color: "var(--muted)" }}>
+        drafting —{" "}
+        <a href="/approvals" className="hover:underline" style={{ color: "var(--accent)" }}>
+          lands in Approvals →
+        </a>
+      </span>
+    );
   return (
     <button
       disabled={busy}

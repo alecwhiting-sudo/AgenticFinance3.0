@@ -116,3 +116,18 @@ One screen, linked from Admin, presentable full-screen:
 4. Everything else reuses replay, drip, month-end, commentary, approvals as
    built. Measured on the dev box: full dataset (~1,200 transactions) in
    ~12s at full speed, 1,159 journals, balance 0.
+5. ✅ **Cold start** (Alec, 2026-10-03 — the "really from scratch" variant):
+   reset modes `cold` (next month) and `cold-all` (everything). Internal
+   records (purchases, GRNs, AR billing, bank feed) load as system data;
+   supplier invoices are NOT posted — each is queued for the Invoice
+   Extraction Agent exactly like a drip (AF-DATA text for text/UBL,
+   vision + keyless fallback for scans, covering email screened). Real
+   model calls on the live system (Haiku tier: ~pennies/month batch,
+   a few $ for cold-all; worker drains sequentially, ~3–5 min/month,
+   ~20–30 min for everything). Payments are skipped — run them from the
+   payments page once the queue drains. Keyless (no API key) the same
+   pipeline runs free via deterministic fallbacks. Verified: cold April
+   ends identical to deterministic April (6 exceptions, 42 straight
+   through, journals = events = 105, balance 0). Fixed along the way:
+   journal numbering now takes an advisory lock (max()+1 raced when the
+   loader and worker posted concurrently).

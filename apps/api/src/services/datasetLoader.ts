@@ -27,6 +27,7 @@ import {
   supplier,
   arInvoice,
   customer,
+  workItem,
   type Db,
   type PurchaseLine,
 } from "@af/db";
@@ -114,6 +115,12 @@ export type LoadOptions = {
   /** incremental: load only the next unloaded dataset month (no truncate).
    * Drives the month-by-month demo scenario (plans/DEMO_SCRIPTS.md §2). */
   nextMonthOnly?: boolean;
+  /** cold start: internal records (purchases, GRNs, AR billing, bank feed)
+   * load as system data, but supplier invoices are NOT posted — each one is
+   * queued as a document for the Invoice Extraction Agent, exactly like
+   * inbound mail (the drip path). Real model work, real cost; payments are
+   * then run from the payments page once the queue drains. */
+  coldStart?: boolean;
   /** pace per chain in ms; >0 also emits per-chain activity events */
   paceMs?: number;
   onProgress?: (done: number, total: number, message: string) => void;
@@ -270,6 +277,11 @@ export async function loadDemoDataset(db: Db, opts: LoadOptions = {}): Promise<L
   const total = apChains.length + 2; // + bank feed + AR load steps
   let done = 0;
 
+  const extractionAgent = opts.coldStart
+    ? await db.query.agent.findFirst({ where: (t) => eq(t.slug, "invoice-extraction") })
+    : null;
+  if (opts.coldStart && !extractionAgent) throw new Error("cold start needs the invoice-extraction agent seeded");
+
   for (const chain of apChains) {
     const sup = supplierByCode.get(chain.supplierCode);
     if (!sup) continue;
@@ -311,6 +323,55 @@ export async function loadDemoDataset(db: Db, opts: LoadOptions = {}): Promise<L
       });
       await markPurchaseReceived(db, purchaseRow.id);
       stats.receipts!++;
+    }
+
+    // Cold start: don't post the invoice — queue the document for the
+    // Invoice Extraction Agent, payload identical to the drip path.
+    if (opts.coldStart) {
+      const isScan = chain.invoice.format === "scan_pdf";
+      await db.insert(workItem).values({
+        type: "invoice.capture",
+        agentId: extractionAgent!.id,
+        payload: isScan
+          ? {
+              documentPath: chain.invoice.altFile ?? chain.invoice.file,
+              format: "scan_pdf",
+              supplierCode: chain.supplierCode,
+              emailText: chain.email.body,
+              fallbackData: {
+                number: chain.invoice.number,
+                invoiceDate: chain.invoice.invoiceDate,
+                dueDate: chain.invoice.dueDate,
+                po: chain.po?.number ?? null,
+                lines: chain.invoice.lines,
+                netMinor: chain.invoice.netMinor,
+                vatMinor: chain.invoice.vatMinor,
+                grossMinor: chain.invoice.grossMinor,
+              },
+            }
+          : {
+              documentText: `AF-DATA ${JSON.stringify({
+                kind: "ap_invoice",
+                supplier: sup.name,
+                number: chain.invoice.number,
+                invoiceDate: chain.invoice.invoiceDate,
+                dueDate: chain.invoice.dueDate,
+                po: chain.po?.number ?? null,
+                netMinor: chain.invoice.netMinor,
+                vatMinor: chain.invoice.vatMinor,
+                grossMinor: chain.invoice.grossMinor,
+                lines: chain.invoice.lines,
+              })}`,
+              emailText: chain.email.body,
+              supplierCode: chain.supplierCode,
+            },
+        priority: 5,
+      });
+      stats.queued = (stats.queued ?? 0) + 1;
+      done++;
+      opts.onProgress?.(done, total, `${chain.invoice.number} queued for extraction`);
+      if (pace > 0) await sleep(pace);
+      continue;
     }
 
     // 3. Invoice capture → match → post/pay or exception case
@@ -438,8 +499,9 @@ export async function loadDemoDataset(db: Db, opts: LoadOptions = {}): Promise<L
   }
 
   // 3b. Month mode catch-up: pay invoices loaded in earlier months whose
-  // payment date lands in this window.
-  if (window) {
+  // payment date lands in this window. (Not in cold start — there, payments
+  // are run from the payments page once the agents have the invoices posted.)
+  if (window && !opts.coldStart) {
     for (const chain of dataset.ap) {
       if (!chain.paid || !chain.paidDate) continue;
       if (inWindow(chain.invoice.invoiceDate)) continue; // handled above

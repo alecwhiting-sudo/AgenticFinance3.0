@@ -144,8 +144,8 @@ export function adminRoutes(app: FastifyInstance): void {
   app.post<{ Body: { mode?: string; paceMs?: number; label?: string } }>("/admin/reset", async (req, reply) => {
     const db = requireDb();
     const mode = req.body?.mode ?? "reload";
-    if (!["reload", "zero", "replay", "month", "months"].includes(mode))
-      return reply.code(400).send({ error: "mode must be reload | zero | replay | month | months" });
+    if (!["reload", "zero", "replay", "month", "months", "cold", "cold-all"].includes(mode))
+      return reply.code(400).send({ error: "mode must be reload | zero | replay | month | months | cold | cold-all" });
     if (job.running) return reply.code(409).send({ error: `a ${job.mode} job is already running` });
 
     job.running = true;
@@ -179,14 +179,17 @@ export function adminRoutes(app: FastifyInstance): void {
         if (mode === "zero") {
           await truncateTransactions(db);
           job.message = "all transaction data cleared — the books are empty";
-        } else if (mode === "month" || mode === "months") {
-          // one month per pass; "months" keeps going with a pause at each boundary
+        } else if (mode === "month" || mode === "months" || mode === "cold") {
+          // one month per pass; "months" keeps going with a pause at each
+          // boundary; "cold" queues the month's supplier invoices for the
+          // extraction agent instead of posting them (real model work)
           for (;;) {
             const startedAt = new Date().toISOString();
             job.done = 0;
             job.total = 0;
             const result = await loadDemoDataset(db, {
               nextMonthOnly: true,
+              coldStart: mode === "cold",
               paceMs,
               onProgress: (done, total, message) => {
                 job.done = done;
@@ -198,9 +201,17 @@ export function adminRoutes(app: FastifyInstance): void {
               job.message = result.reason ?? "nothing to do";
               break;
             }
-            record(req.body?.label?.slice(0, 60) ?? `month ${result.monthLoaded}`, startedAt, job.done, result);
-            job.message = `loaded ${result.monthLoaded} — ${result.journals} journals, balance ${result.balance}`;
-            if (mode === "month") break;
+            record(
+              req.body?.label?.slice(0, 60) ?? `${mode === "cold" ? "cold start" : "month"} ${result.monthLoaded}`,
+              startedAt,
+              job.done,
+              result,
+            );
+            job.message =
+              mode === "cold"
+                ? `${result.monthLoaded}: ${result.stats.queued ?? 0} supplier invoices queued for the agents — watch the queue drain`
+                : `loaded ${result.monthLoaded} — ${result.journals} journals, balance ${result.balance}`;
+            if (mode !== "months") break;
             job.message = `${result.monthLoaded} in the books — pausing at the month boundary`;
             await sleep(4000);
           }
@@ -208,6 +219,7 @@ export function adminRoutes(app: FastifyInstance): void {
           const startedAt = new Date().toISOString();
           const result = await loadDemoDataset(db, {
             reset: true,
+            coldStart: mode === "cold-all",
             paceMs,
             onProgress: (done, total, message) => {
               job.done = done;
@@ -218,9 +230,13 @@ export function adminRoutes(app: FastifyInstance): void {
           if (result.skipped) {
             job.message = "nothing to do";
           } else {
-            job.message = `loaded — ${result.journals} journals, balance ${result.balance}`;
+            job.message =
+              mode === "cold-all"
+                ? `${result.stats.queued ?? 0} supplier invoices queued for the agents — watch the queue drain`
+                : `loaded — ${result.journals} journals, balance ${result.balance}`;
             record(
-              req.body?.label?.slice(0, 60) ?? `${mode}${mode === "replay" && paceMs === 0 ? " (full speed)" : ""}`,
+              req.body?.label?.slice(0, 60) ??
+                (mode === "cold-all" ? "cold start — everything" : `${mode}${mode === "replay" && paceMs === 0 ? " (full speed)" : ""}`),
               startedAt,
               job.done,
               result,
@@ -238,9 +254,9 @@ export function adminRoutes(app: FastifyInstance): void {
               ? "Demo data cleared — books at zero"
               : mode === "replay"
                 ? "Demo dataset replayed from zero"
-                : mode === "month" || mode === "months"
-                  ? `Demo data: ${job.message}`
-                  : "Demo dataset reset and reloaded",
+                : mode === "reload"
+                  ? "Demo dataset reset and reloaded"
+                  : `Demo data: ${job.message}`,
         });
       } catch (err) {
         job.error = String(err);
@@ -251,7 +267,7 @@ export function adminRoutes(app: FastifyInstance): void {
       }
     };
 
-    if (mode === "replay" || mode === "month" || mode === "months") {
+    if (mode !== "reload" && mode !== "zero") {
       // potentially long-running: fire and forget; the UI polls /admin/status
       void work();
       return { started: true, mode };

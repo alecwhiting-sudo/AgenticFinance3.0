@@ -155,10 +155,21 @@ export default function PipelinePage() {
         {confirm ? (
           <span className="flex items-center gap-2">
             <span className="text-xs" style={{ color: "var(--bad)" }}>
-              {confirm === "zero" ? "Wipes ALL transactions." : "Wipes and re-runs ALL transactions."} Sure?
+              {confirm === "zero"
+                ? "Wipes ALL transactions."
+                : confirm === "cold-all"
+                  ? "Wipes everything, then queues ~300 supplier invoices for REAL agent extraction (~20–30 min, a few $ of model calls)."
+                  : "Wipes and re-runs ALL transactions."}{" "}
+              Sure?
             </span>
             <button
-              onClick={() => (confirm === "zero" ? run("zero", 0) : run("replay", confirm === "fullspeed" ? 0 : pace))}
+              onClick={() =>
+                confirm === "zero"
+                  ? run("zero", 0)
+                  : confirm === "cold-all"
+                    ? run("cold-all", 0)
+                    : run("replay", confirm === "fullspeed" ? 0 : pace)
+              }
               className="whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium text-white"
               style={{ background: "var(--bad)" }}
             >
@@ -182,6 +193,18 @@ export default function PipelinePage() {
             {btn("Run remaining months", () => run("months", 60), {
               disabled: !p?.nextMonth,
               title: "Processes every remaining month, pausing briefly at each month boundary — no model calls",
+            })}
+            {btn(
+              p?.nextMonth ? `From scratch: ${monthLabel(p.nextMonth)} (agents extract)` : "From scratch (agents extract)",
+              () => run("cold", 0),
+              {
+                disabled: !p?.nextMonth,
+                title:
+                  "Internal records load as system data; the month's supplier invoices land as unread documents the Invoice Extraction Agent processes one by one — real model calls (Haiku tier, pennies), ~3–5 min per month",
+              },
+            )}
+            {btn("Everything from scratch", () => setConfirm("cold-all"), {
+              title: "Wipes, then queues all ~300 supplier invoices for real agent extraction — ~20–30 min, a few $ of model calls",
             })}
             {btn("Run everything — full speed", () => setConfirm("fullspeed"), {
               title: "Wipes, then runs the whole dataset flat out with the timer on (the 10x run) — no model calls",
@@ -241,15 +264,25 @@ export default function PipelinePage() {
           <h3 className="mb-1 text-sm font-semibold uppercase tracking-wide" style={{ color: "var(--muted)" }}>
             Last run — {lastRun.label}
           </h3>
-          <p className="text-sm leading-6">
-            <span className="font-semibold tabular-nums">{lastRun.items}</span> transactions processed in{" "}
-            <span className="font-semibold tabular-nums">{mmss(lastRun.ms)}</span>
-            {" "}({perMin(lastRun.items, lastRun.ms)} per minute, no model calls — the machine is deterministic code).{" "}
-            <span className="font-semibold tabular-nums">{(lastRun.stats.posted ?? 0) + (lastRun.stats.arInvoices ?? 0)}</span> went
-            straight through untouched. <span className="font-semibold tabular-nums">{lastRun.stats.exceptions ?? 0}</span> fired
-            exceptions that need judgement. The books balanced the whole way:{" "}
-            {lastRun.balance === 0 ? "✓ 0" : lastRun.balance}.
-          </p>
+          {(lastRun.stats.queued ?? 0) > 0 ? (
+            <p className="text-sm leading-6">
+              Cold start: <span className="font-semibold tabular-nums">{lastRun.stats.queued}</span> supplier invoices
+              landed as unread documents — the Invoice Extraction Agent is reading each one (watch the agent queue
+              tile and the ticker). Internal records ({lastRun.stats.purchases ?? 0} purchases,{" "}
+              {lastRun.stats.receipts ?? 0} receipts, {lastRun.stats.arInvoices ?? 0} customer invoices) loaded as
+              system data. Once the queue drains, run payments from the P2P payments page.
+            </p>
+          ) : (
+            <p className="text-sm leading-6">
+              <span className="font-semibold tabular-nums">{lastRun.items}</span> transactions processed in{" "}
+              <span className="font-semibold tabular-nums">{mmss(lastRun.ms)}</span>
+              {" "}({perMin(lastRun.items, lastRun.ms)} per minute, no model calls — the machine is deterministic code).{" "}
+              <span className="font-semibold tabular-nums">{(lastRun.stats.posted ?? 0) + (lastRun.stats.arInvoices ?? 0)}</span> went
+              straight through untouched. <span className="font-semibold tabular-nums">{lastRun.stats.exceptions ?? 0}</span> fired
+              exceptions that need judgement. The books balanced the whole way:{" "}
+              {lastRun.balance === 0 ? "✓ 0" : lastRun.balance}.
+            </p>
+          )}
           <p className="mt-2 text-sm">
             <Link href="/p2p" className="hover:underline" style={{ color: "var(--accent)" }}>
               {p.split.ap_exceptions} exceptions open →
@@ -354,7 +387,7 @@ export default function PipelinePage() {
       {p && p.runs.length > 0 && (
         <section className="rounded-xl border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
           <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide" style={{ color: "var(--muted)" }}>
-            Runs this session — baseline vs the 10x run · all 0 model calls (memory clears on redeploy)
+            Runs this session — baseline vs the 10x run (cold starts spend model tokens; the rest are 0 model calls · memory clears on redeploy)
           </h3>
           <table className="w-full text-sm">
             <thead>
