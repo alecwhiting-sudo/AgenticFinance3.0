@@ -30,6 +30,8 @@
     padding: 2rem 16px 4rem;
   }
   .wrap { max-width: 1080px; margin: 0 auto; }
+  /* on wide screens leave room for the explainer panel */
+  @media (min-width: 1480px) { body.hasPanel .wrap { margin-right: 360px; } }
   h1 { font-size: 1.6rem; letter-spacing: -0.02em; margin: 0; }
   h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 3rem 0 1rem; }
   .sub { color: var(--muted); margin: 0.4rem 0 0; font-size: 0.9rem; }
@@ -65,19 +67,45 @@
   tr:last-child td { border-bottom: none; }
   code { font: 0.78rem ui-monospace, "SF Mono", Menlo, monospace; background: var(--bg); border: 1px solid var(--border); border-radius: 5px; padding: 0 0.3rem; }
   .schemaName { font-weight: 600; white-space: nowrap; }
+
+  /* ---- explainer: click any component for a plain-English description ---- */
+  [data-info] { cursor: pointer; transition: box-shadow 0.12s; }
+  [data-info]:hover { box-shadow: 0 0 0 2px var(--accent); border-radius: 10px; }
+  tr[data-info]:hover { box-shadow: inset 3px 0 0 var(--accent); }
+  [data-info].selected { box-shadow: 0 0 0 2px var(--accent); border-radius: 10px; }
+  #explain {
+    display: none; position: fixed; z-index: 10; background: var(--card);
+    border: 1px solid var(--accent); border-radius: 14px; padding: 1rem 1.1rem;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.18);
+  }
+  #explain.open { display: block; }
+  /* wide: docked panel on the right */
+  @media (min-width: 1480px) {
+    #explain { top: 2rem; right: 16px; width: 330px; max-height: calc(100vh - 4rem); overflow: auto; }
+  }
+  /* narrow: bottom sheet */
+  @media (max-width: 1479.9px) {
+    #explain { left: 16px; right: 16px; bottom: 16px; max-height: 45vh; overflow: auto; }
+  }
+  #explain h4 { margin: 0 1.5rem 0.35rem 0; font-size: 0.95rem; }
+  #explain p { margin: 0 0 0.6rem; font-size: 0.82rem; color: var(--fg); }
+  #explain p.how { color: var(--muted); font-size: 0.76rem; }
+  #explain .close { position: absolute; top: 0.6rem; right: 0.7rem; cursor: pointer; border: 1px solid var(--border); background: var(--bg); color: var(--muted); border-radius: 6px; font-size: 0.8rem; line-height: 1; padding: 0.25rem 0.45rem; }
+  .hint { color: var(--muted); font-size: 0.75rem; margin-top: 0.5rem; }
+  .hint b { color: var(--accent); }
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>AgenticFinance — architecture</h1>
   <p class="sub">Modules clients recognise, agents as the workforce, one event-native finance data platform underneath (D13).</p>
-  <p class="meta">Maintained alongside <code>docs/ARCHITECTURE.md</code> — update both in the same commit. Last updated 2026-10-02 (post Phase 6 + D14 telemetry).</p>
+  <p class="meta">Maintained alongside <code>docs/ARCHITECTURE.md</code> — update both in the same commit. Last updated 2026-10-03 (post D15 cost engineering). <span class="hint"><b>Click any component</b> for what it is and why it matters.</span></p>
 
   <h2>System view — from business activity to certified numbers</h2>
 
-  <div class="layer">
+  <div class="layer" data-info="workbench">
     <h3>Workbench <span class="tag">apps/web · Next.js</span></h3>
-    <p class="note">One UI for finance and technical users: module pages, agent roster &amp; releases, run transcripts, approvals inbox, live flow, reports, admin control room. Talks only to the API.</p>
+    <p class="note">One UI for finance and technical users: module pages, agent roster &amp; releases, run transcripts, approvals inbox, live flow, reports, test panel. Talks only to the API.</p>
   </div>
   <div class="arrow">HTTPS + SSE live stream</div>
 
@@ -85,36 +113,37 @@
     <h3>Functional modules <span class="tag">apps/api services · the families for agents</span></h3>
     <p class="note">The client-facing shape (Workday-like posture): each module owns its workflow and its agents, and pushes business events into the platform.</p>
     <div class="boxes c4">
-      <div class="box fam p2p"><b>P2P — Procure to Pay</b><span>unified Purchase (D12), 3-way match, exceptions, payment runs · agents: Purchase Request, Invoice Extraction (vision), Invoice Exception</span></div>
-      <div class="box fam o2c"><b>O2C — Order to Cash</b><span>AR billing, cash application, collections · agents: Cash Application, Collections</span></div>
-      <div class="box fam r2r"><b>R2R — Record to Report</b><span>bank rec, month-end postings, statements, commentary · agents: Reconciliation, Close</span></div>
-      <div class="box fam pm future"><b>PM — Performance Mgmt</b><span>budgets, forecasts, variance — Phase 5 (planned)</span></div>
+      <div class="box fam p2p" data-info="p2p"><b>P2P — Procure to Pay</b><span>unified Purchase (D12), 3-way match, exceptions, payment runs · agents: Purchase Request, Invoice Extraction (vision), Invoice Exception</span></div>
+      <div class="box fam o2c" data-info="o2c"><b>O2C — Order to Cash</b><span>AR billing, cash application, collections · agents: Cash Application, Collections</span></div>
+      <div class="box fam r2r" data-info="r2r"><b>R2R — Record to Report</b><span>bank rec, month-end postings, statements, commentary · agents: Reconciliation, Close</span></div>
+      <div class="box fam pm future" data-info="pm"><b>PM — Performance Mgmt</b><span>budgets, forecasts, variance — Phase 5 (planned)</span></div>
     </div>
   </div>
   <div class="arrow">agents propose · humans approve · deterministic services decide where code can</div>
 
   <div class="layer">
     <h3>Agent framework &amp; command gateway <span class="tag">apps/worker + apps/api</span></h3>
-    <div class="boxes c3">
-      <div class="box"><b>Agent runtime</b><span>work queue (Postgres FOR UPDATE SKIP LOCKED) → agent loop (Anthropic SDK, model routed by task shape) → step-by-step transcripts; deterministic keyless fallbacks for every task</span></div>
-      <div class="box"><b>Command gateway</b><span>typed commands, schema + permission + idempotency checks; standing authority auto-executes, everything that moves money or leaves the building waits for a human</span></div>
-      <div class="box"><b>Releases &amp; evals</b><span>versioned skills, immutable releases (draft → evaluated → active), eval suites gate promotion; behaviour change = new release. Telemetry (D14): per-period tokens/items/cost via the rate card; eval_summary rollups survive history flushes, raw transcripts and old eval runs are prunable</span></div>
+    <div class="boxes c4">
+      <div class="box" data-info="runtime"><b>Agent runtime</b><span>work queue (Postgres FOR UPDATE SKIP LOCKED) → agent loop (Anthropic SDK, model routed by task shape) → step-by-step transcripts; deterministic keyless fallbacks for every task</span></div>
+      <div class="box" data-info="gateway"><b>Command gateway</b><span>typed commands, schema + permission + idempotency checks; standing authority auto-executes, everything that moves money or leaves the building waits for a human</span></div>
+      <div class="box" data-info="releases"><b>Releases &amp; evals</b><span>versioned skills, immutable releases (draft → evaluated → active), eval suites gate promotion; behaviour change = new release. Telemetry (D14): per-period tokens/items/cost; eval_summary rollups survive history flushes</span></div>
+      <div class="box" data-info="cost"><b>Cost engineering <span class="tag">D15</span></b><span>prompt caching (shared prefixes read at ~0.1×) · learned extraction templates (suppliers graduate off the model entirely) · rate-card pricing at read time · history flushes</span></div>
     </div>
   </div>
   <div class="arrow">every economic change becomes a business event — two entry postures, one pipe</div>
 
-  <div class="layer pipe">
+  <div class="layer pipe" data-info="fdp">
     <h3>Finance Data Platform <span class="tag">fdp schema · data store + ledger combined</span></h3>
     <p class="note">Finance-initiated events (P2P, O2C) arrive <em>with</em> account-coded deltas attached; business-initiated events (month-end ticks, future insurance-style feeds) arrive bare and the deterministic engine derives the deltas from versioned parameter sets.</p>
     <div class="boxes c4">
-      <div class="box"><b>Event store</b><span>append-only, idempotent on (source_system, source_event_key), immutable by trigger; failed events retry safely</span></div>
-      <div class="box"><b>Derivation engine</b><span>deterministic, versioned, no model calls; parameter sets immutable once active; replay reproduces history</span></div>
-      <div class="box"><b>Movement ledger</b><span>one immutable row per event × account; the authoritative delta history</span></div>
-      <div class="box"><b>Journals</b><span>balanced double-entry per event, enforced by a deferred DB constraint; SDJ (system) vs GOJ (human-approved) classes</span></div>
+      <div class="box" data-info="events"><b>Event store</b><span>append-only, idempotent on (source_system, source_event_key), immutable by trigger; failed events retry safely</span></div>
+      <div class="box" data-info="engine"><b>Derivation engine</b><span>deterministic, versioned, no model calls; parameter sets immutable once active; replay reproduces history</span></div>
+      <div class="box" data-info="movements"><b>Movement ledger</b><span>one immutable row per event × account; the authoritative delta history</span></div>
+      <div class="box" data-info="journals"><b>Journals</b><span>balanced double-entry per event, enforced by a deferred DB constraint; SDJ (system) vs GOJ (human-approved) classes</span></div>
     </div>
     <div class="split" style="margin-top: 0.75rem;">
-      <div class="box"><b>LES — Live Economic State</b><span>derived views over movements: GL by account + subledger by economic object (invoice, payment, bank line). Continuously live; what agents reason over.</span></div>
-      <div class="box future"><b>LRS — Locked Reporting State</b><span>lock = physical snapshot · certify = immutable, decision-ready · supersede = restatement. Deferred — lands as one more action on the R2R dashboard.</span></div>
+      <div class="box" data-info="les"><b>LES — Live Economic State</b><span>derived views over movements: GL by account + subledger by economic object (invoice, payment, bank line). Continuously live; what agents reason over.</span></div>
+      <div class="box future" data-info="lrs"><b>LRS — Locked Reporting State</b><span>lock = physical snapshot · certify = immutable, decision-ready · supersede = restatement. Deferred — lands as one more action on the R2R dashboard.</span></div>
     </div>
     <div class="invariant">Invariants, checked by <code>verifyFdp</code>: no movement without an event · per-event deltas balance to zero · movements mirror journal lines exactly · LES sums to zero · no failed events outstanding.</div>
   </div>
@@ -123,9 +152,9 @@
   <div class="layer">
     <h3>Reporting <span class="tag">live basis until LRS</span></h3>
     <div class="boxes c3">
-      <div class="box"><b>Statements</b><span>monthly P&amp;L + balance sheet, every number drills: statement → account → journal → movement → event → document/agent run</span></div>
-      <div class="box"><b>Live experience</b><span>SSE activity stream powers the live feed, P2P flow view, and the admin replay-from-zero</span></div>
-      <div class="box future"><b>Analytics layer</b><span>self-serve exploration + charting over the platform, with a natural-language query interface — planned (MASTER_PLAN Phase 4c)</span></div>
+      <div class="box" data-info="statements"><b>Statements</b><span>monthly P&amp;L + balance sheet, every number drills: statement → account → journal → movement → event → document/agent run</span></div>
+      <div class="box" data-info="live"><b>Live experience</b><span>SSE activity stream powers the live feed, P2P flow view, and the test panel's replay-from-zero</span></div>
+      <div class="box future" data-info="analytics"><b>Analytics layer</b><span>self-serve exploration + charting over the platform, with a natural-language query interface — planned (MASTER_PLAN Phase 4c)</span></div>
     </div>
   </div>
 
@@ -133,27 +162,27 @@
   <div class="layer">
     <table>
       <tr><th>Schema</th><th>Owns</th><th>Tables</th></tr>
-      <tr>
+      <tr data-info="s-core">
         <td class="schemaName">core</td>
         <td>Master data &amp; calendar</td>
         <td><code>company</code> <code>fiscal_period</code> <code>account</code> (chart) <code>supplier</code> <code>customer</code> <code>item</code></td>
       </tr>
-      <tr>
+      <tr data-info="s-erp">
         <td class="schemaName">erp</td>
         <td>Module working objects + the accounting representation</td>
         <td><code>purchase</code> (requisition+PO as one, D12) <code>goods_receipt</code> <code>ap_invoice</code> <code>ap_payment</code> <code>ar_invoice</code> <code>ar_dunning</code> <code>bank_transaction</code> <code>journal</code> <code>journal_line</code> (immutable, balance-enforced) <code>category_budget</code> <code>report_commentary</code></td>
       </tr>
-      <tr>
+      <tr data-info="s-fdp">
         <td class="schemaName">fdp</td>
         <td>The platform: economic truth</td>
         <td><code>event</code> (append-only, idempotent) <code>movement</code> (immutable deltas per event × account) <code>parameter_set</code> (versioned engine inputs) + views <code>les_account</code> <code>les_object</code>; LRS snapshot tables land with lock/certify</td>
       </tr>
-      <tr>
+      <tr data-info="s-agent">
         <td class="schemaName">agent</td>
         <td>The workforce</td>
-        <td><code>agent</code> (with process family) <code>skill</code> <code>skill_version</code> <code>agent_release</code> <code>work_item</code> <code>agent_run</code> (transcripts) <code>command</code> <code>eval_case</code> <code>eval_run</code> <code>activity_event</code></td>
+        <td><code>agent</code> (with process family) <code>skill</code> <code>skill_version</code> <code>agent_release</code> <code>work_item</code> <code>agent_run</code> (transcripts + raw token split incl. cache) <code>command</code> <code>eval_case</code> <code>eval_run</code> <code>eval_summary</code> <code>extraction_template</code> (D15) <code>activity_event</code></td>
       </tr>
-      <tr>
+      <tr data-info="s-evidence">
         <td class="schemaName">evidence</td>
         <td>Cases &amp; audit trail</td>
         <td><code>case</code> <code>case_event</code>; documents (PDF/XML/eml) live in the repo and are served by the API (D10)</td>
@@ -162,7 +191,167 @@
     <div class="invariant">Flow of a pound: module event → <code>fdp.event</code> → <code>fdp.movement</code> + <code>erp.journal_line</code> (same deltas, enforced) → LES views → statements. Corrections are new events; certified history (once LRS lands) is never edited.</div>
   </div>
 
-  <p class="meta" style="margin-top: 2rem;">Decisions D1–D13 in <code>ARCHITECTURE.md §10</code> · per-process plans in <code>docs/plans/</code> · FDP analysis in <code>docs/analysis/finance-data-platform.md</code>.</p>
+  <p class="meta" style="margin-top: 2rem;">Decisions D1–D15 in <code>ARCHITECTURE.md §10</code> · per-process plans in <code>docs/plans/</code> · FDP analysis in <code>docs/analysis/finance-data-platform.md</code>.</p>
 </div>
+
+<aside id="explain" aria-live="polite">
+  <button class="close" onclick="closeExplain()">×</button>
+  <h4 id="exTitle"></h4>
+  <p id="exWhat"></p>
+  <p class="how" id="exHow"></p>
+</aside>
+
+<script>
+/* Feature explainer. Each entry: what (plain English, for a CFO) and how
+ * (one technical sentence, for the person next to the CFO). Keep this in
+ * step with ARCHITECTURE.md decisions when components change. */
+const INFO = {
+  workbench: {
+    t: "Workbench",
+    what: "The single screen your finance team lives in: process pages, the agent roster, the approvals inbox and the reports. Nothing here holds data — it is a window onto the API.",
+    how: "Next.js app; reads the API over HTTPS and subscribes to the live activity stream over SSE.",
+  },
+  p2p: {
+    t: "Procure to Pay",
+    what: "Spend is approved once, at the moment of intent — requisition and purchase order are one record. Goods receipts and invoices match against it; clean matches post and pay straight through, mismatches become exceptions for an agent to investigate and a human to decide.",
+    how: "Deterministic 3-way match; extraction handles text PDFs, e-invoices (parsed, no model) and scans (vision); exceptions open evidence cases.",
+  },
+  o2c: {
+    t: "Order to Cash",
+    what: "Customer billing posts revenue the moment it is raised; cash application matches receipts to invoices automatically and hands the ambiguous ones to an agent; collections drafts the chasing letters — a human approves anything that leaves the building.",
+    how: "Receipts match by reference+amount rule first; the Cash Application Agent gets candidates for the remainder; dunning sends are human-approved commands.",
+  },
+  r2r: {
+    t: "Record to Report",
+    what: "The books close themselves: bank reconciliation, accruals and prepayments posted through the same pipe as everything else, monthly statements where every number drills to its source, and a Close Agent that drafts the month's story.",
+    how: "Month-end postings are idempotent period-tick events; accrual reversals post on day one of the next period; lock/certify (LRS) is the deferred final step.",
+  },
+  pm: {
+    t: "Performance Management",
+    what: "Budgets, forecasts and variance — planned as Phase 5, after the analytics layer. Not built yet, and deliberately so.",
+    how: "Will reuse the same platform: budget versions as parameter sets, variance as derived views.",
+  },
+  runtime: {
+    t: "Agent runtime",
+    what: "Where the agents actually work. Each one claims a task from the queue, reasons with the model its task shape deserves (cheap for high-volume extraction, mid-tier for judgement), and leaves a full step-by-step transcript you can replay.",
+    how: "Postgres FOR UPDATE SKIP LOCKED queue; Anthropic SDK loop with per-release call budgets; deterministic fallbacks keep everything demoable with no API key.",
+  },
+  gateway: {
+    t: "Command gateway",
+    what: "The control boundary. Agents never write to the books — they propose typed commands. Routine ones execute under standing authority; anything that moves money or contacts the outside world waits for a human click. Model text is never evidence of approval.",
+    how: "Schema + permission + idempotency checks per command type; every decision is recorded with who/what/why.",
+  },
+  releases: {
+    t: "Releases & evals",
+    what: "Agents are managed like staff. Their instructions and skills are versioned; a behaviour change is a new release that must pass its eval suite before promotion; nothing mutates a live release. Performance is tracked period on period.",
+    how: "draft → evaluated → active; eval_summary rollups survive history flushes (D14) so track records outlive the demo data.",
+  },
+  cost: {
+    t: "Cost engineering (D15)",
+    what: "Two ways the model bill shrinks as the system runs. Prompt caching: the repeated parts of every request (the agent's instructions and tools) are cached, so a batch pays for them once and re-reads them at about a tenth of the price. Learned templates: after the model has read a supplier's first few invoices correctly, that supplier's layout is learned — later invoices extract in plain code for free, and the model is reserved for new suppliers and layout changes. If a learned layout stops matching, it falls back to the model and re-learns.",
+    how: "Two cache breakpoints per call (system+tools, last user message); agent_run stores the raw token split and all pricing happens at read time against the rate card; agent.extraction_template promotes after 3 validated extractions, demotes after 2 misses; savings use each template's measured model cost.",
+  },
+  fdp: {
+    t: "Finance Data Platform",
+    what: "The system of record: a data store and ledger in one set of tables. Every economic change is an event; the platform turns each event into balanced accounting atomically. There is no separate warehouse to reconcile against — the books and the data are the same thing.",
+    how: "Two entry postures, one pipe: modules submit events with account-coded deltas attached; bare events get deltas derived by the engine. Same validation and write path either way (D13).",
+  },
+  events: {
+    t: "Event store",
+    what: "The root of truth. Every invoice, payment, receipt and month-end tick lands here exactly once — resubmitting the same event is harmless, editing history is impossible.",
+    how: "Append-only with (source_system, source_event_key) idempotency; immutability enforced by database trigger, not application convention.",
+  },
+  engine: {
+    t: "Derivation engine",
+    what: "Where accounting judgement is encoded as code, not prompts. Given a bare business event, it derives the debits and credits from versioned rule sets — the same inputs always produce the same journals. No model is ever asked to compute a number.",
+    how: "Deterministic TypeScript, versioned (engine + parameter set per event); replaying the full event history reproduces identical balances.",
+  },
+  movements: {
+    t: "Movement ledger",
+    what: "The authoritative history of every pound: one immutable row per event per account. Everything above it — balances, statements, analytics — is derived from these rows and can always be rebuilt from them.",
+    how: "Debit positive / credit negative minor units; mirrors journal lines exactly (verified invariant).",
+  },
+  journals: {
+    t: "Journals",
+    what: "Double-entry, enforced by the database itself: a journal that doesn't balance cannot be committed, whoever or whatever wrote it. Posted journals are never edited — corrections are reversals.",
+    how: "Deferred DB constraint proves balance at commit; gapless numbering under an advisory lock; SDJ (system-posted) vs GOJ (human-approved) classes; every journal carries its source event.",
+  },
+  les: {
+    t: "LES — Live Economic State",
+    what: "The always-current position: general ledger by account and subledger by thing (this invoice, this payment, this bank line). It is what the agents reason over and what the screens show — live, not batch.",
+    how: "Views derived from the movement ledger; sums to zero by construction.",
+  },
+  lrs: {
+    t: "LRS — Locked Reporting State (deferred)",
+    what: "The close, when it lands: lock takes a physical snapshot of the numbers, certify makes it immutable and decision-ready, supersede is how restatements happen. Certified history is never recalculated.",
+    how: "Snapshot tables + one more action on the R2R month-end dashboard; deliberately deferred (nothing built so far needs rework for it).",
+  },
+  statements: {
+    t: "Statements",
+    what: "Monthly P&L and balance sheet where no number is an orphan: click any figure and walk down to the journal, the movement, the event, and the document or agent run that caused it.",
+    how: "Aggregations over journal lines/LES only — the reporting layer never recalculates economics.",
+  },
+  live: {
+    t: "Live experience",
+    what: "The demo's heartbeat: a stream of everything happening — agents picking up work, invoices posting, exceptions firing — feeding the live flow view and the test panel.",
+    how: "activity_event table + server-sent events; the replay-from-zero runs paced so you can watch the books being built.",
+  },
+  analytics: {
+    t: "Analytics layer (planned)",
+    what: "Self-serve slicing of everything on the platform — any account, supplier, customer or period, charted — plus an Analyst Agent that answers questions in plain English and cites its drill path. Before Performance Management on the roadmap.",
+    how: "Governed read-only queries over curated views; the model never writes SQL against raw tables (Phase 4c).",
+  },
+  "s-core": {
+    t: "core schema",
+    what: "Who we are and who we deal with: the company, its calendar, the chart of accounts, suppliers, customers and items. Master data changes rarely and survives every demo reset.",
+    how: "Seeded deterministically; never touched by transaction wipes.",
+  },
+  "s-erp": {
+    t: "erp schema",
+    what: "The working documents of each process — purchases, receipts, invoices, payments, bank lines — plus the journal, which is the accounting's human-readable face.",
+    how: "Only the API writes here; journal/journal_line are immutable once posted with balance enforced in the database.",
+  },
+  "s-fdp": {
+    t: "fdp schema",
+    what: "Economic truth: the event store and movement ledger the whole system derives from. If every other table were lost, the books rebuild from here.",
+    how: "Append-only + immutable by trigger; les_account / les_object views are the live state.",
+  },
+  "s-agent": {
+    t: "agent schema",
+    what: "The workforce's HR records: who the agents are, their versioned skills and releases, the work queue, every run's transcript and token spend, their eval history — and what they've learned (supplier extraction templates).",
+    how: "Run transcripts and old eval runs are flushable (D14); eval summaries and learned templates persist.",
+  },
+  "s-evidence": {
+    t: "evidence schema",
+    what: "The audit trail for judgement calls: every exception becomes a case with its timeline of who saw what and decided what.",
+    how: "Cases link invoices, agent runs and human decisions; documents are committed files served by the API (D10).",
+  },
+};
+
+let selected = null;
+function closeExplain() {
+  document.getElementById("explain").classList.remove("open");
+  document.body.classList.remove("hasPanel");
+  if (selected) selected.classList.remove("selected");
+  selected = null;
+}
+document.addEventListener("click", (e) => {
+  const el = e.target.closest("[data-info]");
+  if (!el) return;
+  // clicks on nested data-info pick the innermost
+  e.stopPropagation();
+  const info = INFO[el.dataset.info];
+  if (!info) return;
+  if (selected) selected.classList.remove("selected");
+  selected = el;
+  el.classList.add("selected");
+  document.getElementById("exTitle").textContent = info.t;
+  document.getElementById("exWhat").textContent = info.what;
+  document.getElementById("exHow").textContent = info.how;
+  document.getElementById("explain").classList.add("open");
+  document.body.classList.add("hasPanel");
+});
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeExplain(); });
+</script>
 </body>
 </html>
