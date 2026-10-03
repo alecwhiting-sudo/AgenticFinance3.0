@@ -155,6 +155,18 @@ export async function truncateTransactions(db: Db): Promise<void> {
     truncate table erp.journal_line, erp.journal, erp.bank_transaction, erp.ap_payment,
       erp.ap_invoice, erp.goods_receipt, erp.purchase, erp.category_budget,
       erp.report_commentary, erp.ar_dunning, erp.ar_invoice, fdp.movement, fdp.event cascade`);
+  // Pending proposals, unworked queue items and evidence cases reference the
+  // wiped transactions — stale "awaiting approval" counts on empty books
+  // confuse demos. Executed commands and agent runs survive (D14 history);
+  // no TRUNCATE CASCADE here because agent_run FKs work_item.
+  await db.execute(sql`delete from agent.command where status = 'proposed'`);
+  await db.execute(sql`
+    delete from agent.work_item w
+    where w.status in ('pending', 'claimed', 'running')
+      and not exists (select 1 from agent.agent_run r where r.work_item_id = w.id)`);
+  await db.execute(sql`delete from evidence.case_event`);
+  await db.execute(sql`update evidence.document set case_id = null where case_id is not null`);
+  await db.execute(sql`delete from evidence."case"`);
 }
 
 export async function loadDemoDataset(db: Db, opts: LoadOptions = {}): Promise<LoadResult> {
@@ -172,12 +184,18 @@ export async function loadDemoDataset(db: Db, opts: LoadOptions = {}): Promise<L
   let window: { from: string | null; to: string } | null = null;
   if (opts.nextMonthOnly) {
     const allMonths = datasetMonthTotals().map((m) => m.month);
+    // Boundary = last dataset month with rows in the books. Ignore anything
+    // dated beyond the dataset (dripped invoices are dated "today", which
+    // would otherwise make every month look already loaded).
+    const afterLast = new Date(`${allMonths[allMonths.length - 1]}-01T00:00:00Z`);
+    afterLast.setUTCMonth(afterLast.getUTCMonth() + 1);
+    const horizon = afterLast.toISOString().slice(0, 10); // first day after the dataset's last month
     const [{ m }] = (
       await db.execute(sql`
         select greatest(
-          (select max(invoice_date) from erp.ap_invoice),
-          (select max(invoice_date) from erp.ar_invoice),
-          (select max(txn_date) from erp.bank_transaction)
+          (select max(invoice_date) from erp.ap_invoice where invoice_date < ${horizon}::date),
+          (select max(invoice_date) from erp.ar_invoice where invoice_date < ${horizon}::date),
+          (select max(txn_date) from erp.bank_transaction where txn_date < ${horizon}::date)
         )::text as m`)
     ).rows as { m: string | null }[];
     const loadedUpTo = m ? m.slice(0, 7) : null;
