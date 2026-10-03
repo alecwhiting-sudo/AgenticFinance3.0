@@ -949,7 +949,7 @@ export async function runAgentLoop(
     },
     {
       name: "get_invoice_context",
-      description: "Full context for an AP invoice: the invoice, its purchase (the approved ask), goods receipts, and case history. Use for exception investigations.",
+      description: "Full context for an AP invoice: the invoice, its purchase (the approved ask), goods receipts, and case history. Use for exception investigations. invoiceId accepts the internal uuid OR the supplier invoice number (e.g. EES-D89463).",
       input_schema: {
         type: "object",
         properties: { invoiceId: { type: "string" } },
@@ -1184,6 +1184,11 @@ export async function runAgentLoop(
 
     for (const tu of toolUses) {
       const input = tu.input as Record<string, unknown>;
+      const resultsBefore = toolResults.length;
+      // Every tool runs inside this try: a throwing tool (bad input reaching
+      // SQL, API hiccup) must come back to the model as an error tool_result
+      // it can recover from — never as a failed run. (Body indentation kept.)
+      try {
       if (tu.name === "finish") {
         const result: LoopResult = {
           outcome: (input.outcome as LoopResult["outcome"]) ?? "completed",
@@ -1227,7 +1232,14 @@ export async function runAgentLoop(
         let result: unknown = { error: "database unavailable" };
         if (db) {
           const q = input as { invoiceId: string };
-          const inv = await db.query.apInvoice.findFirst({ where: (t, { eq: e }) => e(t.id, q.invoiceId) });
+          // tolerant lookup: a uuid finds by id; anything else is treated as
+          // a supplier invoice number (a bare number must never 500 the run)
+          const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(q.invoiceId ?? "");
+          const inv = isUuid
+            ? await db.query.apInvoice.findFirst({ where: (t, { eq: e }) => e(t.id, q.invoiceId) })
+            : await db.query.apInvoice.findFirst({
+                where: (t, { eq: e }) => e(t.supplierInvoiceNumber, q.invoiceId),
+              });
           if (!inv) result = { error: "invoice not found" };
           else {
             const p = inv.purchaseId
@@ -1323,6 +1335,17 @@ export async function runAgentLoop(
         is_error: true,
         content: `unknown tool ${tu.name}`,
       });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        await appendStep(runId, steps, { kind: "note", label: `tool ${tu.name} errored`, detail: { message } });
+        if (toolResults.length === resultsBefore)
+          toolResults.push({
+            type: "tool_result",
+            tool_use_id: tu.id,
+            is_error: true,
+            content: `tool ${tu.name} failed: ${message}. Adjust the input or use a different tool; do not retry identical input more than once.`,
+          });
+      }
     }
     messages.push({ role: "user", content: toolResults });
   }
