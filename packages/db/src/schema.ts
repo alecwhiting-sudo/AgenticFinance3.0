@@ -610,3 +610,22 @@ export const evalSummary = ag.table("eval_summary", {
   failed: integer("failed").notNull(),
   finishedAt: timestamp("finished_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+/** Learned extraction templates (D15): the model extracts a supplier's first
+ * invoices; once N extractions validate cleanly, the supplier is promoted to
+ * a deterministic template and later invoices extract in code — no model
+ * call. A miss (template can't parse / gateway rejects) falls back to the
+ * model and is counted; repeated misses suspend the template back to
+ * learning. Agent knowledge, not ERP data — survives demo resets. */
+export const extractionTemplate = ag.table("extraction_template", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  supplierCode: text("supplier_code").notNull().unique(),
+  status: text("status").notNull().default("learning"), // learning | active | suspended
+  confirmations: integer("confirmations").notNull().default(0), // validated model extractions while learning
+  hits: integer("hits").notNull().default(0), // deterministic captures since promotion
+  misses: integer("misses").notNull().default(0), // model fallbacks since promotion
+  avgModelTokens: integer("avg_model_tokens").notNull().default(0), // what a model run cost, for honest savings
+  promotedAt: timestamp("promoted_at", { withTimezone: true }),
+  lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});

@@ -26,6 +26,7 @@ import {
 import type { TranscriptStep } from "@af/shared";
 import { db } from "../lib/db.js";
 import { emitActivity } from "../lib/activity.js";
+import { getActiveTemplate, recordHit, recordLearning, recordMiss } from "./templates.js";
 
 const API_URL = process.env.API_URL ?? "http://localhost:3001";
 const STEP_DELAY_MS = Number(process.env.WORKER_STEP_DELAY_MS ?? 0);
@@ -620,6 +621,32 @@ export async function runAgentLoop(
     return result;
   }
 
+  // Learned templates (D15): a supplier promoted after repeated validated
+  // model extractions is handled by the deterministic parser — no model call.
+  // A miss (parse can't handle it / gateway rejects) falls back to the model
+  // below and is counted; repeated misses demote the template.
+  const templateSupplier =
+    taskType === "invoice.capture" && typeof payload.supplierCode === "string" ? payload.supplierCode : null;
+  if (templateSupplier && (await getActiveTemplate(templateSupplier))) {
+    await appendStep(runId, steps, {
+      kind: "note",
+      label: "learned template",
+      detail: { supplierCode: templateSupplier, note: "layout learned from prior model extractions — extracting in code, 0 model calls" },
+    });
+    const result = await invoiceCaptureFallback(resolved, runId, payload, steps);
+    if (result.outcome === "completed") {
+      await recordHit(templateSupplier);
+      await appendStep(runId, steps, { kind: "outcome", label: result.outcome, detail: { summary: `${result.summary} (learned template — no model call)` } });
+      return { ...result, summary: `${result.summary} (learned template — no model call)` };
+    }
+    await recordMiss(templateSupplier);
+    await appendStep(runId, steps, {
+      kind: "note",
+      label: "template miss",
+      detail: { supplierCode: templateSupplier, note: "deterministic parse did not produce a clean capture — falling back to the model" },
+    });
+  }
+
   const client = new Anthropic();
   const model = resolveModel(resolved.release.modelProfile);
   const tools: Anthropic.Tool[] = [
@@ -865,6 +892,10 @@ export async function runAgentLoop(
           outcome: (input.outcome as LoopResult["outcome"]) ?? "completed",
           summary: String(input.summary ?? ""),
         };
+        // D15: a clean model extraction counts toward promoting this
+        // supplier to a learned (deterministic) template.
+        if (templateSupplier && result.outcome === "completed")
+          await recordLearning(templateSupplier, totals.input + totals.output + totals.cacheWrite + totals.cacheRead);
         await appendStep(runId, steps, { kind: "outcome", label: result.outcome, detail: { summary: result.summary } });
         return result;
       }

@@ -33,14 +33,19 @@ type Purchase = {
   totalMinor: number;
   status: string;
 };
+type Templates = {
+  templates: { supplierCode: string; supplierName: string; status: string; confirmations: number; hits: number; savedCents: number }[];
+  summary: { active: number; learning: number; modelCallsAvoided: number; savedCents: number };
+};
 
 const INVOICE_STAGES = ["captured", "matched", "exception", "approved", "posted", "scheduled", "paid"];
 
 export default async function P2PPage() {
-  const [pipeline, exceptions, purchases] = await Promise.all([
+  const [pipeline, exceptions, purchases, tpl] = await Promise.all([
     getJson<Pipeline>("/p2p/pipeline"),
     getJson<Invoice[]>("/p2p/invoices?status=exception&limit=50"),
     getJson<Purchase[]>("/p2p/purchases?limit=12"),
+    getJson<Templates>("/p2p/templates"),
   ]);
   const apiDown = pipeline === null;
   const stageCount = (s: string) => pipeline?.invoiceStages.find((x) => x.status === s)?.n ?? 0;
@@ -106,6 +111,33 @@ export default async function P2PPage() {
         <Stat label="Standard band" value={bandCount("standard")} hint="one approver, one click" />
         <Stat label="Director band" value={bandCount("director")} hint="over £5,000 or new supplier" />
       </section>
+
+      {tpl && tpl.templates.length > 0 && (
+        <Card>
+          <SectionTitle>
+            Learned extraction templates — the model reads a supplier&apos;s first invoices; once the layout is
+            proven, later invoices extract in code for free
+          </SectionTitle>
+          <div className="mb-3 flex flex-wrap gap-x-6 gap-y-1 text-sm">
+            <span><span className="font-semibold tabular-nums">{tpl.summary.active}</span> suppliers learned</span>
+            <span><span className="font-semibold tabular-nums">{tpl.summary.learning}</span> still learning</span>
+            <span><span className="font-semibold tabular-nums">{tpl.summary.modelCallsAvoided}</span> model calls avoided</span>
+            <span>~<span className="font-semibold tabular-nums">${(tpl.summary.savedCents / 100).toFixed(2)}</span> saved</span>
+          </div>
+          <div className="flex flex-wrap gap-2 text-xs">
+            {tpl.templates.slice(0, 12).map((t) => (
+              <span
+                key={t.supplierCode}
+                className="rounded-full border px-2 py-0.5"
+                style={{ borderColor: t.status === "active" ? "var(--good)" : "var(--border)", color: "var(--muted)" }}
+                title={t.status === "active" ? `${t.hits} invoices extracted for free` : `${t.confirmations}/3 validated extractions`}
+              >
+                {t.supplierName} · {t.status === "active" ? `${t.hits} free` : `learning ${t.confirmations}/3`}
+              </span>
+            ))}
+          </div>
+        </Card>
+      )}
 
       <section className="grid gap-4 md:grid-cols-2">
         <Card>

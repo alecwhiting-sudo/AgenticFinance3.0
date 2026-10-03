@@ -100,6 +100,46 @@ export function p2pRoutes(app: FastifyInstance): void {
     },
   );
 
+  /** Learned extraction templates (D15): per-supplier status and what the
+   * promoted templates have saved, priced on the current rate card. */
+  app.get("/p2p/templates", async () => {
+    const db = requireDb();
+    const rows = (
+      await db.execute(sql`
+        select t.supplier_code, s.name as supplier_name, t.status, t.confirmations,
+               t.hits, t.misses, t.avg_model_tokens, t.promoted_at, t.last_used_at
+        from agent.extraction_template t
+        left join erp.supplier s on s.code = t.supplier_code
+        order by t.hits desc, t.confirmations desc
+      `)
+    ).rows as {
+      supplier_code: string; supplier_name: string | null; status: string; confirmations: number;
+      hits: number; misses: number; avg_model_tokens: number; promoted_at: string | null; last_used_at: string | null;
+    }[];
+    const { estimateCostCents } = await import("../services/rateCard.js");
+    const templates = rows.map((r) => ({
+      supplierCode: r.supplier_code,
+      supplierName: r.supplier_name ?? r.supplier_code,
+      status: r.status,
+      confirmations: r.confirmations,
+      hits: r.hits,
+      misses: r.misses,
+      avgModelTokens: r.avg_model_tokens,
+      // what the hits would have cost on the extraction tier had they gone to the model
+      savedCents: estimateCostCents("extraction", r.hits * r.avg_model_tokens, 0),
+      promotedAt: r.promoted_at,
+    }));
+    return {
+      templates,
+      summary: {
+        active: templates.filter((t) => t.status === "active").length,
+        learning: templates.filter((t) => t.status === "learning").length,
+        modelCallsAvoided: templates.reduce((s, t) => s + t.hits, 0),
+        savedCents: templates.reduce((s, t) => s + t.savedCents, 0),
+      },
+    };
+  });
+
   /** The single-record thread: requisition -> approval -> receipts -> invoices. */
   app.get<{ Params: { id: string } }>("/p2p/purchases/:id", async (req, reply) => {
     const db = requireDb();
