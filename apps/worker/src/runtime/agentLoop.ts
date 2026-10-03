@@ -107,6 +107,7 @@ function buildSystemPrompt(resolved: ResolvedRelease): string {
     skillSections,
     `## Operating rules
 - You act only through your tools. You cannot move money, post journals, or send external communications; such requests are out of scope — finish with outcome "abstained" and explain.
+- Your tool list is the authoritative statement of your capabilities: where a skill's text names fewer or older tools, the tools actually offered here supersede it.
 - Permitted command types: ${resolved.release.commandPermissions.join(", ") || "none"}.
 - Always end by calling the finish tool exactly once.`,
   ]
@@ -958,6 +959,24 @@ export async function runAgentLoop(
       strict: true,
     },
     {
+      name: "query_records",
+      description:
+        "Query actual records from the governed record catalogue (read-only; server-built SQL; max 50 rows + aggregates). Entities and their filters: purchases (party=supplier code/name fragment, status, from/to request date, search=PO number) — rows include receipt and invoice counts; goods_receipts (party, search=GRN/PO number); ap_invoices (party, status, hasPurchase 'true'|'false', period YYYY-MM, search=invoice number) — aggregates include with_purchase/without_purchase counts; ar_invoices (party=customer, status, period, search); payments (status, search=payment ref); bank_transactions (status, kind, from/to, search=reference/counterparty); journals (period, sourceType, search=memo); suppliers / customers (search=code/name). All amounts are integer pence.",
+      input_schema: {
+        type: "object",
+        properties: {
+          entity: {
+            type: "string",
+            enum: ["purchases", "goods_receipts", "ap_invoices", "ar_invoices", "payments", "bank_transactions", "journals", "suppliers", "customers"],
+          },
+          filters: { type: "object", description: "Whitelisted filters for the entity, see the description" },
+          limit: { type: "number", description: "Max rows (default 20, cap 50)" },
+        },
+        required: ["entity"],
+        additionalProperties: false,
+      },
+    },
+    {
       name: "run_view",
       description:
         "Run one curated analytics view (read-only, governed — the only way to read figures). Views: pl-trend (params: year), flux (params: period YYYY-MM, default latest), aging (params: side 'ap'|'ar', asOf YYYY-MM-DD), counterparty (params: dim 'supplier'|'customer'), cash (no params). All amounts return as integer pence.",
@@ -1176,6 +1195,22 @@ export async function runAgentLoop(
           await recordLearning(templateSupplier, totals.input + totals.output + totals.cacheWrite + totals.cacheRead);
         await appendStep(runId, steps, { kind: "outcome", label: result.outcome, detail: { summary: result.summary } });
         return result;
+      }
+      if (tu.name === "query_records") {
+        const q = input as { entity: string; filters?: Record<string, unknown>; limit?: number };
+        const qs = new URLSearchParams({ entity: String(q.entity) });
+        for (const [k, v] of Object.entries(q.filters ?? {}))
+          if (v !== undefined && v !== null && v !== "") qs.set(k, String(v));
+        if (q.limit) qs.set("limit", String(q.limit));
+        const res = await apiFetch(`/analytics/records?${qs}`, { method: "GET" });
+        const result = await res.json().catch(() => ({ error: `records returned non-JSON (status ${res.status})` }));
+        await appendStep(runId, steps, {
+          kind: "tool_call",
+          label: `query_records ${String(q.entity)}`,
+          detail: { input, preview: JSON.stringify(result).slice(0, 500) },
+        });
+        toolResults.push({ type: "tool_result", tool_use_id: tu.id, content: JSON.stringify(result), ...(res.ok ? {} : { is_error: true }) });
+        continue;
       }
       if (tu.name === "run_view") {
         const q = input as { viewId: string; params?: Record<string, unknown> };

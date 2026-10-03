@@ -97,6 +97,35 @@ Navigation: `/analytics` as a child of Record to Report in the sidebar
   overdue AR, cash position) and says plainly that free-text analysis needs a
   model key. No pretending.
 
+## 3b. Record catalogue (M2 follow-on, built)
+
+The views answer aggregate questions; real questions also need the records
+("are Vantage's invoices raised against POs?"). One governed endpoint,
+`GET /analytics/records`, serves per-entity read-only queries: purchases
+(with receipt/invoice coverage counts), goods receipts, AP invoices (with
+with/without-purchase aggregates), AR invoices, payments, bank lines,
+journals, supplier/customer master. The caller picks an entity and
+whitelisted filters; the SQL is built server-side, parameterized, columns
+curated, 50 rows max, aggregates alongside. The Analyst gets it as a second
+tool, `query_records` — still no model-written SQL, still read-only.
+`GET /analytics/entities` documents the catalogue.
+
+## 3c. Data permissions (stub — build later)
+
+Not enforced yet; stubbed so enforcement is one check, not a refactor:
+
+- Every entity in the record catalogue declares an `access` scope
+  (`p2p.read`, `o2c.read`, `r2r.read`, `master.read`); views will get the
+  same treatment.
+- Future model: scopes attach to principals (human users once auth exists;
+  agent releases the same way `commandPermissions` work today). The
+  `/analytics/records` and view endpoints check the caller's scopes before
+  running anything; the Analyst's release carries the read scopes it is
+  allowed, so narrowing an agent's data access is a release change, eval'd
+  like any other.
+- Row-level rules (e.g. a user sees only their cost centre) layer on the
+  same registry later; column curation already happens per entity.
+
 ## 4. Evals (M2, before promote)
 
 Seed eval cases with known answers from the committed dataset: "biggest

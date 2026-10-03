@@ -64,9 +64,11 @@ _Last updated: 2026-10-03_
 
 ## Backlog (agreed, not yet built)
 
-1. **Phase 4c follow-ons** — saved views on a dashboard; grow the view
-   catalogue as questions demand (the Analyst names the missing view when it
-   can't answer). Core 4c built 2026-10-03 (`plans/ANALYTICS.md`).
+1. **Phase 4c follow-ons** — saved views on a dashboard; data permissions
+   (stubbed: every record-catalogue entity declares an `access` scope,
+   enforcement designed in `plans/ANALYTICS.md` §3c). Core 4c built
+   2026-10-03 incl. the record catalogue (`query_records` — the Analyst can
+   scan actual records, not just the aggregate views).
 2. **LRS lock/certify/supersede** — lands as the month-end dashboard's lock
    button + snapshot tables.
 3. **Commentary quality** — Close Agent output is too bland; skills +
