@@ -98,8 +98,8 @@ export default async function P2PPage() {
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-7">
         {INVOICE_STAGES.map((s) => (
           <Link key={s} href={`/p2p/invoices?status=${s}`}>
-            <Card className="!p-3 text-center transition-transform hover:-translate-y-0.5">
-              <div className="text-xl font-semibold tabular-nums">{stageCount(s)}</div>
+            <Card className="!p-3 text-center">
+              <div className="text-xl font-semibold tracking-tight">{stageCount(s)}</div>
               <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>{s}</div>
             </Card>
           </Link>
@@ -119,10 +119,10 @@ export default async function P2PPage() {
             proven, later invoices extract in code for free
           </SectionTitle>
           <div className="mb-3 flex flex-wrap gap-x-6 gap-y-1 text-sm">
-            <span><span className="font-semibold tabular-nums">{tpl.summary.active}</span> suppliers learned</span>
-            <span><span className="font-semibold tabular-nums">{tpl.summary.learning}</span> still learning</span>
-            <span><span className="font-semibold tabular-nums">{tpl.summary.modelCallsAvoided}</span> model calls avoided</span>
-            <span>~<span className="font-semibold tabular-nums">${(tpl.summary.savedCents / 100).toFixed(2)}</span> saved</span>
+            <span><span className="num font-semibold">{tpl.summary.active}</span> suppliers learned</span>
+            <span><span className="num font-semibold">{tpl.summary.learning}</span> still learning</span>
+            <span><span className="num font-semibold">{tpl.summary.modelCallsAvoided}</span> model calls avoided</span>
+            <span>~<span className="num font-semibold">${(tpl.summary.savedCents / 100).toFixed(2)}</span> saved</span>
           </div>
           <div className="flex flex-wrap gap-2 text-xs">
             {tpl.templates.slice(0, 12).map((t) => (

@@ -9,6 +9,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { PUBLIC_API_URL as apiUrl } from "@/lib/api";
+import { Button } from "@/components/ui";
 
 type MonthRow = {
   month: string;
@@ -120,19 +121,15 @@ export default function PipelinePage() {
 
   const busy = p?.job.running ?? false;
   const btn = (label: string, onClick: () => void, opts?: { accent?: boolean; danger?: boolean; title?: string; disabled?: boolean }) => (
-    <button
+    <Button
       key={label}
       disabled={busy || opts?.disabled}
       onClick={onClick}
       title={opts?.title}
-      className="whitespace-nowrap rounded-lg border px-3 py-1.5 text-sm disabled:opacity-40"
-      style={{
-        borderColor: opts?.danger ? "var(--bad)" : opts?.accent ? "var(--accent)" : "var(--border)",
-        color: opts?.danger ? "var(--bad)" : opts?.accent ? "var(--accent)" : undefined,
-      }}
+      variant={opts?.danger ? "danger" : opts?.accent ? "outline" : "ghost"}
     >
       {label}
-    </button>
+    </Button>
   );
 
   const straight = p ? p.split.ap_straight + p.split.ar_posted : 0;
@@ -235,15 +232,15 @@ export default function PipelinePage() {
         <section className="rounded-xl border p-4" style={{ borderColor: "var(--accent)", background: "var(--card)" }}>
           <div className="mb-2 flex flex-wrap items-baseline gap-x-6 gap-y-1">
             <span className="text-sm font-medium">Running — {p.job.mode}</span>
-            <span className="text-2xl font-semibold tabular-nums">
+            <span className="text-2xl font-semibold tracking-tight">
               {p.job.done}
               <span className="text-sm font-normal" style={{ color: "var(--muted)" }}>/{p.job.total || "…"} items</span>
             </span>
-            <span className="text-2xl font-semibold tabular-nums">
+            <span className="text-2xl font-semibold tracking-tight">
               {mmss(p.job.elapsedMs)}
               <span className="text-sm font-normal" style={{ color: "var(--muted)" }}> elapsed</span>
             </span>
-            <span className="text-2xl font-semibold tabular-nums">
+            <span className="text-2xl font-semibold tracking-tight">
               {perMin(p.job.done, p.job.elapsedMs)}
               <span className="text-sm font-normal" style={{ color: "var(--muted)" }}> items/min</span>
             </span>
@@ -266,7 +263,7 @@ export default function PipelinePage() {
           </h3>
           {(lastRun.stats.queued ?? 0) > 0 ? (
             <p className="text-sm leading-6">
-              Cold start: <span className="font-semibold tabular-nums">{lastRun.stats.queued}</span> supplier invoices
+              Cold start: <span className="num font-semibold">{lastRun.stats.queued}</span> supplier invoices
               landed as unread documents — the Invoice Extraction Agent is reading each one (watch the agent queue
               tile and the ticker). Internal records ({lastRun.stats.purchases ?? 0} purchases,{" "}
               {lastRun.stats.receipts ?? 0} receipts, {lastRun.stats.arInvoices ?? 0} customer invoices) loaded as
@@ -274,11 +271,11 @@ export default function PipelinePage() {
             </p>
           ) : (
             <p className="text-sm leading-6">
-              <span className="font-semibold tabular-nums">{lastRun.items}</span> transactions processed in{" "}
-              <span className="font-semibold tabular-nums">{mmss(lastRun.ms)}</span>
+              <span className="num font-semibold">{lastRun.items}</span> transactions processed in{" "}
+              <span className="num font-semibold">{mmss(lastRun.ms)}</span>
               {" "}({perMin(lastRun.items, lastRun.ms)} per minute, no model calls — the machine is deterministic code).{" "}
-              <span className="font-semibold tabular-nums">{(lastRun.stats.posted ?? 0) + (lastRun.stats.arInvoices ?? 0)}</span> went
-              straight through untouched. <span className="font-semibold tabular-nums">{lastRun.stats.exceptions ?? 0}</span> fired
+              <span className="num font-semibold">{(lastRun.stats.posted ?? 0) + (lastRun.stats.arInvoices ?? 0)}</span> went
+              straight through untouched. <span className="num font-semibold">{lastRun.stats.exceptions ?? 0}</span> fired
               exceptions that need judgement. The books balanced the whole way:{" "}
               {lastRun.balance === 0 ? "✓ 0" : lastRun.balance}.
             </p>
@@ -375,7 +372,7 @@ export default function PipelinePage() {
             },
           ].map((s) => (
             <div key={s.l} className="rounded-xl border p-3 text-center" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
-              <div className="text-xl font-semibold tabular-nums">{s.v}</div>
+              <div className="text-xl font-semibold tracking-tight">{s.v}</div>
               <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>{s.l}</div>
               {s.hint && <div className="text-[10px]" style={{ color: "var(--muted)" }}>{s.hint}</div>}
             </div>

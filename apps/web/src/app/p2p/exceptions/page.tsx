@@ -193,7 +193,7 @@ export default function ExceptionsPage() {
                   {d.supplier?.name} · {d.invoice.supplierInvoiceNumber}{" "}
                   <Badge tone="warn">{CODE_LABELS[d.invoice.exceptionCode] ?? d.invoice.exceptionCode}</Badge>
                 </h3>
-                <span className="text-lg font-semibold tabular-nums">{money(d.invoice.grossMinor)}</span>
+                <span className="text-lg font-semibold tracking-tight">{money(d.invoice.grossMinor)}</span>
               </div>
               <div className="mt-1 flex flex-wrap gap-x-5 gap-y-1 text-xs" style={{ color: "var(--muted)" }}>
                 <span>invoiced {d.invoice.invoiceDate}</span>

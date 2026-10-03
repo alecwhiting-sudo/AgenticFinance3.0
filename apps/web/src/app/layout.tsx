@@ -1,5 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+// Typography system (UI_CONVENTIONS §4.1): Inter for UI, IBM Plex Mono for
+// data — self-hosted via fontsource (no build-time font downloads).
+import "@fontsource-variable/inter";
+import "@fontsource/ibm-plex-mono/400.css";
+import "@fontsource/ibm-plex-mono/500.css";
+import "@fontsource/ibm-plex-mono/600.css";
 import CommandPalette from "@/components/CommandPalette";
 import "./globals.css";
 

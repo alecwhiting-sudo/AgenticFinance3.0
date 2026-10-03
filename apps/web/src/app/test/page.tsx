@@ -9,6 +9,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { PUBLIC_API_URL as apiUrl } from "@/lib/api";
+import { Button } from "@/components/ui";
 
 type Pipeline = {
   months: { month: string; dataset: { total: number }; loaded: { total: number } }[];
@@ -347,7 +348,7 @@ export default function TestPage() {
             { v: `$${(p.modelSpend.costCents / 100).toFixed(2)}`, l: "model spend today" },
           ].map((s) => (
             <div key={s.l} className="rounded-xl border p-3 text-center" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
-              <div className="text-lg font-semibold tabular-nums">{s.v}</div>
+              <div className="text-lg font-semibold tracking-tight">{s.v}</div>
               <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>{s.l}</div>
             </div>
           ))}
@@ -429,7 +430,7 @@ export default function TestPage() {
             <button
               key={s.id}
               onClick={() => { setSel(s.id); setConfirm(null); setMsg(null); setJustFinished(false); }}
-              className="block w-full rounded-xl border p-3 text-left transition-transform hover:-translate-y-0.5"
+              className="block w-full rounded-xl border p-3 text-left"
               style={{
                 borderColor: sel === s.id ? "var(--accent)" : "var(--border)",
                 background: "var(--card)",
@@ -484,12 +485,11 @@ export default function TestPage() {
                   </button>
                 </span>
               ) : (
-                <button
+                <Button
                   key={a.label}
                   disabled={busy || (a.needsNextMonth && !p?.nextMonth)}
                   onClick={() => (a.danger ? setConfirm(a.label) : fire(a))}
-                  className="whitespace-nowrap rounded-lg border px-3 py-1.5 text-sm disabled:opacity-40"
-                  style={{ borderColor: a.danger ? "var(--bad)" : "var(--accent)", color: a.danger ? "var(--bad)" : "var(--accent)" }}
+                  variant={a.danger ? "danger" : "outline"}
                 >
                   {a.needsNextMonth && p?.nextMonth ? a.label.replace("next month", monthLabel(p.nextMonth)) : a.label}
                   {a.wipes !== undefined && (
@@ -497,7 +497,7 @@ export default function TestPage() {
                       {a.wipes ? "wipes first" : "adds to books"}
                     </span>
                   )}
-                </button>
+                </Button>
               ),
             )}
           </div>

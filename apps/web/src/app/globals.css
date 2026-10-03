@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/* Typography system (UI_CONVENTIONS §4): Inter for UI, IBM Plex Mono for
+ * data (self-hosted via fontsource, imported in layout.tsx). */
+@theme {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+
 :root {
   --background: #fafaf9;
   --foreground: #1c1917;
@@ -29,6 +36,18 @@
 body {
   background: var(--background);
   color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+/* Data typography (UI_CONVENTIONS §4.1): every numeric table cell — all of
+ * which carry `tabular-nums` by convention — renders in the data mono
+ * automatically, slightly down-sized so x-heights match the sans. Inline
+ * data (amounts, identifiers, dates) outside tables opts in via `.num`. */
+table .tabular-nums,
+.num {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  letter-spacing: -0.01em;
 }
 
 @keyframes fadein {

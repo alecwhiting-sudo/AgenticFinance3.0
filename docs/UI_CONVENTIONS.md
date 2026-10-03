@@ -496,3 +496,92 @@ Agent UX: [LangGraph HITL](https://docs.langchain.com/oss/python/langchain/front
 Stack: [shadcn/ui on Tailwind v4](https://ui.shadcn.com/docs/changelog/2025-02-tailwind-v4) ·
 [cmdk Command component](https://shadcnstudio.com/docs/components/command) ·
 [skeleton loading practice](https://balevdev.medium.com/skeletons-the-pinnacle-of-loading-states-in-react-19-427cbb5a1f48).
+
+---
+
+## PART 4 — Numbers, money and analytics (v2, Alec feedback 2026-10-03)
+
+Part 1 governed structure; this part governs the *visual identity of data*,
+because "one sans, no display font" at browser defaults is exactly what reads
+as a template. The references we build toward: Stripe's dashboard (money
+typography), Mercury (finance gravitas through restraint), Linear (type
+scale and calm chrome), Attio (data-dense tables), Tremor (analytics
+components for this stack, Phase 4c).
+
+### 4.1 Typefaces — the single biggest lever
+
+- **UI sans: Inter** (variable, self-hosted via `next/font`), `--font-sans`.
+  Headings `tracking-tight`; body `text-sm`. No other sans, ever.
+- **Data mono: IBM Plex Mono**, `--font-mono`. Worn by: every numeric **table
+  column**, money amounts in rows and running text, identifiers (PO/invoice
+  numbers), dates in tables, and code-ish values. Mechanism: all table cells
+  marked `tabular-nums` render in mono automatically (globals.css); inline
+  data uses the `num` utility class.
+- **Big figures are proportional sans, not mono.** A KPI value or hero number
+  uses Inter semibold with default (proportional) figures — `tabular-nums`
+  makes display-size numbers look loose. Tabular/mono is for *columns that
+  must align*, full stop.
+
+### 4.2 Type scale (the only sizes)
+
+| Voice | Spec |
+|---|---|
+| Page title | `text-2xl font-semibold tracking-tight` |
+| Section/card heading | `SectionTitle` (text-sm semibold uppercase tracked, muted) |
+| KPI value | `text-2xl font-semibold` (proportional figures) |
+| Body / table | `text-sm` |
+| Meta / hints / labels | `text-xs`, muted |
+
+Nothing else. A new size is a design decision, not a page decision.
+
+### 4.3 Money and number rules
+
+- **Precision ladder:** records and table cells show full pence (`£8,899.20`);
+  aggregates and KPI values auto-compact — `£1,284` → `£12.9k` → `£4.2m`
+  (one decimal at k/m) via `moneyCompact()`; counts compact the same way
+  (`1,284` / `12.9k`). Never mix precisions within one column.
+- **Negatives:** accounting parentheses `(£1,234.00)` in financial columns
+  (already in `money()`); deltas use signed `+/−` with the arrow optional.
+- **Variance semantics — colour by meaning, never by sign.** Cost up = bad
+  (red), revenue up = good (green), neutral movements stay ink. A delta
+  renders through one helper that takes `goodWhen: "up" | "down"`.
+- **Zero vs blank vs down** (restating §1.3): zero is `£0.00`, blank means
+  unknown, API-down is the amber banner — never conflate.
+- **Alignment matrix:** text left · money/numbers right in mono · dates right
+  of text, left of numbers · status badge fixed-width · identifier column is
+  the link, medium weight.
+
+### 4.4 KPI tile grammar (one component, no ad-hoc tiles)
+
+`Kpi` is the only stat tile: **label** (sentence case, muted, no colon) ·
+**value** (Inter semibold, auto-compact, proportional figures) · optional
+**delta** (signed, vs a named period, coloured by meaning per §4.3) ·
+optional **hint** (one muted line). A Kpi that aggregates something is a
+link to the list that produced it (§1.2). Hand-rolled `div` tiles are a
+defect; pages compose `Kpi` or nothing.
+
+### 4.5 Buttons (one component)
+
+`Button` with variants `primary` (accent fill, white text — at most one per
+view region), `outline` (border accent, accent text — secondary actions),
+`ghost` (border token — tertiary), `danger` (border/bad — destructive, always
+behind a named confirm, §1.7.8). Fixed paddings; `whitespace-nowrap`;
+disabled at 40%. Hand-rolled button styling is a defect.
+
+### 4.6 Motion correction
+
+§1.5 already forbids hover lifts; the `hover:-translate-y` instances that
+crept in are removed and must not return. Hover = background tint or border
+emphasis only. The approved motion vocabulary stays: `fadein`, `breathe`,
+numbers settling — real events only.
+
+### 4.7 Charts & analytics (Phase 4c rails, decided now)
+
+Charts follow the dataviz method (form first, colour by job, validate the
+palette, thin marks, hover layer, legend rules). Our parameter block:
+sequential = the accent teal ramp; diverging = teal↔amber with neutral grey
+midpoint; status palette = the badge tones (never reused as series colours);
+categorical order fixed when the first multi-series chart lands (validated,
+not eyeballed); surfaces = `--card` light/dark. Sparklines in Kpi `trend`
+slots use the muted ink with the current period in accent. One axis, always;
+every chart drills (§1.2); a table view exists for every chart.

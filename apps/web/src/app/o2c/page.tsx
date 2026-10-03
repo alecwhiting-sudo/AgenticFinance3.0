@@ -60,19 +60,19 @@ export default async function O2CPage({
 
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Card className="!p-3 text-center">
-          <div className="text-xl font-semibold tabular-nums">{money(outstanding)}</div>
+          <div className="text-xl font-semibold tracking-tight">{money(outstanding)}</div>
           <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>receivables outstanding</div>
         </Card>
         {["posted", "paid"].map((s) => (
           <Link key={s} href={`/o2c?view=${s}`}>
-            <Card className="!p-3 text-center transition-transform hover:-translate-y-0.5">
-              <div className="text-xl font-semibold tabular-nums">{st(s)?.n ?? 0}</div>
+            <Card className="!p-3 text-center">
+              <div className="text-xl font-semibold tracking-tight">{st(s)?.n ?? 0}</div>
               <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>{s === "posted" ? "open invoices" : "paid"}</div>
             </Card>
           </Link>
         ))}
         <Card className="!p-3 text-center">
-          <div className="text-xl font-semibold tabular-nums">{pipeline?.openReceipts ?? 0}</div>
+          <div className="text-xl font-semibold tracking-tight">{pipeline?.openReceipts ?? 0}</div>
           <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>unapplied receipts</div>
         </Card>
       </section>
@@ -84,7 +84,7 @@ export default async function O2CPage({
             const row = pipeline?.aging.find((a) => a.bucket === b);
             return (
               <div key={b} className="rounded-lg border p-3 text-center" style={{ borderColor: b === "d90" && row?.n ? "var(--bad)" : "var(--border)" }}>
-                <div className="text-lg font-semibold tabular-nums">{money(Number(row?.total ?? 0))}</div>
+                <div className="text-lg font-semibold tracking-tight">{money(Number(row?.total ?? 0))}</div>
                 <div className="text-xs" style={{ color: "var(--muted)" }}>
                   {AGING_LABELS[b]} · {row?.n ?? 0} inv
                 </div>

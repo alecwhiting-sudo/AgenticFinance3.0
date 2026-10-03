@@ -93,7 +93,7 @@ export default async function AgentDetail({ params }: { params: Promise<{ slug: 
             },
           ].map((s) => (
             <Card key={s.l} className="!p-3 text-center">
-              <div className="text-xl font-semibold tabular-nums">{s.v}</div>
+              <div className="text-xl font-semibold tracking-tight">{s.v}</div>
               <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>{s.l}</div>
             </Card>
           ))}

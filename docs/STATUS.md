@@ -51,6 +51,13 @@ _Last updated: 2026-10-03_
   priced at read time per tier) + learned extraction templates (suppliers
   promote off the model after 3 validated extractions; savings measured).
 
+- **Design system v2 (UI_CONVENTIONS Part 4, 2026-10-03)**: Inter + IBM Plex
+  Mono (table numerics/money/IDs render mono automatically via the
+  tabular-nums convention; KPI values proportional sans), money precision
+  ladder + moneyCompact, variance coloured by meaning, Kpi/Button/PageHeader
+  primitives, hover-lifts removed. Remaining sweep: adopt Kpi/Button on the
+  older pages opportunistically.
+
 ## Backlog (agreed, not yet built)
 
 1. **Phase 4c** analytics layer + NL Analyst Agent (before PM).

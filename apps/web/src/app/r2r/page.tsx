@@ -134,23 +134,23 @@ export default async function R2RPage({
 
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Link href="/p2p/invoices?status=exception">
-          <Card className="!p-3 text-center transition-transform hover:-translate-y-0.5">
-            <div className="text-xl font-semibold tabular-nums">{s.openExceptions}</div>
+          <Card className="!p-3 text-center">
+            <div className="text-xl font-semibold tracking-tight">{s.openExceptions}</div>
             <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>open exceptions</div>
           </Card>
         </Link>
         <Card className="!p-3 text-center">
-          <div className="text-xl font-semibold tabular-nums">{s.failedEvents}</div>
+          <div className="text-xl font-semibold tracking-tight">{s.failedEvents}</div>
           <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>failed events</div>
         </Card>
         <Link href="/ledger">
-          <Card className="!p-3 text-center transition-transform hover:-translate-y-0.5">
+          <Card className="!p-3 text-center">
             <div className="text-xl font-semibold">TB</div>
             <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>trial balance</div>
           </Card>
         </Link>
         <Link href="/approvals">
-          <Card className="!p-3 text-center transition-transform hover:-translate-y-0.5">
+          <Card className="!p-3 text-center">
             <div className="text-xl font-semibold">✓</div>
             <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>approvals inbox</div>
           </Card>

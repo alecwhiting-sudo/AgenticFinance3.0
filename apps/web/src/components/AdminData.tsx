@@ -105,7 +105,7 @@ export default function AdminData() {
             "GL balance": Number(s.counts.balance) === 0 ? "✓ 0" : s.counts.balance,
           }).map(([k, v]) => (
             <div key={k} className="rounded-lg border p-2 text-center" style={{ borderColor: "var(--border)" }}>
-              <div className="text-lg font-semibold tabular-nums">{v}</div>
+              <div className="text-lg font-semibold tracking-tight">{v}</div>
               <div className="text-[10px] uppercase tracking-wide" style={{ color: "var(--muted)" }}>{k}</div>
             </div>
           ))}

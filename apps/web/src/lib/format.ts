@@ -9,6 +9,22 @@ export function money(minor: number): string {
   return minor < 0 ? `(£${abs})` : `£${abs}`;
 }
 
+/** Compact money for KPI values and aggregates (UI_CONVENTIONS §4.3):
+ * £1,284 → £12.9k → £4.2m. One decimal at k/m; full pence stays in tables. */
+export function moneyCompact(minor: number): string {
+  const abs = Math.abs(minor) / 100;
+  const sign = minor < 0 ? "−" : "";
+  if (abs >= 1_000_000) return `${sign}£${(abs / 1_000_000).toFixed(1)}m`;
+  if (abs >= 10_000) return `${sign}£${(abs / 1_000).toFixed(1)}k`;
+  return `${sign}£${abs.toLocaleString("en-GB", { maximumFractionDigits: 0 })}`;
+}
+
+/** Compact counts: 1,284 → 12.9k. */
+export function numCompact(n: number): string {
+  if (Math.abs(n) >= 10_000) return `${(n / 1_000).toFixed(1)}k`;
+  return n.toLocaleString("en-GB");
+}
+
 export function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-GB", {
     day: "numeric",
