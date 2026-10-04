@@ -171,7 +171,8 @@ export function Waterfall({
   items,
   endLabel,
   end,
-  height = 240,
+  height = 280,
+  width = 860,
 }: {
   startLabel: string;
   start: number;
@@ -179,11 +180,14 @@ export function Waterfall({
   endLabel: string;
   end: number;
   height?: number;
+  /** viewBox width — match it to the card's real width so text renders at
+   * its designed size instead of scaling up with the container. */
+  width?: number;
 }) {
-  const W = 640;
+  const W = width;
   const H = height;
   const padL = 66;
-  const padB = 50;
+  const padB = 56;
   const padT = 16; // headroom for the delta labels above the highest bar
   const cols = items.length + 2;
   const running: number[] = [start];
@@ -198,7 +202,9 @@ export function Waterfall({
   const padR = 14;
   const y = (v: number) => padT + (1 - (v - lo) / (hi - lo)) * (H - padT - padB);
   const plotW = W - padL - padR;
-  const bw = Math.min(34, (plotW / cols) * 0.62);
+  const bw = Math.min(42, (plotW / cols) * 0.62);
+  // room per column decides how much of a name fits before truncating
+  const labelChars = Math.max(14, Math.floor(plotW / cols / 3.6));
   const cx = (i: number) => padL + ((i + 0.5) / cols) * plotW;
   const ticks = niceTicks(lo, hi);
   const short = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
@@ -299,7 +305,9 @@ export function Waterfall({
               fill="var(--muted)"
               transform={`rotate(-30 ${cx(i + 1)} ${H - padB + 12})`}
             >
-              {short(it.label, 14)}
+              {/* native tooltip reveals the full name behind a truncation */}
+              <title>{`${it.label} · ${it.delta >= 0 ? "favourable" : "adverse"} ${money(it.delta)}`}</title>
+              {short(it.label, labelChars)}
             </text>
           </g>
         );
