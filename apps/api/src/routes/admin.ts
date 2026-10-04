@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { sql } from "drizzle-orm";
 import { requireDb } from "../lib/db.js";
 import { emitActivity } from "../lib/activity.js";
-import { datasetMonthTotals, datasetProfile, loadDemoDataset, truncateTransactions } from "../services/datasetLoader.js";
+import { datasetMonthTotals, datasetPlants, datasetProfile, loadDemoDataset, truncateTransactions } from "../services/datasetLoader.js";
 
 /** Admin panel backend (demo control room — not part of the finance product).
  * Reset/reload the demo data, replay it live from zero, process it month by
@@ -63,6 +63,9 @@ export function adminRoutes(app: FastifyInstance): void {
 
   /** What test data exists, before anything runs (Test panel inventory). */
   app.get("/admin/dataset", async () => datasetProfile());
+  /** The live test data map: every planted flaw with details and dates,
+   * derived from the committed dataset (rendered at /test/plants). */
+  app.get("/admin/dataset/plants", async () => datasetPlants());
 
   /** The mission-control feed (plans/DEMO_SCRIPTS.md §4): dataset backlog vs
    * loaded per month, the control split, integrity, job state, past runs. */
@@ -146,11 +149,17 @@ export function adminRoutes(app: FastifyInstance): void {
    * from zero; paceMs 0 = flat out, timed), "month" (incremental: next
    * unloaded month), "months" (all remaining months, pausing at each
    * boundary). Optional label names the run in the dashboard history. */
-  app.post<{ Body: { mode?: string; paceMs?: number; label?: string } }>("/admin/reset", async (req, reply) => {
+  app.post<{ Body: { mode?: string; paceMs?: number; label?: string; from?: string; to?: string } }>("/admin/reset", async (req, reply) => {
     const db = requireDb();
     const mode = req.body?.mode ?? "reload";
-    if (!["reload", "zero", "replay", "month", "months", "cold", "cold-all"].includes(mode))
-      return reply.code(400).send({ error: "mode must be reload | zero | replay | month | months | cold | cold-all" });
+    if (!["reload", "zero", "replay", "month", "months", "cold", "cold-all", "window"].includes(mode))
+      return reply.code(400).send({ error: "mode must be reload | zero | replay | month | months | cold | cold-all | window" });
+    if (mode === "window") {
+      const months = datasetMonthTotals().map((m) => m.month);
+      const { from, to } = req.body ?? {};
+      if (!from || !to || !months.includes(from) || !months.includes(to) || from > to)
+        return reply.code(400).send({ error: `window needs from/to dataset months in order (${months[0]}..${months[months.length - 1]})` });
+    }
     if (job.running) return reply.code(409).send({ error: `a ${job.mode} job is already running` });
 
     job.running = true;
@@ -184,6 +193,25 @@ export function adminRoutes(app: FastifyInstance): void {
         if (mode === "zero") {
           await truncateTransactions(db);
           job.message = "all transaction data cleared — the books are empty";
+        } else if (mode === "window") {
+          // scenario window (plans/DATASET_V2.md PR-D): wipe, then load only
+          // the chosen months — Jan–Jun, Apr–Sep, or any custom range
+          const from = req.body!.from!;
+          const to = req.body!.to!;
+          const startedAt = new Date().toISOString();
+          const result = await loadDemoDataset(db, {
+            monthRange: { from, to },
+            paceMs,
+            onProgress: (done, total, message) => {
+              job.done = done;
+              job.total = total;
+              job.message = message;
+            },
+          });
+          if (!result.skipped) {
+            record(req.body?.label?.slice(0, 60) ?? `window ${from}..${to}`, startedAt, job.done, result);
+            job.message = `loaded ${from}..${to} — ${result.journals} journals, balance ${result.balance}`;
+          }
         } else if (mode === "month" || mode === "months" || mode === "cold") {
           // one month per pass; "months" keeps going with a pause at each
           // boundary; "cold" queues the month's supplier invoices for the

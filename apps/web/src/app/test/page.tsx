@@ -14,7 +14,7 @@ import { BoardLanes, BoardRuns, BoardTicker, BoardTiles, monthLabel, mmss, type 
 
 type Action = {
   label: string;
-  run: { kind: "reset"; mode: string; paceMs?: number } | { kind: "day"; scope: string } | { kind: "drip"; scenario: string };
+  run: { kind: "reset"; mode: string; paceMs?: number; from?: string; to?: string } | { kind: "day"; scope: string } | { kind: "drip"; scenario: string };
   danger?: boolean;
   needsNextMonth?: boolean;
   /** true = wipes the books first; false = builds on what's already loaded */
@@ -75,6 +75,35 @@ const SCENARIOS: Scenario[] = [
       { label: "Statements reflect the months processed so far", href: "/reports" },
       { label: "Open exceptions — review in the workbench", href: "/p2p/exceptions", count: "exceptions" },
       { label: "Approvals awaiting decision", href: "/approvals", count: "approvals" },
+    ],
+  },
+  {
+    id: "window",
+    title: "Six-month windows",
+    tagline: "Wipe, then run just a chosen slice of the year — Jan–Jun, Apr–Sep, or any range.",
+    cost: "£0 — no model calls (deterministic processing)",
+    duration: "~10–30s per window",
+    does:
+      "Wipes the books, then loads ONLY the months you choose, end to end — purchases, receipts, invoices matched and posted, billing, bank feed. Payments dated beyond the window stay unpaid, so the window ends with a realistic open AP/AR position. Use the presets or pick any start and end month below.",
+    uses: "The committed dataset, filtered to the chosen months (the dataset now spans Jan–Sep 2026). Each window carries its share of the planted exceptions — the test data map lists exactly which plants fall in which month.",
+    proves: [
+      "The same books build correctly from any starting slice — not just the full year",
+      "A half-year close: statements, TB and analytics over exactly the chosen window (pair it with the period lens)",
+      "Open items at the window edge are honest: invoices due after the end stay unpaid",
+    ],
+    notProves: [
+      "Document extraction (structured data — see 'From scratch')",
+      "Continuity across the wipe — each window is a fresh build, not an increment",
+    ],
+    actions: [
+      { label: "First half: Jan – Jun", run: { kind: "reset", mode: "window", from: "2026-01", to: "2026-06", paceMs: 0 }, danger: true, wipes: true },
+      { label: "As before: Apr – Sep", run: { kind: "reset", mode: "window", from: "2026-04", to: "2026-09", paceMs: 0 }, danger: true, wipes: true },
+    ],
+    next: [
+      { label: "Statements over the window — set the period lens to match", href: "/reports" },
+      { label: "Trial balance — journals = events, GL to zero", href: "/ledger" },
+      { label: "Open exceptions in the window", href: "/p2p/exceptions", count: "exceptions" },
+      { label: "Which plants landed in this window — the test data map", href: "/test/plants" },
     ],
   },
   {
@@ -238,6 +267,9 @@ export default function TestPage() {
   const [msg, setMsg] = useState<string | null>(null);
   const [justFinished, setJustFinished] = useState(false);
   const [wasRunning, setWasRunning] = useState(false);
+  // custom window range (the "Six-month windows" scenario)
+  const [winFrom, setWinFrom] = useState("2026-01");
+  const [winTo, setWinTo] = useState("2026-09");
 
   const load = useCallback(async () => {
     try {
@@ -272,7 +304,7 @@ export default function TestPage() {
         const res = await fetch(`${apiUrl}/admin/reset`, {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ mode: a.run.mode, paceMs: a.run.paceMs ?? 0 }),
+          body: JSON.stringify({ mode: a.run.mode, paceMs: a.run.paceMs ?? 0, from: a.run.from, to: a.run.to }),
         });
         if (!res.ok) setMsg(((await res.json()) as { error?: string }).error ?? "failed");
         else setMsg("Started — follow it below or on the mission control board.");
@@ -353,7 +385,10 @@ export default function TestPage() {
             {ds.ar.invoices} customer invoices ({ds.ar.contracts} with contracts) · {ds.bank.lines} bank lines ·{" "}
             {Object.values(ds.ap.plantedExceptions).reduce((a, b) => a + b, 0)} planted exceptions ·{" "}
             {ds.masters.suppliers} suppliers, {ds.masters.customers} customers. Generated once by the Transaction
-            Generator Agent and committed to the repository; every run uses the same dataset.
+            Generator Agent and committed to the repository; every run uses the same dataset.{" "}
+            <Link href="/test/plants" className="hover:underline" style={{ color: "var(--accent)" }}>
+              Test data map — every planted flaw, with details and dates →
+            </Link>
           </p>
           {showData && (
             <div className="mt-3 grid gap-4 text-sm sm:grid-cols-3">
@@ -455,7 +490,7 @@ export default function TestPage() {
               confirm === a.label ? (
                 <span key={a.label} className="flex items-center gap-2">
                   <span className="text-xs" style={{ color: "var(--bad)" }}>
-                    {a.run.kind === "reset" && (a.run.mode === "zero" ? "Wipes ALL transactions." : a.run.mode === "cold-all" ? "Wipes, then ~450 real model extractions (~£5–6, 30–45 min)." : "Wipes and re-runs ALL transactions.")} Sure?
+                    {a.run.kind === "reset" && (a.run.mode === "zero" ? "Wipes ALL transactions." : a.run.mode === "cold-all" ? "Wipes, then ~450 real model extractions (~£5–6, 30–45 min)." : a.run.mode === "window" ? "Wipes the books, then loads only the chosen months." : "Wipes and re-runs ALL transactions.")} Sure?
                   </span>
                   <button onClick={() => fire(a)} className="whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium text-white" style={{ background: "var(--bad)" }}>
                     Yes, go
@@ -481,6 +516,39 @@ export default function TestPage() {
               ),
             )}
           </div>
+          {scenario.id === "window" && ds && (
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+              <span className="text-xs" style={{ color: "var(--muted)" }}>Custom range:</span>
+              {[
+                { v: winFrom, set: setWinFrom, label: "from" },
+                { v: winTo, set: setWinTo, label: "to" },
+              ].map((x) => (
+                <select
+                  key={x.label}
+                  value={x.v}
+                  onChange={(e) => x.set(e.target.value)}
+                  aria-label={`Window ${x.label}`}
+                  className="rounded-lg border px-2 py-1 text-xs"
+                  style={{ borderColor: "var(--border)", background: "var(--card)", color: "var(--foreground)" }}
+                >
+                  {ds.months.map((m) => (
+                    <option key={m.month} value={m.month}>{monthLabel(m.month)}</option>
+                  ))}
+                </select>
+              ))}
+              <Button
+                disabled={busy || winFrom > winTo}
+                variant="outline"
+                onClick={() => {
+                  void fire({ label: "custom window", run: { kind: "reset", mode: "window", from: winFrom, to: winTo, paceMs: 0 }, wipes: true });
+                }}
+              >
+                Run {monthLabel(winFrom)} – {monthLabel(winTo)}
+                <span className="ml-2 text-[10px] uppercase tracking-wide" style={{ color: "var(--muted)" }}>wipes first</span>
+              </Button>
+              {winFrom > winTo && <span className="text-xs" style={{ color: "var(--bad)" }}>start must not be after end</span>}
+            </div>
+          )}
           {!busy && scenario.actions.some((a) => a.needsNextMonth) && !p?.nextMonth && (
             <p className="mt-2 text-xs" style={{ color: "var(--warn)" }}>
               All dataset months are already loaded, so there is nothing left for this scenario to

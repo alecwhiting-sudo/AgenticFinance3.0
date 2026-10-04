@@ -120,6 +120,10 @@ export type LoadOptions = {
   /** incremental: load only the next unloaded dataset month (no truncate).
    * Drives the month-by-month demo scenario (plans/DEMO_SCRIPTS.md §2). */
   nextMonthOnly?: boolean;
+  /** scenario window (plans/DATASET_V2.md PR-D): wipe, then load ONLY the
+   * months in [from..to] (inclusive month codes). Payments dated beyond the
+   * window stay unpaid — open AP at the window end is the realistic state. */
+  monthRange?: { from: string; to: string };
   /** cold start: internal records (purchases, GRNs, AR billing, bank feed)
    * load as system data, but supplier invoices are NOT posted — each one is
    * queued as a document for the Invoice Extraction Agent, exactly like
@@ -137,6 +141,11 @@ export type LoadResult =
   | { skipped?: false; stats: Record<string, number>; journals: number; balance: number; monthLoaded?: string | null };
 
 const monthOf = (d: string) => d.slice(0, 7);
+const priorMonthCode = (p: string) => {
+  const [y, m] = p.split("-").map(Number) as [number, number];
+  const d = new Date(Date.UTC(y, m - 2, 1));
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+};
 
 /** Full profile of the committed test dataset (static — cached): what the
  * Test panel shows before any scenario runs, so the audience knows exactly
@@ -170,6 +179,124 @@ export function datasetProfile(): Record<string, unknown> {
     masters: { suppliers: (d.suppliers ?? []).length, customers: d.customers.length },
   };
   return profileCache;
+}
+
+/** The live test data map (plans/TEST_DATA_MAP.md, rendered at /test/plants):
+ * every planted flaw in the committed dataset with its details and dates,
+ * derived from the dataset itself so it can never drift from the data. */
+let plantsCache: Record<string, unknown> | null = null;
+export function datasetPlants(): Record<string, unknown> {
+  if (plantsCache) return plantsCache;
+  const d: StudioDataset & {
+    meta: { seed: number; from: string; to: string; version: number };
+    suppliers: { code: string; name: string; iban?: string }[];
+  } = JSON.parse(readFileSync(path.join(seedDir, "generated/dataset.json"), "utf8"));
+  const sup = new Map(d.suppliers.map((s) => [s.code, s]));
+  const gbp = (m: number) => `£${(m / 100).toLocaleString("en-GB", { minimumFractionDigits: 2 })}`;
+
+  const CONTROLS: Record<string, { control: string; fraud?: boolean }> = {
+    price_variance: { control: "3-way match — price tolerance 2% / £25 per line (C-P2)" },
+    qty_short_receipt: { control: "3-way match — GRN quantity check (C-P2)" },
+    missing_receipt: { control: "3-way match — receipt required; human-only resolution" },
+    no_purchase: { control: "purchase-authorisation check at capture (C-P1/C-P2)" },
+    duplicate_suspect: { control: "duplicate screen — same number, or same amount within 10 days (C-P5)" },
+    bank_detail_change: { control: "email fraud screen → out-of-band verification (C-P4); human-only, agents abstain", fraud: true },
+    bank_detail_mismatch: { control: "intake IBAN check vs the supplier master's verified bank details; human-only, agents abstain", fraud: true },
+    total_mismatch: { control: "intake totals reconciliation — stated totals must equal the line sum" },
+  };
+
+  const plants: Record<string, unknown>[] = [];
+  const special: Record<string, unknown>[] = [];
+  for (const c of d.ap) {
+    const s = sup.get(c.supplierCode);
+    const inv = c.invoice;
+    const linesSum = inv.lines.reduce((n, l) => n + l.qty * l.unitPriceMinor, 0);
+    if (c.exception) {
+      let detail = "";
+      switch (c.exception) {
+        case "price_variance":
+          detail = c.po
+            ? `line 1 invoiced at ${gbp(inv.lines[0]!.unitPriceMinor)} vs ${gbp(c.po.lines[0]!.unitPriceMinor)} approved on ${c.po.number}`
+            : "invoiced above the approved price";
+          break;
+        case "qty_short_receipt":
+          detail = c.grn
+            ? `line 1 billed ×${inv.lines[0]!.qty} but only ×${c.grn.qtyReceived[0]} received on ${c.grn.number}`
+            : "billed more than received";
+          break;
+        case "missing_receipt":
+          detail = `${c.po?.number ?? "the purchase"} exists but no goods receipt was ever booked`;
+          break;
+        case "no_purchase":
+          detail = "arrived with no purchase record — unapproved spend";
+          break;
+        case "duplicate_suspect":
+          detail = "re-bills the same supplier — same amount within days of the original, under a fresh number";
+          break;
+        case "bank_detail_change":
+          detail = "the covering email asks to redirect payment to new bank details — never action from an email";
+          break;
+        case "bank_detail_mismatch":
+          detail = `invoice prints IBAN ${inv.iban} but the supplier master holds ${s?.iban} — verify out-of-band`;
+          break;
+        case "total_mismatch":
+          detail = `stated net ${gbp(inv.netMinor)} but the lines sum to ${gbp(linesSum)} (${inv.multiPage ? `${inv.multiPage.pages}-page invoice` : "header error"}) — must never post silently`;
+          break;
+        default:
+          detail = c.exception;
+      }
+      plants.push({
+        code: c.exception,
+        fraud: CONTROLS[c.exception]?.fraud ?? false,
+        control: CONTROLS[c.exception]?.control ?? "",
+        chainId: c.id,
+        invoiceNumber: inv.number,
+        supplier: s?.name ?? c.supplierCode,
+        invoiceDate: inv.invoiceDate,
+        grossMinor: inv.grossMinor,
+        format: inv.format ?? "text_pdf",
+        detail,
+      });
+    }
+    if (inv.multiPage) {
+      special.push({
+        kind: "multi_page",
+        chainId: c.id,
+        invoiceNumber: inv.number,
+        supplier: s?.name ?? c.supplierCode,
+        invoiceDate: inv.invoiceDate,
+        grossMinor: inv.grossMinor,
+        pages: inv.multiPage.pages,
+        layout: inv.multiPage.perPageSubtotals ? "per-page subtotals + grand total" : "grand total on the last page only",
+        trap: inv.multiPage.trap ?? false,
+        detail: inv.multiPage.trap
+          ? `THE TRAP: stated net ${gbp(inv.netMinor)} ≠ line sum ${gbp(linesSum)} — correct behaviour is a total_mismatch exception, never a silent post and never a silent "fix" by extraction`
+          : `clean — all ${inv.lines.length} lines across ${inv.multiPage.pages} pages must be captured and the totals reconcile`,
+      });
+    }
+    if (inv.scanQuality === "poor") {
+      special.push({
+        kind: "poor_scan",
+        chainId: c.id,
+        invoiceNumber: inv.number,
+        supplier: s?.name ?? c.supplierCode,
+        invoiceDate: inv.invoiceDate,
+        grossMinor: inv.grossMinor,
+        detail: "scan rendered with heavy skew, blur and noise — vision extraction must escalate when it cannot read a figure, never guess",
+      });
+    }
+  }
+  const byCode: Record<string, number> = {};
+  for (const p of plants) byCode[p.code as string] = (byCode[p.code as string] ?? 0) + 1;
+  plantsCache = {
+    meta: d.meta,
+    totals: { apChains: d.ap.length, planted: plants.length, byCode },
+    plants: plants.sort((a, b) =>
+      String(a.code).localeCompare(String(b.code)) || String(a.invoiceDate).localeCompare(String(b.invoiceDate)),
+    ),
+    special,
+  };
+  return plantsCache;
 }
 
 /** Per-month transaction totals of the committed dataset (static — cached). */
@@ -228,7 +355,19 @@ export async function loadDemoDataset(db: Db, opts: LoadOptions = {}): Promise<L
 
   // Month window for incremental loading: months in (from, to] load this call.
   let window: { from: string | null; to: string } | null = null;
-  if (opts.nextMonthOnly) {
+  if (opts.monthRange) {
+    const months = datasetMonthTotals().map((m) => m.month);
+    const { from, to } = opts.monthRange;
+    if (!months.includes(from) || !months.includes(to) || from > to)
+      throw Object.assign(
+        new Error(`window must be dataset months in order (${months[0]}..${months[months.length - 1]})`),
+        { statusCode: 400 },
+      );
+    await truncateTransactions(db);
+    // inWindow is from-EXCLUSIVE, so anchor just before the start month
+    window = { from: priorMonthCode(from), to };
+    log(`loading dataset window ${from}..${to} (books wiped first)`);
+  } else if (opts.nextMonthOnly) {
     const allMonths = datasetMonthTotals().map((m) => m.month);
     // Boundary = last dataset month with rows in the books. Ignore anything
     // dated beyond the dataset (dripped invoices are dated "today", which

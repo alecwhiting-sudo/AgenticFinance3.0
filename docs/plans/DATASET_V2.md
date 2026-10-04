@@ -119,15 +119,21 @@ identically):
    Size: large — may land as 2–3 commits (schema+control, then data, then
    docs/evals) but one package.
 
-## PR-D — Scenario windows (Jan–Jun / Apr–Sep / arbitrary-to-date)
+## PR-D — Scenario windows + the in-app answer sheet · **BUILT 2026-10-04**
 
-- Loader gains window params (start month, end month) instead of the fixed
-  Apr-start; horizon cap logic generalised.
-- Test panel: "Run six months" scenario cards — Jan–Jun, Apr–Sep, plus a
-  custom start→Sep picker; each card states volumes and planted-flaw counts
-  for its window (sourced from the map).
-- Month-by-month demo now offers all nine months. Risk: low-medium.
-  Size: small-medium. Depends on PR-C.
+- Loader `monthRange` mode: wipe, then load ONLY [from..to] months;
+  payments dated beyond the window stay unpaid (honest open AP at the
+  edge). `/admin/reset` mode `window` with from/to.
+- Test panel: "Six-month windows" scenario — Jan–Jun and Apr–Sep presets
+  plus a custom from/to picker. Verified: Jan–Jun = 1169 journals,
+  balance 0, months 2026-01..06 only, 83 open AP at the window edge.
+- **/test/plants** (deliberately NOT in the navigation — reached from the
+  Test panel): the live test data map. Every planted flaw with invoice
+  number, supplier, date, amount, arrival format and the control that
+  catches it, served by `GET /admin/dataset/plants` which derives it from
+  the committed dataset at runtime — it can never drift from the data.
+  Multi-page and poor-scan challenges have their own sections; the trap
+  row is highlighted.
 
 ## PR-E — Chat-built analytics dashboards
 
@@ -146,12 +152,39 @@ Describe tiles in the Analyst chat → a page gets built.
 - Honours the PR-B period lens. Risk: medium. Size: large. Independent of
   C/D — can be pulled earlier if wanted.
 
+## PR-F — Home dashboard revamp: live motion over static totals · **planned**
+
+User observation (2026-10-04): the home dashboard barely moves while whole
+months are being processed — static master-data tiles (accounts 21,
+suppliers 40, customers 60, items 5) say nothing once you've seen them
+once. Principle: every tile should either MOVE when the business moves or
+answer a question a CFO actually asks; master-data counts belong in Admin.
+
+- **Money KPIs instead of master counts**: cash position (with a
+  sparkline), this month's result (period lens aware), AP due in 7 days,
+  AR overdue — each drilling to its page. All book-filtered, all live.
+- **Motion row**: invoices processed today, straight-through rate (% of
+  captures with zero touches), open exceptions with a delta since
+  yesterday, model spend today vs the deterministic volume it rode on.
+- **A working pipeline is visible from the front door**: when a load/run
+  is active, show the live throughput strip (reuse the mission-control
+  lanes + items/min ticker) right on the dashboard; counters tick on SSE
+  activity events instead of waiting for a reload.
+- **Agent roster with a pulse**: working/idle state per agent (claimed
+  work items), last action one-liner, runs + cost today — not just
+  release numbers.
+- Honesty rules carry over: no vanity metrics, every figure drills to its
+  source, "to date" labelling for the in-progress month.
+- Size: M. Depends on nothing; best after E so chat-built tiles and the
+  dashboard share primitives.
+
 ## Sequence summary
 
-| # | Package | Size | Depends on | Why this slot |
+| # | Package | Size | Depends on | Status |
 |---|---|---|---|---|
-| A | Test data map (existing) | docs | — | the contract; done now |
-| B | Period lens | M | — | makes 9 months navigable; low risk |
-| C | Dataset v2 + IBAN control | L | drift guard, B (nice-to-have) | the core ask; one coherent package |
-| D | Scenario windows | S–M | C | needs Jan–Mar data to exist |
-| E | Chat-built dashboards | L | B (lens) | biggest, independent — last by default |
+| A | Test data map (existing) | docs | — | ✅ built |
+| B | Period lens | M | — | ✅ built |
+| C | Dataset v2 + IBAN control | L | drift guard | ✅ built |
+| D | Scenario windows + /test/plants | S–M | C | ✅ built |
+| E | Chat-built dashboards | L | B (lens) | next up |
+| F | Home dashboard revamp (live motion) | M | — (shares primitives with E) | planned |

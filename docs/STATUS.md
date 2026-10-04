@@ -131,10 +131,13 @@ _Last updated: 2026-10-04_
    supplier IBANs + `bank_detail_mismatch` and `total_mismatch` intake
    controls — both human-only/never-silent; poor-scan tier ×10; playbook +
    extraction skills updated (stale pins expected — refresh via the
-   governance flow); new eval cases; invariants 1797) → D
-   six-month/arbitrary scenario windows → E chat-built analytics dashboard
-   pages (supersedes the old "saved views" idea). Do-first: Studio v1
-   byte-identical regen check.
+   governance flow); new eval cases; invariants 1797) → **D scenario
+   windows + /test/plants BUILT 2026-10-04** (wipe-and-load any month
+   range from the Test panel — Jan–Jun/Apr–Sep presets + custom picker;
+   /test/plants, off the main nav, renders the live test data map from the
+   dataset itself) → E chat-built analytics dashboard pages (supersedes
+   the old "saved views" idea) → F home dashboard revamp (live motion
+   over static totals — planned 2026-10-04, see the plan doc).
 3. **Phase 4c follow-ons** — saved views on a dashboard; data permissions
    (stubbed: every record-catalogue entity declares an `access` scope,
    enforcement designed in `plans/ANALYTICS.md` §3c). Core 4c built
