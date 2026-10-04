@@ -409,8 +409,15 @@ export async function loadDemoDataset(db: Db, opts: LoadOptions = {}): Promise<L
     const mm = monthOf(d);
     return (window.from === null || mm > window.from) && mm <= window.to;
   };
-  const apChains = dataset.ap.filter((c) => inWindow(c.invoice.invoiceDate));
-  const arRows = dataset.ar.filter((a) => inWindow(a.invoiceDate));
+  // Always process in DATE order: the dataset file appends extensions (the
+  // v2 Jan–Mar months sit after the original Apr–Sep chains), but a replay
+  // must land January before April. Date order also keeps the duplicate
+  // screen honest — the original invoice is always seen before its re-bill.
+  const byDate = <T,>(key: (x: T) => string) => (a: T, b: T) => key(a).localeCompare(key(b));
+  const apChains = dataset.ap
+    .filter((c) => inWindow(c.invoice.invoiceDate))
+    .sort(byDate((c) => c.invoice.invoiceDate));
+  const arRows = dataset.ar.filter((a) => inWindow(a.invoiceDate)).sort(byDate((a) => a.invoiceDate));
   const bankRows = dataset.bank.filter((b) => inWindow(b.date));
 
   // budgets Apr–Mar (12 seeded periods)

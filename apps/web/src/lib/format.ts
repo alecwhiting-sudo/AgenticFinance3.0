@@ -9,6 +9,14 @@ export function money(minor: number): string {
   return minor < 0 ? `(£${abs})` : `£${abs}`;
 }
 
+/** Whole-pound money for dense multi-column statements (9+ months across):
+ * pence add no information at that altitude and force horizontal scroll —
+ * the drill to the ledger keeps full precision. Accounting parentheses. */
+export function moneyWhole(minor: number): string {
+  const abs = Math.round(Math.abs(minor) / 100).toLocaleString("en-GB");
+  return minor < 0 ? `(£${abs})` : `£${abs}`;
+}
+
 /** Compact money for KPI values and aggregates (UI_CONVENTIONS §4.3):
  * £1,284 → £12.9k → £4.2m. One decimal at k/m; full pence stays in tables. */
 export function moneyCompact(minor: number): string {

@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { parsePeriodLens } from "@af/shared";
 import { getJson } from "@/lib/api";
-import { money } from "@/lib/format";
+import { moneyWhole } from "@/lib/format";
 import { ApiDownBanner } from "@/components/Chrome";
 import { Badge, Card, SectionTitle } from "@/components/ui";
 import Commentary from "@/components/Commentary";
@@ -20,8 +20,9 @@ type Statements = {
   plCumulative: { period_code: string; balance_minor: number }[];
 };
 
-/** debit-positive storage → display sign per statement convention */
-const show = (minor: number) => money(minor);
+/** debit-positive storage → display sign per statement convention;
+ * whole pounds — nine months must fit without horizontal scroll */
+const show = (minor: number) => moneyWhole(minor);
 
 export default async function ReportsPage({
   searchParams,
@@ -35,7 +36,7 @@ export default async function ReportsPage({
 
   if (!s)
     return (
-      <main className="max-w-4xl space-y-5">
+      <main className="space-y-5">
         <h2 className="text-2xl font-semibold tracking-tight">Reports</h2>
         <ApiDownBanner show />
       </main>
@@ -106,7 +107,7 @@ export default async function ReportsPage({
   );
 
   return (
-    <main className="max-w-4xl space-y-6">
+    <main className="space-y-6">
       <section className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-2xl font-semibold tracking-tight">
