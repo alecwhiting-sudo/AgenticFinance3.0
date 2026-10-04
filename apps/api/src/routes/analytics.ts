@@ -353,19 +353,26 @@ export function analyticsRoutes(app: FastifyInstance): void {
   app.get<{ Querystring: { period?: string } }>("/analytics/flux", async (req, reply) => {
     const db = requireDb();
     let period = /^\d{4}-\d{2}$/.test(req.query.period ?? "") ? req.query.period! : undefined;
+    const currentMonth = new Date().toISOString().slice(0, 7);
     if (!period) {
+      // Default to the latest COMPLETE month: comparing a 3-day-old month to
+      // a full prior month reads as "revenue collapsed" and means nothing.
+      // The in-progress month stays selectable; the UI labels it "to date".
       const latest = (
         await db.execute(sql`
-          select max(j.period_code) as p from erp.journal j
+          select max(j.period_code) filter (where j.period_code < ${currentMonth}) as complete,
+                 max(j.period_code) as any
+          from erp.journal j
           join erp.journal_line jl on jl.journal_id = j.id and j.book <> 'test'
           join erp.account a on a.code = jl.account_code
           where a.type in ('income', 'expense')
         `)
-      ).rows[0] as { p: string | null };
-      if (!latest.p) return reply.code(409).send({ error: "no P&L activity yet" });
-      period = latest.p;
+      ).rows[0] as { complete: string | null; any: string | null };
+      if (!latest.any) return reply.code(409).send({ error: "no P&L activity yet" });
+      period = latest.complete ?? latest.any;
     }
     const prior = priorPeriod(period);
+    const partial = period === currentMonth;
     const rows = (
       await db.execute(sql`
         select a.code, a.name, a.type,
@@ -393,6 +400,7 @@ export function analyticsRoutes(app: FastifyInstance): void {
     return {
       view: "flux",
       period,
+      partial,
       prior,
       periods,
       rows: rows.map((r) => ({

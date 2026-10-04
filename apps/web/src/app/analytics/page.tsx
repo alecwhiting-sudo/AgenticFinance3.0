@@ -14,6 +14,8 @@ export const metadata: Metadata = { title: "Analytics" };
 type Flux = {
   period: string;
   prior: string;
+  /** true when the period is the in-progress calendar month */
+  partial: boolean;
   periods: string[];
   rows: { code: string; name: string; type: string; thisMinor: number; prevMinor: number; deltaMinor: number }[];
 };
@@ -219,7 +221,7 @@ export default async function AnalyticsPage({
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi label="Cash balance" value={moneyCompact(cashNow)} hint="latest bank statement line" href="/payments" />
         <Kpi
-          label={flux ? `${monthName(flux.period)} result` : "Result"}
+          label={flux ? `${monthName(flux.period)} result${flux.partial ? " (to date)" : ""}` : "Result"}
           value={moneyCompact(profitThis)}
           hint={flux ? `prior month ${moneyCompact(profitPrior)}` : undefined}
           href="/reports"
@@ -231,8 +233,12 @@ export default async function AnalyticsPage({
       <div className="grid gap-4 xl:grid-cols-2">
         {flux && (
           <ChartCard
-            title={`Month flux — ${monthName(flux.period)} vs ${monthName(flux.prior)}`}
-            question="Why did the result move? Teal bars helped, amber bars hurt; grey anchors are each month's result."
+            title={`Month flux — ${monthName(flux.period)}${flux.partial ? " (month to date)" : ""} vs ${monthName(flux.prior)}`}
+            question={
+              flux.partial
+                ? `${monthName(flux.period)} is still in progress — a partial month against a full one reads as everything falling; compare complete months for the real story.`
+                : "Why did the result move? Teal bars helped, amber bars hurt; grey anchors are each month's result."
+            }
             table={
               <table className="w-full text-xs">
                 <thead>
@@ -276,6 +282,7 @@ export default async function AnalyticsPage({
                   }
                 >
                   {new Date(`${p}-01T00:00:00Z`).toLocaleDateString("en-GB", { month: "short" })}
+                  {p === new Date().toISOString().slice(0, 7) ? " · to date" : ""}
                 </Link>
               ))}
             </div>

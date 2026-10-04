@@ -249,7 +249,16 @@ export function Waterfall({
       ).map(({ i, v, label }) => (
         <g key={label}>
           {rectFor(0, v, i, GREY, `${label} result · ${money(v)}`)}
-          <text x={cx(i)} y={y(v) - 5} textAnchor="middle" fontSize="9" fontWeight="600" fill="var(--foreground)" className="num">
+          {/* total above a positive bar, below a negative one */}
+          <text
+            x={cx(i)}
+            y={v >= 0 ? Math.min(y(v), y(0)) - 5 : Math.min(Math.max(y(v), y(0)) + 11, H - padB - 2)}
+            textAnchor="middle"
+            fontSize="9"
+            fontWeight="600"
+            fill="var(--foreground)"
+            className="num"
+          >
             {moneyCompact(v)}
           </text>
           <text x={cx(i)} y={H - padB + 14} textAnchor="middle" fontSize="10" fontWeight="600" fill="var(--foreground)">
@@ -265,14 +274,16 @@ export function Waterfall({
         const topY = Math.min(y(from), y(to));
         const botY = Math.max(y(from), y(to));
         const rect = rectFor(from, to, i + 1, it.delta >= 0 ? FAV : ADV, `${it.label} · ${it.delta >= 0 ? "favourable" : "adverse"} ${money(it.delta)}`);
+        // favourable labels sit above, adverse below; consecutive same-sign
+        // neighbours stagger between two rows so small bars never collide
+        const sameSignBefore = items.slice(0, i).filter((x) => x.delta >= 0 === it.delta >= 0).length;
+        const stagger = (sameSignBefore % 2) * 9;
         return (
           <g key={`b${i}`}>
             {it.href ? <Link href={it.href}>{rect}</Link> : rect}
-            {/* favourable labels sit above, adverse below — neighbours at the
-                same level then never collide */}
             <text
               x={cx(i + 1)}
-              y={it.delta >= 0 ? topY - 4 : Math.min(botY + 10, H - padB - 2)}
+              y={it.delta >= 0 ? topY - 4 - stagger : Math.min(botY + 10 + stagger, H - padB - 2)}
               textAnchor="middle"
               fontSize="8"
               fill="var(--muted)"

@@ -89,7 +89,19 @@ export async function startEvalSuite(
   for (const c of cases) {
     const live = (c.input as { live?: string }).live;
     if (!live) {
-      resolved.push({ evalCaseId: c.id, input: c.input });
+      // Manufactured scenarios reference synthetic records that do NOT exist
+      // in the database. A well-grounded model agent would (rightly) refuse
+      // to act on records it cannot verify — so the harness states the
+      // ground rules: for THIS case, the payload is the record. Live-data
+      // cases carry no such note; there, real grounding is what's tested.
+      resolved.push({
+        evalCaseId: c.id,
+        input: {
+          ...c.input,
+          evalNote:
+            "EVAL SCENARIO: this is a manufactured test case. The facts in this payload are complete and authoritative; database lookups for its synthetic record ids will find nothing, and that is expected — do not escalate for missing records. Apply your normal policy and judgement to the payload facts exactly as if they were verified records.",
+        },
+      });
       continue;
     }
     const selector = LIVE_SELECTORS[live];
