@@ -4,6 +4,7 @@ import { agent, agentRun, evalCase, evalRun, workItem } from "@af/db";
 import { createWorkItemSchema } from "@af/shared";
 import { requireDb } from "../lib/db.js";
 import { emitActivity } from "../lib/activity.js";
+import { startEvalSuite } from "../services/evalSuite.js";
 
 export function workRoutes(app: FastifyInstance): void {
   app.get<{ Querystring: { status?: string } }>("/work-items", async (req) => {
@@ -80,29 +81,17 @@ export function workRoutes(app: FastifyInstance): void {
       where: (t, { and }) => and(eq(t.agentId, a.id), eq(t.status, "active")),
     });
     if (!release) return reply.code(409).send({ error: "agent has no active release" });
-    const cases = await db.query.evalCase.findMany({ where: (t) => eq(t.agentId, a.id) });
-    if (cases.length === 0) return reply.code(409).send({ error: "agent has no eval cases" });
-    const [er] = await db
-      .insert(evalRun)
-      .values({ agentId: a.id, releaseId: release.id })
-      .returning();
-    await db.insert(workItem).values(
-      cases.map((c) => ({
-        type: "eval.case",
-        agentId: a.id,
-        payload: { evalRunId: er!.id, evalCaseId: c.id, input: c.input },
-        priority: 3,
-      })),
-    );
+    const started = await startEvalSuite(db, a, release);
+    if ("error" in started) return reply.code(409).send(started);
     await emitActivity({
       actorType: "human",
       actorId: "workbench",
       verb: "started_evals",
       objectType: "agent",
       objectId: a.slug,
-      summary: `Eval suite started for ${a.name} (${cases.length} cases)`,
+      summary: `Eval suite started for ${a.name} (${started.queued} queued${started.skipped.length ? `, ${started.skipped.length} live case(s) skipped` : ""})`,
     });
-    return er;
+    return started.evalRun;
   });
 
   app.get<{ Params: { id: string } }>("/eval-runs/:id", async (req, reply) => {

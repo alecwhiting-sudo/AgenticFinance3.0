@@ -89,6 +89,10 @@ async function gradeEvalCase(
     if (assertion.kind === "outcome" && outcome !== assertion.value) {
       failures.push(`expected outcome ${assertion.value}, got ${outcome}`);
     }
+    // live-data cases assert invariants: any of several outcomes may be right
+    if (assertion.kind === "outcome_in" && !assertion.value.split("|").includes(outcome)) {
+      failures.push(`expected outcome in [${assertion.value}], got ${outcome}`);
+    }
     if (
       assertion.kind === "summary_contains" &&
       !summary.toLowerCase().includes(assertion.value.toLowerCase())

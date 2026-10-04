@@ -19,6 +19,8 @@ import {
 } from "@af/shared";
 import { requireDb } from "../lib/db.js";
 import { emitActivity } from "../lib/activity.js";
+import { startEvalSuite } from "../services/evalSuite.js";
+import { controlRegressionDiff } from "../lib/skillDiff.js";
 
 export function agentRoutes(app: FastifyInstance): void {
   app.get("/agents", async () => {
@@ -425,15 +427,32 @@ export function agentRoutes(app: FastifyInstance): void {
         const v = versionById.get(vid);
         if (v) pinnedBySkill.set(v.skillId, v.version);
       }
-      const changes: { skillName: string; from: number | null; to: number }[] = [];
+      const changes: {
+        skillName: string;
+        from: number | null;
+        to: number;
+        diff?: ReturnType<typeof controlRegressionDiff>;
+      }[] = [];
       const desired: string[] = [];
+      const textOf = (skillId: string, version: number) =>
+        allVersions.find((v) => v.skillId === skillId && v.version === version)?.instructions ?? "";
       for (const m of mapped) {
         const latest = latestBySkill.get(m.skillId);
         if (!latest) continue;
         desired.push(latest.id);
         const pinned = pinnedBySkill.get(m.skillId) ?? null;
-        if (pinned !== latest.version)
-          changes.push({ skillName: skillById.get(m.skillId)?.name ?? m.skillId, from: pinned, to: latest.version });
+        if (pinned !== latest.version) {
+          // M3a control-regression check: what operative lines would the
+          // agent LOSE by moving from the pinned text to the latest?
+          const diff =
+            pinned !== null ? controlRegressionDiff(textOf(m.skillId, pinned), textOf(m.skillId, latest.version)) : undefined;
+          changes.push({
+            skillName: skillById.get(m.skillId)?.name ?? m.skillId,
+            from: pinned,
+            to: latest.version,
+            ...(diff && (diff.removedNeverDo.length || diff.removedMethod.length || !diff.comparable) ? { diff } : {}),
+          });
+        }
       }
       if (changes.length === 0) continue;
       const cases = await db.query.evalCase.findMany({ where: (t) => eq(t.agentId, a.id) });
@@ -520,21 +539,17 @@ export function agentRoutes(app: FastifyInstance): void {
         })
         .returning();
 
-      const cases = await db.query.evalCase.findMany({ where: (t) => eq(t.agentId, a.id) });
-      if (cases.length === 0) {
+      const started = await startEvalSuite(db, a, draft!);
+      if ("error" in started) {
         results.push({ agentSlug: a.slug, status: "draft created — no eval cases, promote manually", draftVersion: draft!.version });
         continue;
       }
-      const [er] = await db.insert(evalRun).values({ agentId: a.id, releaseId: draft!.id }).returning();
-      await db.insert(workItem).values(
-        cases.map((c) => ({
-          type: "eval.case",
-          agentId: a.id,
-          payload: { evalRunId: er!.id, evalCaseId: c.id, input: c.input, releaseId: draft!.id },
-          priority: 3,
-        })),
-      );
-      results.push({ agentSlug: a.slug, status: "draft + evals running — promotes when green", draftVersion: draft!.version, evalRunId: er!.id });
+      results.push({
+        agentSlug: a.slug,
+        status: `draft + evals running — promotes when green${started.skipped.length ? ` (${started.skipped.length} live case(s) skipped: no matching record)` : ""}`,
+        draftVersion: draft!.version,
+        evalRunId: started.evalRun.id,
+      });
     }
     await emitActivity({
       actorType: "human",

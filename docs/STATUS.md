@@ -108,13 +108,14 @@ _Last updated: 2026-10-03_
 
 ## Backlog (agreed, not yet built)
 
-1. **Release governance** (`plans/RELEASE_GOVERNANCE.md`, decision
-   2026-10-04): eval runs currently execute against the live books — fine
-   for a disposable demo, not practice. Plan: M1 eval isolation (simulated
-   commands, never executed, never in the inbox) → M3a control-regression
-   diff on skill changes → M2 shadow replay with a measured impact report
-   (exceptions up/down by code, changed recommendations, cost per case) →
-   M3b AI release reviewer grounded in those measurements → M4 real test
+1. **Release governance** (`plans/RELEASE_GOVERNANCE.md`): M1 built as D16
+   book codes; **M3a built** (control-regression diff: dropped never-do/
+   method lines flag red on the refresh preview, Confirm gated on explicit
+   acceptance); **M2a built** (live-data eval cases via selectors —
+   oldest open exception, most overdue AR — invariant assertions incl.
+   `outcome_in`, skipped-passed when no record matches, eval suites now
+   target a specific release). Remaining: M2 shadow replay with measured
+   impact report → M3b AI release reviewer grounded in it → M4 real test
    environment + canary (production phase).
 2. **Phase 4c follow-ons** — saved views on a dashboard; data permissions
    (stubbed: every record-catalogue entity declares an `access` scope,

@@ -54,14 +54,15 @@ evals are safe to run IN the live environment as a standing assurance
 control (continuous re-testing of live releases), which is stronger than
 suppressing execution — the posting path itself stays tested.
 
-**M2a — Live-data eval cases (new, from Alec's question).** Today every
-eval case runs on manufactured payloads; none grades the agent on real
-records. Add a case kind that references live data — e.g. "pick the oldest
-open exception and investigate it" — asserting invariants (options are
-costed from actual records; recommendation matches the code's decision
-tree) rather than exact values, executing in `book=test`. This is the
-"some evals should run by seeing what the agent does with real data"
-layer; the full-population version is M2.
+**M2a — Live-data eval cases — BUILT 2026-10-04.** Eval cases may now carry
+`input.live` naming a selector resolved against the real books at run time
+(`services/evalSuite.ts`): `oldest_open_exception` (graded exactly as the
+workbench would queue it) and `most_overdue_ar_invoice`, growing as
+coverage demands. Live cases assert invariants (`outcome_in`,
+`command_proposed`) rather than fixed answers, execute in `book=test`
+(D16), and a case with no matching record is recorded as skipped-passed so
+absence of data never fails a suite. Seeded: invoice-exception and
+collections each carry one. The full-population version is M2.
 
 **M2 — Shadow replay with an impact report (the real test environment).**
 A Test-panel scenario: copy the books into a sandbox (or rely on replay
@@ -79,10 +80,16 @@ already have (loader, replay, runs[] side-by-side memory).
 **M3 — AI release review (the gut-call, made rigorous).** A release-review
 step on every draft, shown on the preview and the release page before
 promotion:
-- **Control-regression check (deterministic):** diff the old and new skill
-  texts' *Escalation & never-do* and *Method* sections; any removed
-  prohibition, loosened tolerance or dropped escalation trigger is flagged
-  red — a control change, which a human must explicitly accept.
+- **Control-regression check (deterministic) — BUILT 2026-10-04 (M3a):**
+  `lib/skillDiff.ts` diffs the pinned vs latest text's *Escalation &
+  never-do* and *Method* sections per changed skill; removed operative
+  lines flag red on the refresh preview and the Confirm button stays
+  disabled until the human ticks "I have read these and accept the control
+  changes". Pre-template pinned versions flag as "not comparable — read the
+  full text". Rewording can flag too; that is the accepted cost (nothing
+  loosens silently). Verified: a doctored version dropping the
+  bank_detail_change prohibition was flagged line-by-line and blocked the
+  confirm.
 - **Model review (reasoning tier, per the routing table):** reads old text,
   new text, the diff, and — critically — the M2 impact numbers when they
   exist, and writes a structured opinion: expected behaviour change,

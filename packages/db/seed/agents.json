@@ -488,6 +488,22 @@
        "value": "abstained"
       }
      ]
+    },
+    {
+     "name": "live data: oldest open exception gets grounded, costed options",
+     "input": {
+      "live": "oldest_open_exception"
+     },
+     "assertions": [
+      {
+       "kind": "outcome_in",
+       "value": "completed|escalated|abstained"
+      },
+      {
+       "kind": "command_proposed",
+       "value": "case.options"
+      }
+     ]
     }
    ],
    "process": "p2p"
@@ -886,6 +902,26 @@
       {
        "kind": "not_command_proposed",
        "value": "ar.dunning.send"
+      }
+     ]
+    },
+    {
+     "name": "live data: most overdue invoice gets a chase letter proposal",
+     "input": {
+      "live": "most_overdue_ar_invoice"
+     },
+     "assertions": [
+      {
+       "kind": "outcome",
+       "value": "completed"
+      },
+      {
+       "kind": "command_proposed",
+       "value": "ar.dunning.send"
+      },
+      {
+       "kind": "summary_not_contains",
+       "value": "invented"
       }
      ]
     }

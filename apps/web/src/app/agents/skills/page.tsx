@@ -85,6 +85,7 @@ export default function SkillsLibraryPage() {
   // every agent being updated, what it proposes (the consequence surface if
   // a skill is wrong) and how strong its eval gate is — only then confirm.
   const staleAgents = [...new Set(rows.flatMap((s) => s.usedBy.filter((u) => u.stale).map((u) => u.agentSlug)))];
+  type ControlDiff = { comparable: boolean; removedNeverDo: string[]; removedMethod: string[] };
   type PreviewAgent = {
     agentSlug: string;
     agentName: string;
@@ -92,11 +93,19 @@ export default function SkillsLibraryPage() {
     commandPermissions: string[];
     evalCases: number;
     activeVersion: number;
-    changes: { skillName: string; from: number | null; to: number }[];
+    changes: { skillName: string; from: number | null; to: number; diff?: ControlDiff }[];
   };
   const [preview, setPreview] = useState<PreviewAgent[] | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [baselined, setBaselined] = useState(false);
+  const [flagsAccepted, setFlagsAccepted] = useState(false);
+  // M3a: any dropped never-do/method line (or an incomparable pre-template
+  // version) is a control change the human must explicitly accept
+  const controlFlags = (preview ?? []).flatMap((a) =>
+    a.changes
+      .filter((c) => c.diff)
+      .map((c) => ({ agent: a.agentName, skill: c.skillName, diff: c.diff! })),
+  );
 
   const loadPreview = async () => {
     setMsg(null);
@@ -236,6 +245,32 @@ export default function SkillsLibraryPage() {
             {preview.length === 0 && <p className="text-sm" style={{ color: "var(--muted)" }}>Nothing is stale any more.</p>}
           </div>
 
+          {controlFlags.length > 0 && (
+            <div className="rounded-lg border px-3 py-2 text-xs" style={{ borderColor: "var(--bad)" }}>
+              <p className="font-medium" style={{ color: "var(--bad)" }}>
+                Control changes detected — operative lines from the currently-pinned text are not present in the new version:
+              </p>
+              <ul className="mt-1 space-y-1">
+                {controlFlags.map((f, i) => (
+                  <li key={i}>
+                    <span className="font-medium">{f.agent} · {f.skill}:</span>{" "}
+                    {!f.diff.comparable && <span style={{ color: "var(--muted)" }}>pinned version pre-dates the skill template — sections not comparable, read the full text before accepting. </span>}
+                    {f.diff.removedNeverDo.map((l, j) => (
+                      <span key={`n${j}`} className="block" style={{ color: "var(--bad)" }}>− (never-do) {l}</span>
+                    ))}
+                    {f.diff.removedMethod.map((l, j) => (
+                      <span key={`m${j}`} className="block" style={{ color: "var(--warn)" }}>− (method) {l}</span>
+                    ))}
+                  </li>
+                ))}
+              </ul>
+              <label className="mt-2 flex items-center gap-2">
+                <input type="checkbox" checked={flagsAccepted} onChange={(e) => setFlagsAccepted(e.target.checked)} />
+                <span>I have read these and accept the control changes.</span>
+              </label>
+            </div>
+          )}
+
           <div className="rounded-lg border px-3 py-2 text-xs" style={{ borderColor: "var(--border)", color: "var(--muted)" }}>
             <span className="font-medium" style={{ color: "var(--foreground)" }}>Using the eval framework around this:</span>{" "}
             1) Run the baseline first — it evals each agent's CURRENT release, so after the refresh you can compare
@@ -251,11 +286,21 @@ export default function SkillsLibraryPage() {
               title={baselined ? "Baselines already started this round" : "Evals each agent's current release for a before/after comparison"}>
               {baselined ? "Baselines running" : "1 · Run baseline evals"}
             </Button>
-            <Button variant="primary" onClick={confirmRefresh} disabled={refreshing || preview.length === 0}
-              title={refreshing ? "Re-enables when the refresh round finishes" : undefined}>
+            <Button
+              variant="primary"
+              onClick={confirmRefresh}
+              disabled={refreshing || preview.length === 0 || (controlFlags.length > 0 && !flagsAccepted)}
+              title={
+                refreshing
+                  ? "Re-enables when the refresh round finishes"
+                  : controlFlags.length > 0 && !flagsAccepted
+                    ? "Accept the flagged control changes above first"
+                    : undefined
+              }
+            >
               {refreshing ? "Refreshing…" : `2 · Confirm refresh (${preview.length} agent${preview.length === 1 ? "" : "s"})`}
             </Button>
-            <Button variant="ghost" onClick={() => { setPreview(null); setBaselined(false); }} disabled={refreshing}>
+            <Button variant="ghost" onClick={() => { setPreview(null); setBaselined(false); setFlagsAccepted(false); }} disabled={refreshing}>
               Cancel
             </Button>
           </div>
