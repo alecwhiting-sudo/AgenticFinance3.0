@@ -388,6 +388,93 @@ export function agentRoutes(app: FastifyInstance): void {
     return created;
   });
 
+  /** The stale-pin cleanup: for every agent whose active release does not
+   * pin the latest version of each centrally-mapped skill, draft a rebuilt
+   * release from the map and start its eval suite against THAT draft. A
+   * fully green suite auto-promotes it (the worker handles that — standard
+   * eval-before-promote governance with the promote step automated).
+   * Agents without eval cases get the draft only, flagged for manual
+   * promotion. */
+  app.post("/agents/releases/refresh-stale", async (req) => {
+    const db = requireDb();
+    const body = z.object({ updatedBy: z.string().min(1) }).parse(req.body ?? {});
+    const agents = await db.query.agent.findMany();
+    const allVersions = await db.query.skillVersion.findMany();
+    const latestBySkill = new Map<string, { id: string; version: number }>();
+    for (const v of allVersions) {
+      const cur = latestBySkill.get(v.skillId);
+      if (!cur || v.version > cur.version) latestBySkill.set(v.skillId, { id: v.id, version: v.version });
+    }
+    const results: { agentSlug: string; status: string; draftVersion?: number; evalRunId?: string }[] = [];
+
+    for (const a of agents) {
+      const active = await db.query.agentRelease.findFirst({
+        where: (t) => and(eq(t.agentId, a.id), eq(t.status, "active")),
+      });
+      if (!active) continue;
+      const mapped = await db.query.agentSkill.findMany({ where: (t) => eq(t.agentId, a.id) });
+      const desired = mapped
+        .map((m) => latestBySkill.get(m.skillId)?.id)
+        .filter((x): x is string => !!x)
+        .sort();
+      const pinned = [...active.skillVersionIds].sort();
+      if (desired.join(",") === pinned.join(",")) {
+        results.push({ agentSlug: a.slug, status: "current" });
+        continue;
+      }
+      // skip when a refresh draft is already in flight (re-clicks are safe)
+      const latestRelease = await db.query.agentRelease.findFirst({
+        where: (t) => eq(t.agentId, a.id),
+        orderBy: (t) => desc(t.version),
+      });
+      if (latestRelease && latestRelease.status === "draft" && (latestRelease.notes ?? "").includes("[auto-promote]")) {
+        results.push({ agentSlug: a.slug, status: "refresh already in flight", draftVersion: latestRelease.version });
+        continue;
+      }
+      const [draft] = await db
+        .insert(agentRelease)
+        .values({
+          agentId: a.id,
+          version: (latestRelease?.version ?? active.version) + 1,
+          instructions: active.instructions,
+          skillVersionIds: desired,
+          commandPermissions: active.commandPermissions,
+          modelProfile: active.modelProfile,
+          maxModelCalls: active.maxModelCalls,
+          maxCostMinor: active.maxCostMinor,
+          status: "draft",
+          notes: `[auto-promote] Skill refresh by ${body.updatedBy}: pins the latest version of each mapped skill`,
+          createdBy: body.updatedBy,
+        })
+        .returning();
+
+      const cases = await db.query.evalCase.findMany({ where: (t) => eq(t.agentId, a.id) });
+      if (cases.length === 0) {
+        results.push({ agentSlug: a.slug, status: "draft created — no eval cases, promote manually", draftVersion: draft!.version });
+        continue;
+      }
+      const [er] = await db.insert(evalRun).values({ agentId: a.id, releaseId: draft!.id }).returning();
+      await db.insert(workItem).values(
+        cases.map((c) => ({
+          type: "eval.case",
+          agentId: a.id,
+          payload: { evalRunId: er!.id, evalCaseId: c.id, input: c.input, releaseId: draft!.id },
+          priority: 3,
+        })),
+      );
+      results.push({ agentSlug: a.slug, status: "draft + evals running — promotes when green", draftVersion: draft!.version, evalRunId: er!.id });
+    }
+    await emitActivity({
+      actorType: "human",
+      actorId: body.updatedBy,
+      verb: "refreshed_stale_releases",
+      objectType: "agent",
+      objectId: "all",
+      summary: `Stale-skill refresh: ${results.filter((r) => r.draftVersion).length} drafts created`,
+    });
+    return { results };
+  });
+
   /** Replace an agent's central skill map (the curriculum) and draft a
    * release pinned to the latest version of each mapped skill. The release
    * still goes through eval → promote; the map changes immediately. */

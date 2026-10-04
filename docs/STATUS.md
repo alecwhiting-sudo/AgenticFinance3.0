@@ -61,6 +61,13 @@ _Last updated: 2026-10-03_
   pending migrations and refreshes the registry seed (non-destructive) before
   the server starts — new skills/agents/migrations land on push, no manual
   `railway run`. Opt out: `MIGRATE_ON_BOOT=false`.
+- **Stale-pin refresh (2026-10-04)**: the library shows a banner when any
+  agent's active release pins older skill versions; one click
+  (`POST /agents/releases/refresh-stale`) drafts a rebuilt release per stale
+  agent from the central map, runs its eval suite AGAINST THE DRAFT (eval
+  work items now target a specific release), and auto-promotes only on a
+  fully green suite (promoted_by=eval-harness). Agents without eval cases
+  get the draft only — manual promote.
 - **Skill template (2026-10-03)**: all 21 skills follow seven standard
   headings — Purpose & trigger / Inputs / Grounding / Method / Outputs &
   format / Escalation & never-do / Quality bar (UI_CONVENTIONS §5.1); the

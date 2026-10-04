@@ -5,7 +5,7 @@
  * graded against their eval case's assertions.
  */
 import { and, eq, sql } from "drizzle-orm";
-import { agentRun, command, evalRun, evalSummary, workItem } from "@af/db";
+import { agentRelease, agentRun, command, evalRun, evalSummary, workItem } from "@af/db";
 import { db } from "../lib/db.js";
 import { emitActivity } from "../lib/activity.js";
 import { runAgentLoop, type ResolvedRelease } from "./agentLoop.js";
@@ -47,14 +47,20 @@ async function claimNext(): Promise<WorkItemRow | null> {
   } as WorkItemRow;
 }
 
-async function resolveActiveRelease(agentId: string): Promise<ResolvedRelease | null> {
+async function resolveActiveRelease(agentId: string, releaseId?: string): Promise<ResolvedRelease | null> {
   if (!db) return null;
   const a = await db.query.agent.findFirst({ where: (t) => eq(t.id, agentId) });
   if (!a) return null;
-  const release = await db.query.agentRelease.findFirst({
-    where: (t) => and(eq(t.agentId, a.id), eq(t.status, "active")),
-  });
-  if (!release) return null;
+  // eval work items may target a SPECIFIC release (so a draft is genuinely
+  // evaluated before promotion); everything else runs the active one
+  const release = releaseId
+    ? await db.query.agentRelease.findFirst({
+        where: (t) => and(eq(t.agentId, a.id), eq(t.id, releaseId)),
+      })
+    : await db.query.agentRelease.findFirst({
+        where: (t) => and(eq(t.agentId, a.id), eq(t.status, "active")),
+      });
+  if (!release || release.status === "retired") return null;
   const versions = release.skillVersionIds.length
     ? await db.query.skillVersion.findMany({
         where: (t, { inArray }) => inArray(t.id, release.skillVersionIds),
@@ -152,6 +158,32 @@ async function gradeEvalCase(
       objectId: evalRunId,
       summary: `Eval suite finished: ${passCount}/${results.length} passed`,
     });
+
+    // Auto-promotion: ONLY for drafts explicitly marked [auto-promote] (the
+    // stale-skill refresh flow), and only on a fully green suite — the
+    // standard governance (eval before promote) with the promote step
+    // automated, attributed to the harness.
+    const allPassed = results.length === passCount && results.length > 0;
+    if (allPassed && release && release.status === "draft" && (release.notes ?? "").includes("[auto-promote]")) {
+      await db.transaction(async (tx) => {
+        await tx
+          .update(agentRelease)
+          .set({ status: "retired" })
+          .where(and(eq(agentRelease.agentId, release.agentId), eq(agentRelease.status, "active")));
+        await tx
+          .update(agentRelease)
+          .set({ status: "active", evalRunId, promotedBy: "eval-harness", promotedAt: finishedAt })
+          .where(eq(agentRelease.id, release.id));
+      });
+      await emitActivity({
+        actorType: "system",
+        actorId: "eval-harness",
+        verb: "promoted_release",
+        objectType: "agent",
+        objectId: release.agentId,
+        summary: `Release v${release.version} auto-promoted after a green eval suite (${passCount}/${results.length})`,
+      });
+    }
   }
 }
 
@@ -164,7 +196,9 @@ async function processItem(item: WorkItemRow): Promise<void> {
       .where(eq(workItem.id, item.id));
     return;
   }
-  const resolved = await resolveActiveRelease(item.agentId);
+  const targetReleaseId =
+    item.type === "eval.case" && typeof item.payload.releaseId === "string" ? item.payload.releaseId : undefined;
+  const resolved = await resolveActiveRelease(item.agentId, targetReleaseId);
   if (!resolved) {
     await db
       .update(workItem)

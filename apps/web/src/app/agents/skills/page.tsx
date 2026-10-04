@@ -80,6 +80,46 @@ export default function SkillsLibraryPage() {
 
   const sel = rows.find((s) => s.slug === selected) ?? null;
 
+  // stale = some agent's active release pins an older version than the
+  // latest skill text; the refresh drafts rebuilt releases from the central
+  // map, evals them, and auto-promotes on a fully green suite
+  const staleAgents = [...new Set(rows.flatMap((s) => s.usedBy.filter((u) => u.stale).map((u) => u.agentSlug)))];
+  const [refreshing, setRefreshing] = useState(false);
+  const refreshStale = async () => {
+    setRefreshing(true);
+    setMsg(null);
+    try {
+      const res = await fetch(`${apiUrl}/agents/releases/refresh-stale`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ updatedBy: "workbench-user" }),
+      });
+      const d = (await res.json()) as { results?: { agentSlug: string; status: string; draftVersion?: number }[]; error?: string };
+      if (!res.ok) {
+        setMsg(d.error ?? "refresh failed");
+        setRefreshing(false);
+        return;
+      }
+      const drafted = (d.results ?? []).filter((r) => r.draftVersion);
+      setMsg(
+        `${drafted.length} rebuilt release${drafted.length === 1 ? "" : "s"} drafted; evals running — each promotes itself when its suite is green. ` +
+          (d.results ?? [])
+            .filter((r) => r.status.includes("manual"))
+            .map((r) => `${r.agentSlug}: promote manually (no eval cases).`)
+            .join(" "),
+      );
+      // the worker promotes within seconds in demo mode — poll until clean
+      for (let i = 0; i < 10; i++) {
+        await new Promise((r) => setTimeout(r, 3000));
+        await load();
+      }
+    } catch {
+      setMsg(`Cannot reach the API at ${apiUrl}.`);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   return (
     <main className="space-y-6">
       <PageHeader
@@ -88,6 +128,23 @@ export default function SkillsLibraryPage() {
         actions={<Button variant="outline" onClick={() => setAdding(!adding)}>{adding ? "Cancel" : "New skill"}</Button>}
       />
       {msg && <p className="text-sm" style={{ color: "var(--muted)" }}>{msg}</p>}
+
+      {staleAgents.length > 0 && (
+        <div
+          className="flex flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-3"
+          style={{ borderColor: "var(--warn)", background: "var(--card)" }}
+        >
+          <p className="text-sm">
+            <span style={{ color: "var(--warn)" }}>Stale pins:</span>{" "}
+            {staleAgents.length} agent{staleAgents.length === 1 ? "" : "s"} ({staleAgents.join(", ")}) run
+            older skill versions than the latest text. Refresh drafts a rebuilt release per agent from the
+            central map, runs its eval suite against the draft, and promotes it only when every eval passes.
+          </p>
+          <Button variant="primary" onClick={refreshStale} disabled={refreshing} title={refreshing ? "Re-enables when the refresh round finishes" : undefined}>
+            {refreshing ? "Refreshing…" : "Refresh stale releases"}
+          </Button>
+        </div>
+      )}
 
       {adding && (
         <div className="rounded-xl border p-4" style={{ borderColor: "var(--accent)", background: "var(--card)" }}>
