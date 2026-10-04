@@ -19,7 +19,7 @@ export function r2rRoutes(app: FastifyInstance): void {
     const months = (
       await db.execute(sql`
         select distinct period_code from erp.journal
-        where period_code like ${`${year}-%`} order by 1
+        where book <> 'test' and period_code like ${`${year}-%`} order by 1
       `)
     ).rows.map((r) => (r as { period_code: string }).period_code);
 
@@ -27,7 +27,7 @@ export function r2rRoutes(app: FastifyInstance): void {
       await db.execute(sql`
         select a.code, a.name, a.type, j.period_code, sum(jl.amount_minor)::bigint as amount_minor
         from erp.journal_line jl
-        join erp.journal j on j.id = jl.journal_id
+        join erp.journal j on j.id = jl.journal_id and j.book <> 'test'
         join erp.account a on a.code = jl.account_code
         where a.type in ('income', 'expense') and j.period_code like ${`${year}-%`}
         group by a.code, a.name, a.type, j.period_code
@@ -41,7 +41,7 @@ export function r2rRoutes(app: FastifyInstance): void {
         with monthly as (
           select a.code, a.name, a.type, j.period_code, sum(jl.amount_minor)::bigint as amount_minor
           from erp.journal_line jl
-          join erp.journal j on j.id = jl.journal_id
+          join erp.journal j on j.id = jl.journal_id and j.book <> 'test'
           join erp.account a on a.code = jl.account_code
           where a.type in ('asset', 'liability', 'equity')
           group by a.code, a.name, a.type, j.period_code
@@ -58,7 +58,7 @@ export function r2rRoutes(app: FastifyInstance): void {
         with monthly as (
           select j.period_code, sum(jl.amount_minor)::bigint as amount_minor
           from erp.journal_line jl
-          join erp.journal j on j.id = jl.journal_id
+          join erp.journal j on j.id = jl.journal_id and j.book <> 'test'
           join erp.account a on a.code = jl.account_code
           where a.type in ('income', 'expense')
           group by j.period_code
@@ -102,13 +102,13 @@ export function r2rRoutes(app: FastifyInstance): void {
       `)
     ).rows;
     const [{ n: openExceptions }] = (
-      await db.execute(sql`select count(*)::int as n from erp.ap_invoice where status = 'exception'`)
+      await db.execute(sql`select count(*)::int as n from erp.ap_invoice where status = 'exception' and book <> 'test'`)
     ).rows as { n: number }[];
     const [{ n: failedEvents }] = (
-      await db.execute(sql`select count(*)::int as n from fdp.event where status = 'failed'`)
+      await db.execute(sql`select count(*)::int as n from fdp.event where status = 'failed' and book <> 'test'`)
     ).rows as { n: number }[];
     const periods = (
-      await db.execute(sql`select distinct period_code from erp.journal order by 1 desc limit 12`)
+      await db.execute(sql`select distinct period_code from erp.journal where book <> 'test' order by 1 desc limit 12`)
     ).rows.map((r) => (r as { period_code: string }).period_code);
 
     return { period, periods, bank, monthEnd, openExceptions, failedEvents };
@@ -151,7 +151,7 @@ export function r2rRoutes(app: FastifyInstance): void {
         with monthly as (
           select a.code, a.name, a.type, j.period_code, sum(jl.amount_minor)::bigint as amount_minor
           from erp.journal_line jl
-          join erp.journal j on j.id = jl.journal_id
+          join erp.journal j on j.id = jl.journal_id and j.book <> 'test'
           join erp.account a on a.code = jl.account_code
           where a.type in ('income', 'expense')
           group by a.code, a.name, a.type, j.period_code

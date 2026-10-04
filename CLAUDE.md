@@ -8,7 +8,7 @@ gateway, evals), and a workbench front end — demo-first, production later.
 **Start here:** `docs/STATUS.md` — the one-page progress tracker; update it in
 the same commit as any milestone, deferral or decision.
 **Source of truth:** `docs/MASTER_PLAN.md` (phases, scope) and
-`docs/ARCHITECTURE.md` (design, decisions D1–D14). Read both before structural
+`docs/ARCHITECTURE.md` (design, decisions D1–D16). Read both before structural
 changes, and update `docs/architecture.html` (the living diagram) in the same
 commit as any structural change. Per-process plans live in `docs/plans/`.
 

@@ -139,7 +139,7 @@
       <div class="box" data-info="events"><b>Event store</b><span>append-only, idempotent on (source_system, source_event_key), immutable by trigger; failed events retry safely</span></div>
       <div class="box" data-info="engine"><b>Derivation engine</b><span>deterministic, versioned, no model calls; parameter sets immutable once active; replay reproduces history</span></div>
       <div class="box" data-info="movements"><b>Movement ledger</b><span>one immutable row per event × account; the authoritative delta history</span></div>
-      <div class="box" data-info="journals"><b>Journals</b><span>balanced double-entry per event, enforced by a deferred DB constraint; SDJ (system) vs GOJ (human-approved) classes</span></div>
+      <div class="box" data-info="journals"><b>Journals</b><span>balanced double-entry per event, enforced by a deferred DB constraint; SDJ (system) vs GOJ (human-approved) classes · book dimension (D16): main vs test — eval runs post to the test book, statements read main only</span></div>
     </div>
     <div class="split" style="margin-top: 0.75rem;">
       <div class="box" data-info="les"><b>LES — Live Economic State</b><span>derived views over movements: GL by account + subledger by economic object (invoice, payment, bank line). Continuously live; what agents reason over.</span></div>
@@ -283,6 +283,7 @@ const INFO = {
     t: "Journals",
     what: "Double-entry, enforced by the database itself: a journal that doesn't balance cannot be committed, whoever or whatever wrote it. Posted journals are never edited — corrections are reversals.",
     how: "Deferred DB constraint proves balance at commit; gapless numbering under an advisory lock; SDJ (system-posted) vs GOJ (human-approved) classes; every journal carries its source event.",
+    book: "D16: every journal carries a book code — main for the real books (future GAAP books join here), test for eval-originated postings. Evals exercise the full posting pipeline in the live environment; statements, analytics and queues read book <> test.",
   },
   les: {
     t: "LES — Live Economic State",

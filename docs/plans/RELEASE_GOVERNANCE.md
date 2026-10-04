@@ -42,13 +42,26 @@ production practice, and it would fail an ITGC change-management review
 
 ## 3. The plan, layered (keeps everything already built)
 
-**M1 — Eval isolation (build next; small).** Eval-originated proposals are
-marked and never touch the books: work items carry `isEval`; the worker
-passes it on `commands/propose`; the gateway validates schema+permission
-fully but stores the command as `simulated` — never executes, never enters
-the approvals inbox, excluded from all business queries. Eval grading reads
-simulated commands exactly as it reads real ones today, so every existing
-assertion keeps working. This alone removes the "testing in prod" defect.
+**M1 — Eval isolation — BUILT 2026-10-04 as BOOK CODES (D16), superseding
+the "simulated commands" design.** The better frame (Alec): the deployment
+is one environment, but the ledger carries a `book` dimension — `main` for
+the real books (future: ifrs/local GAAP books), `test` for eval-originated
+work. Eval commands execute the FULL pipeline (gateway, posting, movements,
+subledgers) into `book=test`; the gateway derives the book from the run's
+work item so callers can't spoof it; statements, trial balance, analytics,
+queues and the approvals inbox all read `book <> 'test'`. Consequence:
+evals are safe to run IN the live environment as a standing assurance
+control (continuous re-testing of live releases), which is stronger than
+suppressing execution — the posting path itself stays tested.
+
+**M2a — Live-data eval cases (new, from Alec's question).** Today every
+eval case runs on manufactured payloads; none grades the agent on real
+records. Add a case kind that references live data — e.g. "pick the oldest
+open exception and investigate it" — asserting invariants (options are
+costed from actual records; recommendation matches the code's decision
+tree) rather than exact values, executing in `book=test`. This is the
+"some evals should run by seeing what the agent does with real data"
+layer; the full-population version is M2.
 
 **M2 — Shadow replay with an impact report (the real test environment).**
 A Test-panel scenario: copy the books into a sandbox (or rely on replay

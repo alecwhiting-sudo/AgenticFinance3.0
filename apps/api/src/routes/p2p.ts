@@ -53,7 +53,7 @@ export function p2pRoutes(app: FastifyInstance): void {
       await db.execute(sql`
         select purchase_id, count(*)::int as n,
                count(*) filter (where status = 'exception')::int as exceptions
-        from erp.ap_invoice where purchase_id is not null group by purchase_id
+        from erp.ap_invoice where book <> 'test' and purchase_id is not null group by purchase_id
       `)
     ).rows as { purchase_id: string; n: number; exceptions: number }[];
     const invBy = new Map(invs.map((i) => [i.purchase_id, i]));
@@ -199,7 +199,7 @@ export function p2pRoutes(app: FastifyInstance): void {
         await db.execute(sql`
           select jl.amount_minor, jl.memo as line_memo, j.id as journal_id, j.number,
                  j.journal_date, j.memo, j.source_type, j.source_id
-          from erp.journal_line jl join erp.journal j on j.id = jl.journal_id
+          from erp.journal_line jl join erp.journal j on j.id = jl.journal_id and j.book <> 'test'
           where jl.account_code = ${req.params.code}
             and (${period}::text is null or j.period_code = ${period})
           order by j.journal_date desc, j.number desc limit 200
@@ -240,10 +240,10 @@ export function p2pRoutes(app: FastifyInstance): void {
     const rows = (
       await db.execute(sql`
         (select 'purchase' as kind, id::text, number as label, status::text as sub from erp.purchase
-          where number ilike ${like} or business_need ilike ${like} limit 5)
+          where book <> 'test' and (number ilike ${like} or business_need ilike ${like}) limit 5)
         union all
         (select 'invoice', i.id::text, i.supplier_invoice_number, i.status::text from erp.ap_invoice i
-          where i.supplier_invoice_number ilike ${like} limit 5)
+          where i.book <> 'test' and i.supplier_invoice_number ilike ${like} limit 5)
         union all
         (select 'supplier', code, name, code from erp.supplier where name ilike ${like} or code ilike ${like} limit 5)
         union all
@@ -262,16 +262,16 @@ export function p2pRoutes(app: FastifyInstance): void {
       await db.execute(sql`
         select a.code, a.name, a.type, coalesce(sum(jl.amount_minor), 0)::int as balance_minor
         from erp.account a
-        left join erp.journal_line jl on jl.account_code = a.code
+        left join (erp.journal_line jl join erp.journal j on j.id = jl.journal_id and j.book <> 'test') on jl.account_code = a.code
         group by a.code, a.name, a.type
         order by a.code
       `)
     ).rows as { code: string; name: string; type: string; balance_minor: number }[];
     const [{ total }] = (
-      await db.execute(sql`select coalesce(sum(amount_minor),0)::bigint as total from erp.journal_line`)
+      await db.execute(sql`select coalesce(sum(jl.amount_minor),0)::bigint as total from erp.journal_line jl join erp.journal j on j.id = jl.journal_id and j.book <> 'test'`)
     ).rows as { total: string }[];
     const [{ n: journals }] = (
-      await db.execute(sql`select count(*)::int as n from erp.journal`)
+      await db.execute(sql`select count(*)::int as n from erp.journal where book <> 'test'`)
     ).rows as { n: number }[];
     return { accounts: rows, controlTotalMinor: Number(total), journals };
   });

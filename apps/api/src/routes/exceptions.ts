@@ -34,7 +34,7 @@ export function exceptionRoutes(app: FastifyInstance): void {
                exists (select 1 from agent.work_item w
                        where w.case_id = i.case_id and w.status in ('pending','claimed','running')) as investigating
         from erp.ap_invoice i join erp.supplier s on s.id = i.supplier_id
-        where i.status = 'exception'
+        where i.book <> 'test' and i.status = 'exception'
         order by i.exception_code, i.invoice_date
       `)
     ).rows;
@@ -88,7 +88,7 @@ export function exceptionRoutes(app: FastifyInstance): void {
         select count(*)::int as invoices,
                count(*) filter (where status = 'exception')::int as open_exceptions,
                count(*) filter (where status = 'paid')::int as paid
-        from erp.ap_invoice where supplier_id = ${inv.supplierId}
+        from erp.ap_invoice where book <> 'test' and supplier_id = ${inv.supplierId}
       `)
     ).rows as { invoices: number; open_exceptions: number; paid: number }[];
 

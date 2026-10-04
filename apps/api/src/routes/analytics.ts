@@ -166,7 +166,7 @@ export function analyticsRoutes(app: FastifyInstance): void {
                  p.approval_band, p.total_minor::bigint as total_minor, p.request_date, p.order_date,
                  (select count(*) from erp.goods_receipt g where g.purchase_id = p.id)::int as receipts,
                  (select count(*) from erp.ap_invoice i where i.purchase_id = p.id)::int as invoices
-          from erp.purchase p join erp.supplier s on s.id = p.supplier_id
+          from erp.purchase p join erp.supplier s on s.id = p.supplier_id and p.book <> 'test'
           where (${party}::text is null or s.code ilike ${party} or s.name ilike ${party})
             and (${status}::text is null or p.status::text = ${status})
             and (${from}::text is null or p.request_date >= ${from}::date)
@@ -178,10 +178,10 @@ export function analyticsRoutes(app: FastifyInstance): void {
           select count(*)::int as total, coalesce(sum(p.total_minor), 0)::bigint as sum_total_minor,
                  (select jsonb_object_agg(status, n) from (
                     select p2.status::text, count(*)::int as n from erp.purchase p2
-                    join erp.supplier s2 on s2.id = p2.supplier_id
+                    join erp.supplier s2 on s2.id = p2.supplier_id and p2.book <> 'test'
                     where (${party}::text is null or s2.code ilike ${party} or s2.name ilike ${party})
                     group by 1) t(status, n)) as by_status
-          from erp.purchase p join erp.supplier s on s.id = p.supplier_id
+          from erp.purchase p join erp.supplier s on s.id = p.supplier_id and p.book <> 'test'
           where (${party}::text is null or s.code ilike ${party} or s.name ilike ${party})
         `);
         return { entity, rows, shown: rows.length, aggregates: agg ?? null };
@@ -193,7 +193,7 @@ export function analyticsRoutes(app: FastifyInstance): void {
                  g.receipt_date, g.recorded_by
           from erp.goods_receipt g
           join erp.purchase p on p.id = g.purchase_id
-          join erp.supplier s on s.id = p.supplier_id
+          join erp.supplier s on s.id = p.supplier_id and p.book <> 'test'
           where (${party}::text is null or s.code ilike ${party} or s.name ilike ${party})
             and (${search}::text is null or g.number ilike ${search} or p.number ilike ${search})
           order by g.receipt_date desc limit ${limit}
@@ -210,7 +210,7 @@ export function analyticsRoutes(app: FastifyInstance): void {
                      p.number as purchase_number, i.status, i.exception_code,
                      i.gross_minor::bigint as gross_minor, i.invoice_date, i.due_date, i.format
               from erp.ap_invoice i
-              join erp.supplier s on s.id = i.supplier_id
+              join erp.supplier s on s.id = i.supplier_id and i.book <> 'test'
               left join erp.purchase p on p.id = i.purchase_id
               where (${party}::text is null or s.code ilike ${party} or s.name ilike ${party})
                 and (${status}::text is null or i.status::text = ${status})
@@ -237,10 +237,10 @@ export function analyticsRoutes(app: FastifyInstance): void {
                      count(*) filter (where i.purchase_id is null)::int as without_purchase,
                      (select jsonb_object_agg(status, n) from (
                         select i2.status::text, count(*)::int as n from erp.ap_invoice i2
-                        join erp.supplier s2 on s2.id = i2.supplier_id
+                        join erp.supplier s2 on s2.id = i2.supplier_id and i2.book <> 'test'
                         where (${party}::text is null or s2.code ilike ${party} or s2.name ilike ${party})
                         group by 1) t(status, n)) as by_status
-              from erp.ap_invoice i join erp.supplier s on s.id = i.supplier_id
+              from erp.ap_invoice i join erp.supplier s on s.id = i.supplier_id and i.book <> 'test'
               where (${party}::text is null or s.code ilike ${party} or s.name ilike ${party})
             `)
           : await run(sql`
@@ -298,6 +298,7 @@ export function analyticsRoutes(app: FastifyInstance): void {
           where (${period}::text is null or j.period_code = ${period})
             and (${sourceType ?? null}::text is null or j.source_type = ${sourceType ?? null})
             and (${search}::text is null or j.memo ilike ${search})
+            and j.book <> 'test'
           order by j.number desc limit ${limit}
         `);
         return { entity, rows, shown: rows.length, aggregates: null };
@@ -322,7 +323,7 @@ export function analyticsRoutes(app: FastifyInstance): void {
     let year = /^\d{4}$/.test(req.query.year ?? "") ? Number(req.query.year) : undefined;
     if (!year) {
       const latest = (
-        await db.execute(sql`select max(period_code) as p from erp.journal`)
+        await db.execute(sql`select max(period_code) as p from erp.journal where book <> 'test'`)
       ).rows[0] as { p: string | null };
       year = latest.p ? Number(latest.p.slice(0, 4)) : new Date().getUTCFullYear();
     }
@@ -330,7 +331,7 @@ export function analyticsRoutes(app: FastifyInstance): void {
       await db.execute(sql`
         select a.code, a.name, a.type, j.period_code, sum(jl.amount_minor)::bigint as amount_minor
         from erp.journal_line jl
-        join erp.journal j on j.id = jl.journal_id
+        join erp.journal j on j.id = jl.journal_id and j.book <> 'test'
         join erp.account a on a.code = jl.account_code
         where a.type in ('income', 'expense') and j.period_code like ${`${year}-%`}
         group by a.code, a.name, a.type, j.period_code
@@ -356,7 +357,7 @@ export function analyticsRoutes(app: FastifyInstance): void {
       const latest = (
         await db.execute(sql`
           select max(j.period_code) as p from erp.journal j
-          join erp.journal_line jl on jl.journal_id = j.id
+          join erp.journal_line jl on jl.journal_id = j.id and j.book <> 'test'
           join erp.account a on a.code = jl.account_code
           where a.type in ('income', 'expense')
         `)
@@ -371,7 +372,7 @@ export function analyticsRoutes(app: FastifyInstance): void {
           coalesce(sum(jl.amount_minor) filter (where j.period_code = ${period}), 0)::bigint as this_minor,
           coalesce(sum(jl.amount_minor) filter (where j.period_code = ${prior}), 0)::bigint as prev_minor
         from erp.journal_line jl
-        join erp.journal j on j.id = jl.journal_id
+        join erp.journal j on j.id = jl.journal_id and j.book <> 'test'
         join erp.account a on a.code = jl.account_code
         where a.type in ('income', 'expense') and j.period_code in (${period}, ${prior})
         group by a.code, a.name, a.type
@@ -384,7 +385,7 @@ export function analyticsRoutes(app: FastifyInstance): void {
     const periods = (
       await db.execute(sql`
         select distinct j.period_code from erp.journal j
-        join erp.journal_line jl on jl.journal_id = j.id
+        join erp.journal_line jl on jl.journal_id = j.id and j.book <> 'test'
         join erp.account a on a.code = jl.account_code
         where a.type in ('income','expense') order by 1
       `)
@@ -420,7 +421,7 @@ export function analyticsRoutes(app: FastifyInstance): void {
         side === "ap"
           ? sql`
               select s.code, s.name, i.due_date, i.gross_minor, i.status
-              from erp.ap_invoice i join erp.supplier s on s.id = i.supplier_id
+              from erp.ap_invoice i join erp.supplier s on s.id = i.supplier_id and i.book <> 'test'
               where i.status not in ('paid', 'rejected')
             `
           : sql`
@@ -466,7 +467,7 @@ export function analyticsRoutes(app: FastifyInstance): void {
           ? sql`
               select s.code, s.name, to_char(i.invoice_date, 'YYYY-MM') as period_code,
                      sum(i.gross_minor)::bigint as gross_minor, count(*)::int as invoices
-              from erp.ap_invoice i join erp.supplier s on s.id = i.supplier_id
+              from erp.ap_invoice i join erp.supplier s on s.id = i.supplier_id and i.book <> 'test'
               where i.status <> 'rejected'
               group by s.code, s.name, to_char(i.invoice_date, 'YYYY-MM')
               order by s.code, to_char(i.invoice_date, 'YYYY-MM')

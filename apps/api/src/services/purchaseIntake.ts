@@ -6,6 +6,7 @@ import { purchase, supplier, type Db, type PurchaseLine } from "@af/db";
 import { approvalBandFor, linesTotal } from "./policy.js";
 import { commitPurchaseBudget } from "./posting.js";
 import { emitActivity } from "../lib/activity.js";
+import { currentBook } from "../lib/bookContext.js";
 
 export type CreatePurchaseParams = {
   supplierCode?: string;
@@ -75,6 +76,7 @@ export async function createPurchase(
     .insert(purchase)
     .values({
       number,
+      book: currentBook(), // D16
       supplierId: sup.id,
       requestedBy: params.requestedBy,
       businessNeed: params.businessNeed,

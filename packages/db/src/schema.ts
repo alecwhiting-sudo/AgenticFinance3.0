@@ -275,6 +275,9 @@ export const command = ag.table("command", {
   agentId: uuid("agent_id").references(() => agent.id),
   releaseId: uuid("release_id").references(() => agentRelease.id),
   status: commandStatus("status").notNull().default("proposed"),
+  /** D16: commands from eval runs carry book "test" — they execute into the
+   * test book and never appear in the human approvals inbox. */
+  book: text("book").notNull().default("main"),
   requiresApproval: boolean("requires_approval").notNull().default(false),
   decidedBy: text("decided_by"),
   decisionReason: text("decision_reason"),
@@ -369,6 +372,8 @@ export const journal = erp.table("journal", {
   number: integer("number").notNull().unique(), // sequential, assigned at posting
   journalDate: date("journal_date").notNull(),
   periodCode: text("period_code").notNull(), // e.g. 2026-04
+  /** Book code (D16): main | test (| future GAAP books). */
+  book: text("book").notNull().default("main"),
   memo: text("memo").notNull(),
   sourceType: text("source_type").notNull(), // ap_invoice | ap_payment | manual | ...
   sourceId: text("source_id").notNull(),
@@ -411,6 +416,7 @@ export type PurchaseLine = {
 export const purchase = erp.table("purchase", {
   id: uuid("id").primaryKey().defaultRandom(),
   number: text("number").notNull().unique(), // PO-26xxxx — doubles as the supplier-facing reference
+  book: text("book").notNull().default("main"), // D16: test rows never reach main queues
   supplierId: uuid("supplier_id").notNull().references(() => supplier.id),
   requestedBy: text("requested_by").notNull(),
   businessNeed: text("business_need").notNull(),
@@ -453,6 +459,7 @@ export const apInvoice = erp.table("ap_invoice", {
   id: uuid("id").primaryKey().defaultRandom(),
   supplierId: uuid("supplier_id").notNull().references(() => supplier.id),
   supplierInvoiceNumber: text("supplier_invoice_number").notNull(),
+  book: text("book").notNull().default("main"), // D16
   purchaseId: uuid("purchase_id").references(() => purchase.id),
   invoiceDate: date("invoice_date").notNull(),
   dueDate: date("due_date").notNull(),
@@ -532,6 +539,10 @@ export const fdpEventStatus = fdp.enum("fdp_event_status", ["pending", "processe
 export const fdpEvent = fdp.table("event", {
   id: uuid("id").primaryKey().defaultRandom(),
   eventType: text("event_type").notNull(), // e.g. ap.invoice.posted, ap.payment.executed
+  /** Book code (D16): "main" = the real books; "test" = eval-originated
+   * postings, full pipeline but excluded from statements/analytics/queues.
+   * Future GAAP books (ifrs, local) join the same dimension. */
+  book: text("book").notNull().default("main"),
   occurredAt: timestamp("occurred_at_utc", { withTimezone: true }).notNull(),
   ingestedAt: timestamp("ingested_at_utc", { withTimezone: true }).notNull().defaultNow(),
   sourceSystem: text("source_system").notNull(), // loader | api | worker | drip …

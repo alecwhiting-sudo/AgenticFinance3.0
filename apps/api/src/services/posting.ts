@@ -14,6 +14,7 @@ import {
   type PurchaseLine,
 } from "@af/db";
 import { ACCOUNTS } from "./policy.js";
+import { currentBook } from "../lib/bookContext.js";
 
 export type JournalLineInput = { accountCode: string; amountMinor: number; memo?: string };
 
@@ -66,6 +67,7 @@ export async function postJournal(
       .values({
         companyId: co.id,
         number: Number(next),
+        book: currentBook(), // D16: eval-originated commands post to the test book
         journalDate: input.journalDate,
         periodCode,
         memo: input.memo,

@@ -19,6 +19,7 @@ import { isDuplicate, threeWayMatch } from "./match.js";
 import { markPurchaseReceived, postApInvoice } from "./posting.js";
 import { createPurchase } from "./purchaseIntake.js";
 import { emitActivity } from "../lib/activity.js";
+import { currentBook } from "../lib/bookContext.js";
 
 export const looksLikeBankDetailChange = (text: string): boolean =>
   /\b(sort\s*code|bank(ing)?\s+details?|account\s+number|remit.*to)\b/i.test(text) &&
@@ -122,6 +123,7 @@ export async function captureInvoice(
     .insert(apInvoice)
     .values({
       supplierId: sup.id,
+      book: currentBook(), // D16
       supplierInvoiceNumber: data.supplierInvoiceNumber,
       purchaseId: p?.id ?? null,
       invoiceDate: data.invoiceDate,

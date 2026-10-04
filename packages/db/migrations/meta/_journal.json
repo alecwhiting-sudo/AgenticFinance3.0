@@ -92,6 +92,13 @@
       "when": 1791055711813,
       "tag": "0012_wakeful_wallop",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1791118504220,
+      "tag": "0013_glorious_earthquake",
+      "breakpoints": true
     }
   ]
 }

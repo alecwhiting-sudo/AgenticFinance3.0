@@ -6,6 +6,7 @@ import { captureInvoice, resolveInvoiceException, type CaptureInvoiceData, type 
 import { commandDefs, proposeCommandSchema, type CommandType } from "@af/shared";
 import { requireDb } from "../lib/db.js";
 import { emitActivity } from "../lib/activity.js";
+import { MAIN_BOOK, TEST_BOOK, runInBook } from "../lib/bookContext.js";
 
 /** Execute an approved/auto-approved command inside deterministic services. */
 async function executeCommand(
@@ -145,6 +146,15 @@ export function commandRoutes(app: FastifyInstance): void {
       return reply.code(403).send({ error: `release has no permission for ${body.type}` });
     }
 
+    // D16 book code: a command proposed by an eval run executes into the
+    // TEST book — full pipeline, real gateway, real posting, but statements,
+    // analytics and the approvals inbox never see it. The gateway derives
+    // the book itself (run → work item type), so no caller can spoof it.
+    const workItemRow = run.workItemId
+      ? await db.query.workItem.findFirst({ where: (t) => eq(t.id, run.workItemId!) })
+      : null;
+    const book = workItemRow?.type === "eval.case" ? TEST_BOOK : MAIN_BOOK;
+
     const [created] = await db
       .insert(command)
       .values({
@@ -154,6 +164,7 @@ export function commandRoutes(app: FastifyInstance): void {
         runId: run.id,
         agentId: run.agentId,
         releaseId: run.releaseId,
+        book,
         requiresApproval: def.requiresApproval,
         status: def.requiresApproval ? "proposed" : "approved",
         decidedBy: def.requiresApproval ? null : "standing-authority",
@@ -163,7 +174,7 @@ export function commandRoutes(app: FastifyInstance): void {
 
     if (!def.requiresApproval) {
       try {
-        const result = await executeCommand(body.type, params);
+        const result = await runInBook(book, () => executeCommand(body.type, params));
         await db
           .update(command)
           .set({ status: "executed", result })
@@ -200,8 +211,9 @@ export function commandRoutes(app: FastifyInstance): void {
   app.get<{ Querystring: { status?: string } }>("/commands", async (req) => {
     const db = requireDb();
     const status = (req.query.status ?? "proposed") as typeof command.$inferSelect.status;
+    // D16: test-book commands (eval runs) never reach the human inbox
     const rows = await db.query.command.findMany({
-      where: (t) => eq(t.status, status),
+      where: (t, { and, ne }) => and(eq(t.status, status), ne(t.book, TEST_BOOK)),
       orderBy: (t) => desc(t.createdAt),
       limit: 100,
     });
@@ -323,7 +335,9 @@ export function commandRoutes(app: FastifyInstance): void {
         return { ok: true };
       }
 
-      const result = await executeCommand(cmd.type as CommandType, cmd.params, decidedBy);
+      // execute in the command's own book (a human-approved main command
+      // posts to main; a test-book command could only ever post to test)
+      const result = await runInBook(cmd.book, () => executeCommand(cmd.type as CommandType, cmd.params, decidedBy));
       await db
         .update(command)
         .set({ status: "executed", decidedBy, decisionReason: reason, decidedAt: new Date(), result })

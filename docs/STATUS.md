@@ -3,7 +3,7 @@
 **Purpose:** the one page a new session (or human) reads to resume. Keep it
 honest and short; update it in the same commit as any milestone, deferral or
 decision. Detail lives in `MASTER_PLAN.md` (phases), `ARCHITECTURE.md`
-(decisions D1–D14), `docs/plans/*` (per-process), and the living diagram
+(decisions D1–D16), `docs/plans/*` (per-process), and the living diagram
 `docs/architecture.html` (in-app at `/admin/architecture`).
 
 _Last updated: 2026-10-03_
@@ -61,6 +61,15 @@ _Last updated: 2026-10-03_
   pending migrations and refreshes the registry seed (non-destructive) before
   the server starts — new skills/agents/migrations land on push, no manual
   `railway run`. Opt out: `MIGRATE_ON_BOOT=false`.
+- **Book codes (D16, 2026-10-04)**: `book` dimension on events, journals,
+  purchases, AP invoices and commands — `main` is the real books (future
+  GAAP books join the dimension), `test` is where eval-originated commands
+  execute the FULL pipeline. The gateway derives the book from the run's
+  work item (unspoofable); statements, TB, analytics, queues and the
+  approvals inbox read `book <> 'test'`. Verified: eval suites run green
+  while main stays byte-identical (1159 journals, balance 0, inbox
+  unchanged; test book carries the eval purchases/commands). Evals are now
+  a standing in-prod assurance control, not a pollution source.
 - **Stale-pin refresh (2026-10-04)**: the library banners when any agent's
   active release pins older skill versions. Refresh is two-step: a preview
   (`GET /agents/releases/refresh-stale`) names every agent being updated,

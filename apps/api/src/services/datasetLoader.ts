@@ -234,7 +234,7 @@ export async function loadDemoDataset(db: Db, opts: LoadOptions = {}): Promise<L
     const [{ m }] = (
       await db.execute(sql`
         select greatest(
-          (select max(invoice_date) from erp.ap_invoice where invoice_date < ${horizon}::date),
+          (select max(invoice_date) from erp.ap_invoice where book <> 'test' and invoice_date < ${horizon}::date),
           (select max(invoice_date) from erp.ar_invoice where invoice_date < ${horizon}::date),
           (select max(txn_date) from erp.bank_transaction where txn_date < ${horizon}::date)
         )::text as m`)
@@ -300,7 +300,7 @@ export async function loadDemoDataset(db: Db, opts: LoadOptions = {}): Promise<L
     const prior = (
       await db.execute(sql`
         select s.code, i.supplier_invoice_number as num, i.gross_minor as gross, i.invoice_date::text as d
-        from erp.ap_invoice i join erp.supplier s on s.id = i.supplier_id`)
+        from erp.ap_invoice i join erp.supplier s on s.id = i.supplier_id where i.book <> 'test'`)
     ).rows as { code: string; num: string; gross: number; d: string }[];
     for (const r of prior) {
       const list = seenInvoices.get(r.code) ?? [];
@@ -637,7 +637,7 @@ export async function loadDemoDataset(db: Db, opts: LoadOptions = {}): Promise<L
   opts.onProgress?.(done, total, `AR loaded, ${applied} receipts applied`);
 
   log(`loaded: ${JSON.stringify(stats)}`);
-  const [{ n: journals }] = (await db.execute(sql`select count(*) as n from erp.journal`)).rows as { n: string }[];
+  const [{ n: journals }] = (await db.execute(sql`select count(*) as n from erp.journal where book <> 'test'`)).rows as { n: string }[];
   const [{ bal }] = (await db.execute(sql`select coalesce(sum(amount_minor),0) as bal from erp.journal_line`)).rows as { bal: string }[];
   log(`journals: ${journals}, ledger balance check (must be 0): ${bal}`);
   return { stats, journals: Number(journals), balance: Number(bal), monthLoaded: window?.to ?? null };

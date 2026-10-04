@@ -14,6 +14,7 @@
 import { eq } from "drizzle-orm";
 import { fdpEvent, fdpMovement, type Db } from "@af/db";
 import { postJournal, type JournalLineInput } from "./posting.js";
+import { currentBook } from "../lib/bookContext.js";
 
 /** Engine identity stamped on every movement for replay traceability.
  * Deterministic code — no model call, ever (CLAUDE.md model routing). */
@@ -86,6 +87,8 @@ export async function postEvent(db: Db, input: FdpEventInput): Promise<FdpPostRe
     .insert(fdpEvent)
     .values({
       eventType: input.eventType,
+      book: currentBook(), // D16
+
       occurredAt: new Date(`${input.occurredAt}T00:00:00Z`),
       sourceSystem: input.sourceSystem,
       sourceEventKey: input.sourceEventKey,

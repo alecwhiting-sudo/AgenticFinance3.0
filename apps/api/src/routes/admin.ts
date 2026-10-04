@@ -50,12 +50,12 @@ export function adminRoutes(app: FastifyInstance): void {
     const db = requireDb();
     const [counts] = (
       await db.execute(sql`
-        select (select count(*)::int from erp.purchase) as purchases,
-               (select count(*)::int from erp.ap_invoice) as invoices,
-               (select count(*)::int from erp.journal) as journals,
-               (select count(*)::int from fdp.event) as events,
+        select (select count(*)::int from erp.purchase where book <> 'test') as purchases,
+               (select count(*)::int from erp.ap_invoice where book <> 'test') as invoices,
+               (select count(*)::int from erp.journal where book <> 'test') as journals,
+               (select count(*)::int from fdp.event where book <> 'test') as events,
                (select count(*)::int from erp.bank_transaction) as bank_lines,
-               (select coalesce(sum(amount_minor),0)::bigint from erp.journal_line) as balance
+               (select coalesce(sum(jl.amount_minor),0)::bigint from erp.journal_line jl join erp.journal j on j.id = jl.journal_id and j.book <> 'test') as balance
       `)
     ).rows;
     return { counts, job: jobWithElapsed() };
@@ -72,7 +72,7 @@ export function adminRoutes(app: FastifyInstance): void {
     const loaded = (
       await db.execute(sql`
         select m, sum(ap)::int as ap, sum(ar)::int as ar, sum(bank)::int as bank from (
-          select to_char(invoice_date,'YYYY-MM') as m, count(*) as ap, 0 as ar, 0 as bank from erp.ap_invoice group by 1
+          select to_char(invoice_date,'YYYY-MM') as m, count(*) as ap, 0 as ar, 0 as bank from erp.ap_invoice where book <> 'test' group by 1
           union all
           select to_char(invoice_date,'YYYY-MM'), 0, count(*), 0 from erp.ar_invoice group by 1
           union all
@@ -92,20 +92,20 @@ export function adminRoutes(app: FastifyInstance): void {
     const [split] = (
       await db.execute(sql`
         select
-          (select count(*)::int from erp.ap_invoice where status in ('matched','approved','posted','scheduled','paid')) as ap_straight,
-          (select count(*)::int from erp.ap_invoice where status = 'exception') as ap_exceptions,
+          (select count(*)::int from erp.ap_invoice where book <> 'test' and status in ('matched','approved','posted','scheduled','paid')) as ap_straight,
+          (select count(*)::int from erp.ap_invoice where book <> 'test' and status = 'exception') as ap_exceptions,
           (select count(*)::int from erp.ar_invoice) as ar_posted,
           (select count(*)::int from erp.bank_transaction where status = 'matched') as bank_matched,
           (select count(*)::int from erp.bank_transaction where status = 'unmatched') as bank_unmatched,
           (select count(*)::int from agent.work_item where status in ('pending','claimed','running')) as agent_queue,
-          (select count(*)::int from agent.command where status = 'proposed' and requires_approval) as awaiting_human
+          (select count(*)::int from agent.command where status = 'proposed' and requires_approval and book <> 'test') as awaiting_human
       `)
     ).rows;
     const [integrity] = (
       await db.execute(sql`
-        select (select count(*)::int from erp.journal) as journals,
-               (select count(*)::int from fdp.event) as events,
-               (select coalesce(sum(amount_minor),0)::bigint from erp.journal_line) as balance
+        select (select count(*)::int from erp.journal where book <> 'test') as journals,
+               (select count(*)::int from fdp.event where book <> 'test') as events,
+               (select coalesce(sum(jl.amount_minor),0)::bigint from erp.journal_line jl join erp.journal j on j.id = jl.journal_id and j.book <> 'test') as balance
       `)
     ).rows;
     // which month "Process next month" would load (mirrors the loader's boundary)
