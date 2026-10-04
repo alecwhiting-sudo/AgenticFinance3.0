@@ -106,7 +106,7 @@ export const ENTITY_CATALOGUE = [
   },
   {
     id: "suppliers",
-    what: "Supplier master records: code, name, payment terms.",
+    what: "Supplier master records: code, name, payment terms, verified IBAN.",
     filters: { search: "code or name fragment" },
     access: "master.read",
   },
@@ -305,13 +305,20 @@ export function analyticsRoutes(app: FastifyInstance): void {
       }
 
       // suppliers / customers master data
-      const table = entity === "suppliers" ? sql`erp.supplier` : sql`erp.customer`;
-      const rows = await run(sql`
-        select code, name, payment_terms_days
-        from ${table}
-        where (${search}::text is null or code ilike ${search} or name ilike ${search})
-        order by code limit ${limit}
-      `);
+      const rows =
+        entity === "suppliers"
+          ? await run(sql`
+              select code, name, payment_terms_days, iban
+              from erp.supplier
+              where (${search}::text is null or code ilike ${search} or name ilike ${search})
+              order by code limit ${limit}
+            `)
+          : await run(sql`
+              select code, name, payment_terms_days
+              from erp.customer
+              where (${search}::text is null or code ilike ${search} or name ilike ${search})
+              order by code limit ${limit}
+            `);
       return { entity, rows, shown: rows.length, aggregates: null };
     },
   );

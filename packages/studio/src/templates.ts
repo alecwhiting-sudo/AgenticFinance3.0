@@ -48,13 +48,44 @@ export function apInvoiceHtml(chain: ApChain, supplierName: string): string {
     vatMinor: inv.vatMinor,
     grossMinor: inv.grossMinor,
     lines: inv.lines,
+    ...(inv.iban ? { iban: inv.iban } : {}),
   };
+  const payTo = inv.iban
+    ? `<p class="muted">Pay by bank transfer to IBAN <b>${inv.iban}</b>, quoting ${inv.number}.</p>`
+    : "";
   const totals = `<table>
     <tr><td class="r">Net</td><td class="r" style="width:110px">${gbp(inv.netMinor)}</td></tr>
     <tr><td class="r">VAT 20%</td><td class="r">${gbp(inv.vatMinor)}</td></tr>
     <tr class="tot"><td class="r">Total due</td><td class="r">${gbp(inv.grossMinor)}</td></tr>
-  </table>`;
+  </table>${payTo}`;
   const ref = chain.po ? `<p class="muted">Your reference: ${chain.po.number}</p>` : "";
+
+  // template 3: the multi-page services invoice (dataset v2) — lines spread
+  // across pages, optional per-page subtotals, grand totals only at the end.
+  // The stored totals are what the document STATES (the trap keeps its wrong
+  // grand total on paper); AF-DATA carries the same stated figures.
+  if (inv.template === 3 && inv.multiPage) {
+    const mp = inv.multiPage;
+    const per = Math.ceil(inv.lines.length / mp.pages);
+    const pages: string[] = [];
+    for (let p = 0; p < mp.pages; p++) {
+      const pageLines = inv.lines.slice(p * per, (p + 1) * per);
+      const sub = pageLines.reduce((n, l) => n + l.qty * l.unitPriceMinor, 0);
+      pages.push(`<div style="${p < mp.pages - 1 ? "page-break-after:always" : ""}">
+        <div style="display:flex;justify-content:space-between">
+          <div><h1>${supplierName}</h1><p class="muted">Professional services</p></div>
+          <div style="text-align:right"><h1 style="color:#4a4a8a">TAX INVOICE</h1>
+            <p><b>${inv.number}</b> · page ${p + 1} of ${mp.pages}</p></div>
+        </div>
+        <p>Invoice date: <b>${inv.invoiceDate}</b> &nbsp; Due: <b>${inv.dueDate}</b></p>
+        <p>Bill to: Brightline Ltd, 14 Foundry Lane, Leeds LS1 4DQ</p>${p === 0 ? ref : ""}
+        ${linesTable(pageLines)}
+        ${mp.perPageSubtotals ? `<table><tr><td class="r">Subtotal this page</td><td class="r" style="width:110px">${gbp(sub)}</td></tr></table>` : ""}
+        ${p === mp.pages - 1 ? totals : `<p class="muted">Continued on page ${p + 2}…</p>`}
+      </div>`);
+    }
+    return page(`${pages.join("")}${mrz(data)}`);
+  }
 
   if (inv.template === 0)
     return page(

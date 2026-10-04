@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
+  xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
+  xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
+  <cbc:CustomizationID>urn:cen.eu:en16931:2017</cbc:CustomizationID>
+  <cbc:ID>DAS-93997</cbc:ID>
+  <cbc:IssueDate>2026-02-13</cbc:IssueDate>
+  <cbc:DueDate>2026-03-30</cbc:DueDate>
+  <cbc:InvoiceTypeCode>380</cbc:InvoiceTypeCode>
+  <cbc:DocumentCurrencyCode>GBP</cbc:DocumentCurrencyCode>
+  <cac:OrderReference><cbc:ID>PO-261415</cbc:ID></cac:OrderReference>
+  <cac:AccountingSupplierParty>
+    <cac:Party>
+      <cac:PartyIdentification><cbc:ID>SUP-034</cbc:ID></cac:PartyIdentification>
+      <cac:PartyName><cbc:Name>Dunholme Archive Storage</cbc:Name></cac:PartyName>
+    </cac:Party>
+  </cac:AccountingSupplierParty>
+  <cac:AccountingCustomerParty>
+    <cac:Party><cac:PartyName><cbc:Name>Brightline Interiors Ltd</cbc:Name></cac:PartyName></cac:Party>
+  </cac:AccountingCustomerParty>
+  <cac:TaxTotal><cbc:TaxAmount currencyID="GBP">5801.80</cbc:TaxAmount></cac:TaxTotal>
+  <cac:LegalMonetaryTotal>
+    <cbc:LineExtensionAmount currencyID="GBP">29009.00</cbc:LineExtensionAmount>
+    <cbc:TaxExclusiveAmount currencyID="GBP">29009.00</cbc:TaxExclusiveAmount>
+    <cbc:TaxInclusiveAmount currencyID="GBP">34810.80</cbc:TaxInclusiveAmount>
+    <cbc:PayableAmount currencyID="GBP">34810.80</cbc:PayableAmount>
+  </cac:LegalMonetaryTotal>
+  <cac:InvoiceLine>
+    <cbc:ID>1</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="EA">8</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="GBP">28304.00</cbc:LineExtensionAmount>
+    <cac:Item>
+      <cbc:Name>Electricity Q bill</cbc:Name>
+      <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
+    </cac:Item>
+    <cac:Price><cbc:PriceAmount currencyID="GBP">3538.00</cbc:PriceAmount></cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>2</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="GBP">705.00</cbc:LineExtensionAmount>
+    <cac:Item>
+      <cbc:Name>Meeting room hire</cbc:Name>
+      <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
+    </cac:Item>
+    <cac:Price><cbc:PriceAmount currencyID="GBP">705.00</cbc:PriceAmount></cac:Price>
+  </cac:InvoiceLine>
+</Invoice>

@@ -1,0 +1,1 @@
+ALTER TABLE "erp"."supplier" ADD COLUMN "iban" text;

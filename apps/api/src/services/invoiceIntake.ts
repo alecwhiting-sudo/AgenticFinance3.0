@@ -35,6 +35,8 @@ export type CaptureInvoiceData = {
   netMinor: number;
   vatMinor: number;
   grossMinor: number;
+  /** The IBAN printed on the invoice — checked against the supplier master. */
+  ibanOnInvoice?: string;
   emailText?: string;
   documentPath?: string;
   emailPath?: string;
@@ -61,7 +63,7 @@ async function openExceptionCase(
   const [c] = await db
     .insert(evidenceCase)
     .values({
-      kind: code === "bank_detail_change" ? "fraud-risk" : "invoice-exception",
+      kind: code === "bank_detail_change" || code === "bank_detail_mismatch" ? "fraud-risk" : "invoice-exception",
       title: `${code}: ${supplierName} invoice ${inv.supplierInvoiceNumber}`,
     })
     .returning();
@@ -92,7 +94,7 @@ async function openExceptionCase(
         exceptionCode: code,
         detail,
         objective:
-          "Investigate using get_invoice_context, then (1) propose case.options with 2-3 grounded, costed resolution options (params: caseId, options[{resolution: approve_adjusted|part_approve|record_receipt|reject|retro_purchase|human_verify, label, rationale, costedNote?, adjustedQuantities?}]) and (2) propose ap.invoice.resolve for your single recommended option. Never resolve bank_detail_change — options there are human_verify guidance only.",
+          "Investigate using get_invoice_context, then (1) propose case.options with 2-3 grounded, costed resolution options (params: caseId, options[{resolution: approve_adjusted|part_approve|record_receipt|reject|retro_purchase|human_verify, label, rationale, costedNote?, adjustedQuantities?}]) and (2) propose ap.invoice.resolve for your single recommended option. Never resolve bank_detail_change or bank_detail_mismatch — bank details are verified by humans out-of-band; options there are human_verify guidance only.",
       },
       priority: 3,
     });
@@ -164,6 +166,29 @@ export async function captureInvoice(
     return { invoiceId: inv.id, status: "exception", exceptionCode: "bank_detail_change" };
   }
 
+  // 1b. bank-detail screen on the document itself (dataset v2): the printed
+  // IBAN must match the supplier master's verified one. Held human-only,
+  // exactly like the email screen — a wrong IBAN pays the wrong account.
+  if (data.ibanOnInvoice && sup.iban && data.ibanOnInvoice !== sup.iban) {
+    await openExceptionCase(
+      db, inv, sup.name, "bank_detail_mismatch",
+      `Invoice shows IBAN ${data.ibanOnInvoice}; supplier master holds ${sup.iban} — verify out-of-band before anything is paid`,
+    );
+    return { invoiceId: inv.id, status: "exception", exceptionCode: "bank_detail_mismatch" };
+  }
+
+  // 1c. totals reconciliation (dataset v2): the stated totals must equal the
+  // sum of the lines — a multi-page carried-subtotal error (or a bad
+  // extraction) must never post silently.
+  const linesSum = lines.reduce((n, l) => n + l.qty * l.unitPriceMinor, 0);
+  if (linesSum !== data.netMinor) {
+    await openExceptionCase(
+      db, inv, sup.name, "total_mismatch",
+      `Invoice lines sum to ${linesSum}p but the stated net total is ${data.netMinor}p — re-check every page before approving`,
+    );
+    return { invoiceId: inv.id, status: "exception", exceptionCode: "total_mismatch" };
+  }
+
   // 2. duplicate heuristics against this supplier's history
   const prior = await db.query.apInvoice.findMany({
     where: (t) => and(eq(t.supplierId, sup.id)),
@@ -222,9 +247,9 @@ export async function resolveInvoiceException(
   if (!inv) throw Object.assign(new Error("invoice not found"), { statusCode: 404 });
   if (inv.status !== "exception")
     throw Object.assign(new Error(`invoice is ${inv.status}, not exception`), { statusCode: 409 });
-  if (inv.exceptionCode === "bank_detail_change")
+  if (inv.exceptionCode === "bank_detail_change" || inv.exceptionCode === "bank_detail_mismatch")
     throw Object.assign(
-      new Error("bank_detail_change is human-only: verify out-of-band, then reject or re-capture"),
+      new Error(`${inv.exceptionCode} is human-only: verify bank details out-of-band, then reject or re-capture`),
       { statusCode: 403 },
     );
 

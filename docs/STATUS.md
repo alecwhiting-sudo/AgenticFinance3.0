@@ -28,19 +28,21 @@ _Last updated: 2026-10-04_
 - **Live on Railway** (GitHub auto-deploy from `main`-equivalent branch pushes;
   dashboard "Redeploy" does **not** rebuild): web, api
   (`api-production-7cea.up.railway.app`), worker (needs `API_URL` env — set).
-- **Dataset:** 300 AP chains (each: requisition+PO → GRN (288) → invoice,
-  36 planted exceptions: price_variance, qty_short_receipt, missing_receipt,
-  no_purchase, duplicate_suspect, bank_detail_change), 400 AR invoices,
-  508 bank lines, 110 UBL e-invoices, 50 scan-style PDFs. All committed in
+- **Dataset v2 (2026-10-04):** Jan–Sep 2026 — 450 AP chains, 54 planted
+  exceptions across 8 codes (incl. v2: bank_detail_mismatch wrong-IBAN
+  fraud ×5, total_mismatch multi-page trap ×1), 600 AR invoices, 821 bank
+  lines, 135 UBL e-invoices, 75 scan PDFs (10 poor tier), 5 multi-page
+  invoices. Flaw catalogue: `plans/TEST_DATA_MAP.md`. All committed in
   `packages/db/seed/generated/` — internal docs (PO/GRN) are schema rows;
   only supplier-facing artefacts are rendered PDFs.
 - **Agents (10, by family):** p2p: purchase-request, invoice-extraction
   (Haiku), invoice-exception · r2r: reconciliation, close, analyst · o2c:
   cash-application, collections · platform: hello-finance,
   transaction-generator. All evals green at last run.
-- **Invariants proven:** fresh load = 1159 events = 1159 journals, GL balance
-  0; replay from zero reproduces identical state; immutability + balance
-  controls attack-tested; 30 unit tests.
+- **Invariants proven:** fresh load = 1797 events = 1797 journals, GL balance
+  0, zero planted-vs-derived exception mismatches; v1 months regenerate
+  byte-identical from the Studio; replay from zero reproduces identical
+  state; immutability + balance controls attack-tested; 30 unit tests.
 - **Test panel** (`/test`, in the nav): the scenario catalog — each scenario
   states what it does, what data it uses, what it proves and what it does
   NOT prove, cost and duration, before you run it (month-by-month, 10x,
@@ -67,7 +69,7 @@ _Last updated: 2026-10-04_
   execute the FULL pipeline. The gateway derives the book from the run's
   work item (unspoofable); statements, TB, analytics, queues and the
   approvals inbox read `book <> 'test'`. Verified: eval suites run green
-  while main stays byte-identical (1159 journals, balance 0, inbox
+  while main stays byte-identical (verified at 1159 journals, balance 0, inbox
   unchanged; test book carries the eval purchases/commands). Evals are now
   a standing in-prod assurance control, not a pollution source.
 - **Stale-pin refresh (2026-10-04)**: the library banners when any agent's
@@ -124,10 +126,12 @@ _Last updated: 2026-10-04_
    one shared lens model in `@af/shared`, `?lens=` in the URL +
    localStorage so it follows you between pages; quarter/YTD flux compares
    the window to the equal-length prior window; aging as-of window end;
-   Analyst views take the same from/to params) → C dataset v2 (Jan–Mar extension;
-   5 multi-page invoices incl. one subtotal-mismatch trap; supplier bank
-   details + planted wrong IBANs + new `bank_detail_mismatch` intake
-   control; poor-scan tier; extraction evals; invariant sweep) → D
+   Analyst views take the same from/to params) → **C dataset v2 BUILT 2026-10-04**
+   (Jan–Mar extension; 5 multi-page invoices incl. the AC-75726 trap;
+   supplier IBANs + `bank_detail_mismatch` and `total_mismatch` intake
+   controls — both human-only/never-silent; poor-scan tier ×10; playbook +
+   extraction skills updated (stale pins expected — refresh via the
+   governance flow); new eval cases; invariants 1797) → D
    six-month/arbitrary scenario windows → E chat-built analytics dashboard
    pages (supersedes the old "saved views" idea). Do-first: Studio v1
    byte-identical regen check.

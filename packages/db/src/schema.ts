@@ -81,6 +81,10 @@ export const supplier = erp.table("supplier", {
   name: text("name").notNull(),
   email: text("email"),
   paymentTermsDays: integer("payment_terms_days"),
+  // Verified bank details on the master (dataset v2): the IBAN an invoice
+  // shows is checked against this at intake — a mismatch is held as
+  // bank_detail_mismatch, human-only, like the email-based C-P4 screen.
+  iban: text("iban"),
   active: boolean("active").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()

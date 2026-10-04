@@ -149,7 +149,7 @@ standard release rule.
   drill filter, `apps/web/src/components/charts.tsx` (ChartCard with
   chart/table toggle, TrendChart, Waterfall, HBars, AreaTrend — inline SVG,
   teal ramp / teal↔amber diverging per §4.7), `/analytics` page under R2R.
-  Verified against the full replay (1159 journals): flux profit ties to
+  Verified against the full replay (1159 journals at the time; 1797 since dataset v2): flux profit ties to
   `/erp/statements` exactly; drill lands on the filtered postings; light +
   dark themes screenshot-checked.
 - M2 built (2026-10-03): `analyst` agent seeded (agents.json: release +

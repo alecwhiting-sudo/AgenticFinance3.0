@@ -85,7 +85,7 @@ const SCENARIOS: Scenario[] = [
     duration: "baseline ~2s · full run ~15–60s, timed live",
     does:
       "Two runs, side by side: first a single month as the baseline, then the entire dataset — ten months' volume — processed as one batch at full speed, timed. The runs table on mission control shows both: items, duration, throughput, and the human-review count, which scales with the exception rate rather than the volume.",
-    uses: "The full dataset as one batch: 300 supplier invoice chains, 400 customer invoices, 508 bank lines, 36 planted exceptions (~12%).",
+    uses: "The full dataset as one batch: 450 supplier invoice chains (Jan–Sep), 600 customer invoices, 821 bank lines, 54 planted exceptions (~12%) — incl. the v2 plants: multi-page invoices, wrong IBANs, a totals trap (docs/plans/TEST_DATA_MAP.md).",
     proves: [
       "Deterministic processing scales linearly, with no model cost",
       "Human review scales with the exception rate (36 of ~1,200 items)",
@@ -455,7 +455,7 @@ export default function TestPage() {
               confirm === a.label ? (
                 <span key={a.label} className="flex items-center gap-2">
                   <span className="text-xs" style={{ color: "var(--bad)" }}>
-                    {a.run.kind === "reset" && (a.run.mode === "zero" ? "Wipes ALL transactions." : a.run.mode === "cold-all" ? "Wipes, then ~300 real model extractions (~£3–4, 20–30 min)." : "Wipes and re-runs ALL transactions.")} Sure?
+                    {a.run.kind === "reset" && (a.run.mode === "zero" ? "Wipes ALL transactions." : a.run.mode === "cold-all" ? "Wipes, then ~450 real model extractions (~£5–6, 30–45 min)." : "Wipes and re-runs ALL transactions.")} Sure?
                   </span>
                   <button onClick={() => fire(a)} className="whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium text-white" style={{ background: "var(--bad)" }}>
                     Yes, go

@@ -55,6 +55,8 @@ const CODE_LABELS: Record<string, string> = {
   no_purchase: "No purchase record",
   duplicate_suspect: "Duplicate suspect",
   bank_detail_change: "Bank detail change (fraud risk)",
+  bank_detail_mismatch: "IBAN mismatch vs master (fraud risk)",
+  total_mismatch: "Stated total ≠ line sum",
 };
 
 export default function ExceptionsPage() {

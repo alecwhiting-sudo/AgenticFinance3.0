@@ -272,6 +272,7 @@ async function invoiceCaptureFallback(
     netMinor: Number(doc.netMinor ?? 0),
     vatMinor: Number(doc.vatMinor ?? 0),
     grossMinor: Number(doc.grossMinor ?? 0),
+    ...(doc.iban ? { ibanOnInvoice: String(doc.iban) } : {}),
     ...(emailText ? { emailText } : {}),
     ...(typeof payload.documentPath === "string" ? { documentPath: payload.documentPath } : {}),
   };
@@ -611,6 +612,26 @@ async function invoiceExceptionFallback(
       label: "Verify with the supplier out of band — never from this email",
       rationale: `The covering email requests a bank detail change (${detail}). Call the supplier on the number already on file; if genuine, update details through master data, then release. If not, reject and report.`,
     });
+  } else if (code === "bank_detail_mismatch") {
+    options.push({
+      resolution: "human_verify",
+      label: "Verify the bank details out of band — never from the document",
+      rationale: `The IBAN printed on the invoice differs from the supplier master's verified bank details (${detail}). Confirm the correct account with the supplier via a channel already on file; if the master is stale, update it through master data and re-capture. If not, reject and report.`,
+    });
+  } else if (code === "total_mismatch") {
+    options.push(
+      {
+        resolution: "reject",
+        label: "Reject for a corrected invoice",
+        rationale: `The stated grand total does not equal the sum of the lines (${detail}). If the document itself is wrong, the supplier should re-bill correctly.`,
+      },
+      {
+        resolution: "part_approve",
+        label: "Lines verified right — approve at the line sum",
+        rationale: `If a page-by-page re-check confirms every line and only the stated total is wrong, part-approve at the invoiced quantities so the posting equals the verified line sum (${detail}). Never approve at the stated total.`,
+        adjustedQuantities: inv?.lines.map((l) => ({ lineNo: l.lineNo, qty: l.qty })),
+      },
+    );
   }
 
   if (caseId && options.length > 0) {
@@ -651,6 +672,16 @@ async function invoiceExceptionFallback(
       return {
         outcome: "abstained",
         summary: "Fraud-risk case: the covering email requests a bank detail change. I will not action or recommend any resolution — verify with the supplier via a known channel, out of band (guidance is on the case). The invoice stays held.",
+      };
+    case "bank_detail_mismatch":
+      return {
+        outcome: "abstained",
+        summary: `Fraud-risk case: the IBAN printed on the invoice differs from the supplier master's verified bank details (${detail}). I will not action or recommend any resolution — confirm the correct account with the supplier via a known channel, out of band. The invoice stays held; nothing is paid until the master and the document agree.`,
+      };
+    case "total_mismatch":
+      return {
+        outcome: "escalated",
+        summary: `The invoice's stated total does not equal the sum of its lines (${detail}) — typical of a multi-page carried-subtotal error or a bad extraction. A human should re-check every page against the lines, then either reject for a corrected invoice or part-approve at the verified line quantities.`,
       };
     default:
       return { outcome: "escalated", summary: `No playbook for exception code "${code}" — human triage needed.` };

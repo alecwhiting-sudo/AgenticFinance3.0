@@ -2,6 +2,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { generate } from "./generate.js";
+import { extendV2 } from "./extend.js";
 import { render } from "./render.js";
 import { formats } from "./formats.js";
 import { validate } from "./validate.js";
@@ -11,7 +12,8 @@ const cmd = process.argv[2];
 
 if (cmd === "generate") {
   const seed = Number(process.argv[3] ?? 20261001);
-  const dataset = generate(seed);
+  // v1 (Apr–Sep, byte-stable) + the v2 Jan–Mar extension (own RNG streams)
+  const dataset = extendV2(generate(seed), seed);
   mkdirSync(path.join(seedDir, "generated"), { recursive: true });
   writeFileSync(
     path.join(seedDir, "generated/dataset.json"),
@@ -19,7 +21,9 @@ if (cmd === "generate") {
   );
   console.log("generated dataset:", JSON.stringify(dataset.stats));
 } else if (cmd === "render") {
-  await render(seedDir);
+  // --missing renders only documents not yet on disk (v2 additions) so the
+  // committed v1 binaries never churn
+  await render(seedDir, { onlyMissing: process.argv[3] === "--missing" });
 } else if (cmd === "formats") {
   await formats(seedDir);
 } else if (cmd === "validate") {

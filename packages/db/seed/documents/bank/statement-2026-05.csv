@@ -1,16 +1,28 @@
 date,amount,reference,counterparty,kind
+2026-05-01,-6256.80,YHS-55492,"Yarrow Health & Safety Ltd",ap_payment
+2026-05-03,5460.00,BRT-5406,"Carden Health Partners",ar_receipt
 2026-05-04,4104.00,BRT-5073,"Nawton Vehicle Hire",ar_receipt
 2026-05-05,2964.00,BRT-5087,"Redmayne Sports Group",ar_receipt
 2026-05-05,5760.00,BRT-5134,"Redmayne Sports Group",ar_receipt
+2026-05-05,-2073.60,JCC-23319,"Juniper Catering Co",ap_payment
 2026-05-06,624.00,BRT-5063,"Helmsley Outdoor Events",ar_receipt
 2026-05-06,13344.00,BRT-5311,"Oldstead Hospitality",ar_receipt
+2026-05-06,-894.00,UL-52841,"Ullswater Logistics",ap_payment
+2026-05-06,6000.00,BRT-5416,"Crayke Data Centres",ar_receipt
+2026-05-06,1896.00,BRT-5574,"Eastgate Manufacturing plc",ar_receipt
 2026-05-07,10020.00,BRT-5372,"Garsdale Foods Ltd",ar_receipt
+2026-05-07,4320.00,BRT-5469,"Yearsley Cold Storage",ar_receipt
+2026-05-07,-34128.00,VAT-Q1-2026,"HMRC",vat
 2026-05-08,-1345.20,IOP-22993,"Ingleton Office Plants",ap_payment
+2026-05-08,15360.00,BRT-5470,"Hutton Rudby Robotics",ar_receipt
 2026-05-09,1872.00,BRT-5306,"Ugthorpe Haulage",ar_receipt
+2026-05-09,-1318.80,MTL-77015,"Mercia Telecoms Ltd",ap_payment
+2026-05-09,1080.00,BRT-5433,"Yearsley Cold Storage",ar_receipt
 2026-05-11,-16850.40,HBM-64193,"Holloway Business Media",ap_payment
 2026-05-12,-10059.60,MWL-69280,"Metro Workspace (Leeds) Ltd",ap_payment
 2026-05-12,5760.00,BRT-5382,"Dunmore Estates Ltd",ar_receipt
 2026-05-13,1140.00,BRT-5115,"Nunthorpe Solar",ar_receipt
+2026-05-13,10800.00,BRT-5504,"Carden Health Partners",ar_receipt
 2026-05-14,-679.20,DSL-61985,"Dentonware Software Ltd",ap_payment
 2026-05-14,-31911.60,QR-39724,"Quayside Recruitment",ap_payment
 2026-05-14,-4492.80,KIB-96371,"Kestrel Insurance Brokers",ap_payment

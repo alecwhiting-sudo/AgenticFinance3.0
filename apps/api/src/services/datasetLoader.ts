@@ -65,6 +65,11 @@ type StudioChain = {
     number: string; invoiceDate: string; dueDate: string; lines: StudioLine[];
     netMinor: number; vatMinor: number; grossMinor: number; file: string;
     format?: "text_pdf" | "scan_pdf" | "ubl_xml"; altFile?: string;
+    /** dataset v2: printed IBAN, multi-page spec + text layer, scan tier */
+    iban?: string;
+    multiPage?: { pages: number; perPageSubtotals: boolean; trap?: boolean };
+    textLayer?: string;
+    scanQuality?: "poor";
   };
   email: { file: string; body: string };
   exception: string | null;
@@ -279,16 +284,22 @@ export async function loadDemoDataset(db: Db, opts: LoadOptions = {}): Promise<L
   const supplierByCode = new Map(suppliers.map((s) => [s.code, s]));
   {
     const seedData = JSON.parse(readFileSync(path.join(seedDir, "generated/dataset.json"), "utf8")) as {
-      suppliers: { code: string; name: string; email: string; paymentTermsDays: number }[];
+      suppliers: { code: string; name: string; email: string; paymentTermsDays: number; iban?: string }[];
     };
     for (const s of seedData.suppliers) {
-      if (!supplierByCode.has(s.code)) {
+      const existing = supplierByCode.get(s.code);
+      if (!existing) {
         const [row] = await db
           .insert(supplier)
-          .values({ companyId: companyRow.id, code: s.code, name: s.name, email: s.email, paymentTermsDays: s.paymentTermsDays })
+          .values({ companyId: companyRow.id, code: s.code, name: s.name, email: s.email, paymentTermsDays: s.paymentTermsDays, iban: s.iban ?? null })
           .onConflictDoNothing({ target: supplier.code })
           .returning();
         if (row) supplierByCode.set(s.code, row);
+      } else if (!existing.iban && s.iban) {
+        // master-data backfill: suppliers created before the IBAN field
+        // existed get their verified bank details without a reload
+        await db.update(supplier).set({ iban: s.iban }).where(eq(supplier.id, existing.id));
+        supplierByCode.set(s.code, { ...existing, iban: s.iban });
       }
     }
   }
@@ -363,6 +374,17 @@ export async function loadDemoDataset(db: Db, opts: LoadOptions = {}): Promise<L
     // Invoice Extraction Agent, payload identical to the drip path.
     if (opts.coldStart) {
       const isScan = chain.invoice.format === "scan_pdf";
+      const fallbackData = {
+        number: chain.invoice.number,
+        invoiceDate: chain.invoice.invoiceDate,
+        dueDate: chain.invoice.dueDate,
+        po: chain.po?.number ?? null,
+        lines: chain.invoice.lines,
+        netMinor: chain.invoice.netMinor,
+        vatMinor: chain.invoice.vatMinor,
+        grossMinor: chain.invoice.grossMinor,
+        ...(chain.invoice.iban ? { iban: chain.invoice.iban } : {}),
+      };
       await db.insert(workItem).values({
         type: "invoice.capture",
         agentId: extractionAgent!.id,
@@ -372,33 +394,37 @@ export async function loadDemoDataset(db: Db, opts: LoadOptions = {}): Promise<L
               format: "scan_pdf",
               supplierCode: chain.supplierCode,
               emailText: chain.email.body,
-              fallbackData: {
-                number: chain.invoice.number,
-                invoiceDate: chain.invoice.invoiceDate,
-                dueDate: chain.invoice.dueDate,
-                po: chain.po?.number ?? null,
-                lines: chain.invoice.lines,
-                netMinor: chain.invoice.netMinor,
-                vatMinor: chain.invoice.vatMinor,
-                grossMinor: chain.invoice.grossMinor,
-              },
+              fallbackData,
             }
-          : {
-              documentText: `AF-DATA ${JSON.stringify({
-                kind: "ap_invoice",
-                supplier: sup.name,
-                number: chain.invoice.number,
-                invoiceDate: chain.invoice.invoiceDate,
-                dueDate: chain.invoice.dueDate,
-                po: chain.po?.number ?? null,
-                netMinor: chain.invoice.netMinor,
-                vatMinor: chain.invoice.vatMinor,
-                grossMinor: chain.invoice.grossMinor,
-                lines: chain.invoice.lines,
-              })}`,
-              emailText: chain.email.body,
-              supplierCode: chain.supplierCode,
-            },
+          : chain.invoice.textLayer
+            ? {
+                // multi-page invoice (dataset v2): the model gets the real
+                // page-by-page text — no AF-DATA shortcut. It must sum all
+                // pages and reconcile the stated totals itself; keyless
+                // demos use fallbackData (hidden from the model).
+                documentText: chain.invoice.textLayer,
+                documentPath: chain.invoice.file,
+                supplierCode: chain.supplierCode,
+                emailText: chain.email.body,
+                fallbackData,
+              }
+            : {
+                documentText: `AF-DATA ${JSON.stringify({
+                  kind: "ap_invoice",
+                  supplier: sup.name,
+                  number: chain.invoice.number,
+                  invoiceDate: chain.invoice.invoiceDate,
+                  dueDate: chain.invoice.dueDate,
+                  po: chain.po?.number ?? null,
+                  netMinor: chain.invoice.netMinor,
+                  vatMinor: chain.invoice.vatMinor,
+                  grossMinor: chain.invoice.grossMinor,
+                  lines: chain.invoice.lines,
+                  ...(chain.invoice.iban ? { iban: chain.invoice.iban } : {}),
+                })}`,
+                emailText: chain.email.body,
+                supplierCode: chain.supplierCode,
+              },
         priority: 5,
       });
       stats.queued = (stats.queued ?? 0) + 1;
@@ -462,7 +488,13 @@ export async function loadDemoDataset(db: Db, opts: LoadOptions = {}): Promise<L
         invoiceLines: invLines,
       });
 
+      // dataset v2 intake checks (mirror invoiceIntake.captureInvoice):
+      // printed IBAN vs supplier master; stated totals vs line sum
+      const linesSum = invLines.reduce((n, l) => n + l.qty * l.unitPriceMinor, 0);
       if (looksLikeBankDetailChange(chain.email.body)) derived = "bank_detail_change";
+      else if (chain.invoice.iban && sup.iban && chain.invoice.iban !== sup.iban)
+        derived = "bank_detail_mismatch";
+      else if (linesSum !== chain.invoice.netMinor) derived = "total_mismatch";
       else if (dup.duplicate) derived = "duplicate_suspect";
       else if (match.result === "exception") derived = match.code;
 
@@ -487,11 +519,18 @@ export async function loadDemoDataset(db: Db, opts: LoadOptions = {}): Promise<L
           stats.paid!++;
         }
       } else {
-        const detail = match.result === "exception" ? match.detail : dup.reason ?? "flagged by email screen";
+        const detail =
+          derived === "bank_detail_mismatch"
+            ? `Invoice shows IBAN ${chain.invoice.iban}; supplier master holds ${sup.iban} — verify out-of-band before anything is paid`
+            : derived === "total_mismatch"
+              ? `Invoice lines sum to ${linesSum}p but the stated net total is ${chain.invoice.netMinor}p — re-check every page before approving`
+              : match.result === "exception"
+                ? match.detail
+                : dup.reason ?? "flagged by email screen";
         const [c] = await db
           .insert(evidenceCase)
           .values({
-            kind: derived === "bank_detail_change" ? "fraud-risk" : "invoice-exception",
+            kind: derived === "bank_detail_change" || derived === "bank_detail_mismatch" ? "fraud-risk" : "invoice-exception",
             title: `${derived}: ${sup.name} invoice ${chain.invoice.number}`,
           })
           .returning();

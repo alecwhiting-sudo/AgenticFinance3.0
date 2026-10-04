@@ -35,6 +35,19 @@ export type ApChain = {
     /** The alternate-format file (scan PDF or UBL XML); `file` keeps the
      * original text PDF so existing documents stay untouched. */
     altFile?: string;
+    /** Dataset v2 (plans/DATASET_V2.md PR-C) ------------------------------ */
+    /** The IBAN printed on the invoice. Checked against the supplier
+     * master's IBAN at intake — a difference is `bank_detail_mismatch`. */
+    iban?: string;
+    /** Multi-page services invoice: lines spread over `pages` pages,
+     * optionally with per-page subtotals; `trap` = the stated grand total
+     * does NOT equal the sum of the lines (must raise `total_mismatch`). */
+    multiPage?: { pages: number; perPageSubtotals: boolean; trap?: boolean };
+    /** The full plain-text layer of a multi-page invoice — what intake and
+     * the extraction agent read in place of the one-line AF-DATA block. */
+    textLayer?: string;
+    /** Scan tier: "poor" renders with heavier skew/noise/blur. */
+    scanQuality?: "poor";
   };
   email: { file: string; subject: string; body: string; from: string; date: string };
   exception: string | null;
@@ -69,7 +82,7 @@ export type BankTxn = {
 
 export type Dataset = {
   meta: { seed: number; generatedAt: string; from: string; to: string; version: number };
-  suppliers: { code: string; name: string; email: string; paymentTermsDays: number; account: string; contact: string }[];
+  suppliers: { code: string; name: string; email: string; paymentTermsDays: number; account: string; contact: string; iban?: string }[];
   customers: { code: string; name: string; email: string; paymentTermsDays: number; contact: string }[];
   items: { code: string; name: string; kind: string; unitPriceMinor: number }[];
   ap: ApChain[];

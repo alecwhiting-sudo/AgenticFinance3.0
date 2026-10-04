@@ -326,7 +326,7 @@ export function generate(seed = 20261001, apCount = 300, arCount = 400): Dataset
   };
 }
 
-function buildApEmail(
+export function buildApEmail(
   rng: Rng,
   id: string,
   supplierName: string,

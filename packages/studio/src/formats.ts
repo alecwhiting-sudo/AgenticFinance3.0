@@ -4,7 +4,7 @@
  * image PDFs with NO text layer (force the vision extraction path). The
  * original files are never touched. Also reserves a handful of unseen scan
  * invoices for the live drip. No LLM, no network. */
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { chromium, type Page } from "playwright-core";
 import type { ApChain, Dataset, Line } from "./types.js";
@@ -77,32 +77,50 @@ ${lines}
 }
 
 /** Degrade the invoice HTML into a scan: skew, grayscale, noise — and strip
- * the AF-DATA machine-readable footer so only the pixels carry the data. */
-function scanHtml(html: string): string {
+ * the AF-DATA machine-readable footer so only the pixels carry the data.
+ * The "poor" tier (dataset v2) is a genuinely bad office scan: more skew,
+ * heavier blur and noise, washed-out contrast — vision extraction must
+ * escalate when it cannot read a figure, never guess. */
+function scanHtml(html: string, quality: "normal" | "poor" = "normal"): string {
+  const bodyFx =
+    quality === "poor"
+      ? `transform: rotate(-1.7deg) scale(0.96) translateX(6px);
+         filter: grayscale(0.95) contrast(0.82) brightness(1.18) blur(0.9px);`
+      : `transform: rotate(-0.55deg) scale(0.985);
+         filter: grayscale(0.92) contrast(1.22) brightness(1.05) blur(0.4px);`;
+  const noise =
+    quality === "poor"
+      ? `radial-gradient(circle at 12% 18%, rgba(0,0,0,.14), transparent 30%),
+         radial-gradient(circle at 82% 74%, rgba(0,0,0,.18), transparent 28%),
+         radial-gradient(circle at 48% 95%, rgba(0,0,0,.1), transparent 22%),
+         repeating-linear-gradient(2deg, transparent 0 1px, rgba(0,0,0,.05) 1px 2px),
+         repeating-linear-gradient(91deg, transparent 0 7px, rgba(255,255,255,.08) 7px 8px)`
+      : `radial-gradient(circle at 18% 28%, rgba(0,0,0,.05), transparent 40%),
+         radial-gradient(circle at 78% 82%, rgba(0,0,0,.08), transparent 35%),
+         repeating-linear-gradient(3deg, transparent 0 2px, rgba(0,0,0,.013) 2px 3px)`;
   return html
     .replace(/<div class="mrz">AF-DATA [^<]*<\/div>/, "")
     .replace(
       "</head>",
       `<style>
         html { background: #8a8a8a; }
-        body {
-          transform: rotate(-0.55deg) scale(0.985);
-          filter: grayscale(0.92) contrast(1.22) brightness(1.05) blur(0.4px);
-        }
+        body { ${bodyFx} }
         body::after {
           content: ""; position: fixed; inset: 0; pointer-events: none;
-          background-image:
-            radial-gradient(circle at 18% 28%, rgba(0,0,0,.05), transparent 40%),
-            radial-gradient(circle at 78% 82%, rgba(0,0,0,.08), transparent 35%),
-            repeating-linear-gradient(3deg, transparent 0 2px, rgba(0,0,0,.013) 2px 3px);
+          background-image: ${noise};
         }
       </style></head>`,
     );
 }
 
-async function renderScanPdf(pg: Page, html: string, outPath: string): Promise<void> {
-  await pg.setContent(scanHtml(html), { waitUntil: "load" });
-  const jpg = await pg.screenshot({ type: "jpeg", quality: 52, fullPage: false });
+async function renderScanPdf(
+  pg: Page,
+  html: string,
+  outPath: string,
+  quality: "normal" | "poor" = "normal",
+): Promise<void> {
+  await pg.setContent(scanHtml(html, quality), { waitUntil: "load" });
+  const jpg = await pg.screenshot({ type: "jpeg", quality: quality === "poor" ? 26 : 52, fullPage: false });
   await pg.setContent(
     `<html><head><style>@page{size:A4;margin:0}body{margin:0}img{width:100vw;height:100vh;object-fit:cover}</style></head><body><img src="data:image/jpeg;base64,${jpg.toString("base64")}"></body></html>`,
     { waitUntil: "load" },
@@ -124,7 +142,14 @@ export type DripScanEntry = {
 
 export async function formats(
   seedDir: string,
-  counts = { scan: 50, xml: 110, dripScan: 6 },
+  counts: {
+    scan: number;
+    xml: number;
+    dripScan: number;
+    v2scan?: number;
+    v2xml?: number;
+    v2poor?: number;
+  } = { scan: 50, xml: 110, dripScan: 6, v2scan: 25, v2xml: 25, v2poor: 10 },
 ): Promise<void> {
   const datasetPath = path.join(seedDir, "generated/dataset.json");
   const dataset: Dataset = JSON.parse(readFileSync(datasetPath, "utf8"));
@@ -133,15 +158,40 @@ export async function formats(
   mkdirSync(path.join(seedDir, "documents/ap-scan"), { recursive: true });
   mkdirSync(path.join(seedDir, "documents/drip-scan"), { recursive: true });
 
-  // deterministic disjoint selection over a stable order
+  // deterministic disjoint selection over a stable order. The v1 selection
+  // runs over the v1 chains ONLY (ap-0001..ap-0300) so its assignments stay
+  // byte-identical forever; v2 chains get their own pass below.
+  const isV1 = (c: ApChain) => Number(c.id.slice(3)) <= 300;
   const rng = mulberry32(FORMAT_SEED);
-  const shuffled = [...dataset.ap].sort((a, b) => a.id.localeCompare(b.id));
+  const shuffled = [...dataset.ap].filter(isV1).sort((a, b) => a.id.localeCompare(b.id));
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(rng() * (i + 1));
     [shuffled[i], shuffled[j]] = [shuffled[j]!, shuffled[i]!];
   }
   const scanSet = new Set(shuffled.slice(0, counts.scan).map((c) => c.id));
   const xmlSet = new Set(shuffled.slice(counts.scan, counts.scan + counts.xml).map((c) => c.id));
+
+  // v2 pass (dataset v2): among the Jan–Mar chains — leaving the multi-page
+  // and IBAN-mismatch plants as text PDFs so their planted details stay
+  // visible — ~25 become UBL e-invoices and ~25 become scans, the first 10
+  // of them at the POOR quality tier.
+  const poorSet = new Set<string>();
+  {
+    const rng2 = mulberry32(FORMAT_SEED ^ 0x2b7e1516);
+    const eligible = dataset.ap
+      .filter((c) => !isV1(c) && !c.invoice.multiPage && !c.exception?.startsWith("bank_detail_mismatch"))
+      .sort((a, b) => a.id.localeCompare(b.id));
+    for (let i = eligible.length - 1; i > 0; i--) {
+      const j = Math.floor(rng2() * (i + 1));
+      [eligible[i], eligible[j]] = [eligible[j]!, eligible[i]!];
+    }
+    for (const c of eligible.slice(0, counts.v2scan ?? 25)) {
+      scanSet.add(c.id);
+      if (poorSet.size < (counts.v2poor ?? 10)) poorSet.add(c.id);
+    }
+    for (const c of eligible.slice(counts.v2scan ?? 25, (counts.v2scan ?? 25) + (counts.v2xml ?? 25)))
+      xmlSet.add(c.id);
+  }
 
   const browser = await chromium.launch({
     executablePath: process.env.CHROMIUM_PATH ?? "/opt/pw-browsers/chromium",
@@ -164,14 +214,21 @@ export async function formats(
       nXml++;
     } else if (scanSet.has(chain.id)) {
       const alt = `documents/ap-scan/${base}.pdf`;
-      await renderScanPdf(pg, apInvoiceHtml(chain, sup.name), path.join(seedDir, alt));
+      const poor = poorSet.has(chain.id);
+      // committed scans are not re-rendered (Chromium stamps metadata, so a
+      // re-render churns identical-looking binaries in git)
+      if (!existsSync(path.join(seedDir, alt)))
+        await renderScanPdf(pg, apInvoiceHtml(chain, sup.name), path.join(seedDir, alt), poor ? "poor" : "normal");
       chain.invoice.format = "scan_pdf";
       chain.invoice.altFile = alt;
+      if (poor) chain.invoice.scanQuality = "poor";
+      else delete chain.invoice.scanQuality;
       nScan++;
       if (nScan % 10 === 0) console.log(`rendered ${nScan} scan PDFs…`);
     } else if (chain.invoice.format) {
       delete chain.invoice.format;
       delete chain.invoice.altFile;
+      delete chain.invoice.scanQuality;
     }
   }
 
@@ -218,7 +275,8 @@ export async function formats(
       po: null,
       invoice: { ...dataset.ap[0]!.invoice, ...inv, template: 1 },
     } as ApChain;
-    await renderScanPdf(pg, apInvoiceHtml(pseudoChain, sup.name), path.join(seedDir, inv.file));
+    if (!existsSync(path.join(seedDir, inv.file)))
+      await renderScanPdf(pg, apInvoiceHtml(pseudoChain, sup.name), path.join(seedDir, inv.file));
     manifest.push(inv);
   }
   writeFileSync(

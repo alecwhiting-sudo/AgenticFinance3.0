@@ -11,10 +11,15 @@ export function validate(seedDir: string, checkFiles: boolean): string[] {
   const errors: string[] = [];
   const err = (m: string) => errors.push(m);
 
-  // arithmetic: invoice totals = sum of lines; gross = net + vat
+  // arithmetic: invoice totals = sum of lines; gross = net + vat.
+  // The v2 TRAP invoice is the one allowed — REQUIRED — exception: its
+  // stated total must NOT equal its line sum (that's the planted flaw).
   for (const c of dataset.ap) {
     const net = c.invoice.lines.reduce((n, l) => n + l.qty * l.unitPriceMinor, 0);
-    if (net !== c.invoice.netMinor) err(`${c.id}: net != sum(lines)`);
+    if (c.invoice.multiPage?.trap) {
+      if (net === c.invoice.netMinor) err(`${c.id}: trap invoice totals reconcile — not a trap`);
+      if (c.exception !== "total_mismatch") err(`${c.id}: trap not planted as total_mismatch`);
+    } else if (net !== c.invoice.netMinor) err(`${c.id}: net != sum(lines)`);
     if (c.invoice.netMinor + c.invoice.vatMinor !== c.invoice.grossMinor)
       err(`${c.id}: gross != net + vat`);
   }
@@ -24,12 +29,34 @@ export function validate(seedDir: string, checkFiles: boolean): string[] {
     if (i.netMinor + i.vatMinor !== i.grossMinor) err(`${i.id}: gross != net + vat`);
   }
 
-  // exception quota 12–15%, bank_detail_change exactly 2
+  // exception quota 12–15%; bank_detail_change exactly 2 in v1, 3 from v2
+  const v2 = (dataset.meta.version ?? 1) >= 2;
   const exceptions = dataset.ap.filter((c) => c.exception);
   const rate = exceptions.length / dataset.ap.length;
   if (rate < 0.12 || rate > 0.155) err(`exception rate ${(rate * 100).toFixed(1)}% outside 12–15%`);
   const bdc = exceptions.filter((c) => c.exception === "bank_detail_change").length;
-  if (bdc !== 2) err(`bank_detail_change count ${bdc}, expected 2`);
+  if (bdc !== (v2 ? 3 : 2)) err(`bank_detail_change count ${bdc}, expected ${v2 ? 3 : 2}`);
+
+  // dataset v2 plants (plans/DATASET_V2.md PR-C)
+  if (v2) {
+    const suppliersByCode = new Map(dataset.suppliers.map((s) => [s.code, s]));
+    const mp = dataset.ap.filter((c) => c.invoice.multiPage);
+    if (mp.length !== 5) err(`multi-page invoices: ${mp.length}, expected 5`);
+    if (mp.filter((c) => c.invoice.multiPage!.perPageSubtotals).length !== 3)
+      err("expected 3 multi-page invoices with per-page subtotals (incl. the trap)");
+    if (mp.filter((c) => c.invoice.multiPage!.trap).length !== 1) err("expected exactly 1 trap");
+    for (const c of mp) if (!c.invoice.textLayer) err(`${c.id}: multi-page without textLayer`);
+    const mm = dataset.ap.filter((c) => c.exception === "bank_detail_mismatch");
+    if (mm.length !== 5) err(`bank_detail_mismatch plants: ${mm.length}, expected 5`);
+    for (const c of mm) {
+      const sup = suppliersByCode.get(c.supplierCode);
+      if (!c.invoice.iban || !sup?.iban || c.invoice.iban === sup.iban)
+        err(`${c.id}: planted IBAN mismatch does not actually mismatch`);
+    }
+    for (const s of dataset.suppliers) if (!s.iban) err(`supplier ${s.code} has no IBAN`);
+    const poor = dataset.ap.filter((c) => c.invoice.scanQuality === "poor");
+    if (poor.length !== 10) err(`poor-scan tier: ${poor.length}, expected 10`);
+  }
 
   // structural: taxonomy consistency
   for (const c of dataset.ap) {

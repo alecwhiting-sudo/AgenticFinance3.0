@@ -88,6 +88,9 @@ export const commandDefs = {
       netMinor: z.number().int().positive(),
       vatMinor: z.number().int().min(0),
       grossMinor: z.number().int().positive(),
+      /** The IBAN printed on the invoice, when one is — intake checks it
+       * against the supplier master (bank_detail_mismatch, human-only). */
+      ibanOnInvoice: z.string().max(40).optional(),
       emailText: z.string().max(8000).optional(),
       documentPath: z.string().optional(),
       emailPath: z.string().optional(),

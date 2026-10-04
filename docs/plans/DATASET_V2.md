@@ -77,7 +77,15 @@ One shared period model, applied everywhere figures are shown.
   answers honour the lens the user is looking at.
 - No schema change; book filters unchanged. Risk: low. Size: medium.
 
-## PR-C — Dataset v2 (Jan–Mar + edge-case documents + IBAN control) · **the big one**
+## PR-C — Dataset v2 (Jan–Mar + edge-case documents + IBAN control) · **BUILT 2026-10-04**
+
+As built, beyond the spec below: a second intake control landed with it
+(`total_mismatch` — stated totals must equal the line sum, which is how the
+trap is caught); the fiscal calendar now starts 2026-01 (15 periods);
+keyless playbook paths and five new eval cases cover both new codes; the
+exact planted invoice numbers are in `plans/TEST_DATA_MAP.md`. New
+invariant: fresh load = **1797 events = 1797 journals**, balance 0, zero
+planted-vs-derived mismatches.
 
 Studio changes (`packages/studio`), all deterministic, same seed
 discipline (new seed constant for the extension so v1 months regenerate

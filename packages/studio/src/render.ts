@@ -20,7 +20,10 @@ function chromiumPath(): string {
   );
 }
 
-export async function render(seedDir: string): Promise<void> {
+export async function render(
+  seedDir: string,
+  opts: { onlyMissing?: boolean } = {},
+): Promise<void> {
   const dataset: Dataset = JSON.parse(
     readFileSync(path.join(seedDir, "generated/dataset.json"), "utf8"),
   );
@@ -35,6 +38,9 @@ export async function render(seedDir: string): Promise<void> {
   let n = 0;
   const pdf = async (relFile: string, html: string) => {
     const out = path.join(seedDir, relFile);
+    // --missing: committed documents are never re-rendered (Chromium stamps
+    // metadata into PDFs, so a re-render churns v1 binaries in git)
+    if (opts.onlyMissing && existsSync(out)) return;
     await pg.setContent(html, { waitUntil: "load" });
     await pg.pdf({ path: out, format: "A4", printBackground: true });
     if (++n % 100 === 0) console.log(`rendered ${n} PDFs…`);

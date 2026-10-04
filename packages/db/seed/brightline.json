@@ -1,6 +1,6 @@
 {
   "company": { "code": "BRT", "name": "Brightline Ltd", "currency": "GBP" },
-  "periods": { "firstMonth": "2026-04", "months": 12 },
+  "periods": { "firstMonth": "2026-01", "months": 15 },
   "accounts": [
     { "code": "1000", "name": "Bank — current account", "type": "asset" },
     { "code": "1100", "name": "Trade receivables", "type": "asset" },

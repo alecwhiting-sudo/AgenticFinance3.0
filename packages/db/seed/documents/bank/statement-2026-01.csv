@@ -1,0 +1,12 @@
+date,amount,reference,counterparty,kind
+2026-01-17,2880.00,BRT-5454,"Welburn Opticians Group",ar_receipt
+2026-01-17,1080.00,BRT-5567,"Redmayne Sports Group",ar_receipt
+2026-01-17,540.00,BRT-5576,"Dunmore Estates Ltd",ar_receipt
+2026-01-20,6432.00,BRT-5598,"Palmerston Education Trust",ar_receipt
+2026-01-25,1140.00,BRT-5579,"Nunthorpe Solar",ar_receipt
+2026-01-25,-52871.09,PAYROLL-2026-01,"Elmswell Payroll Bureau",salaries
+2026-01-27,24120.00,BRT-5443,"Redmayne Sports Group",ar_receipt
+2026-01-28,19200.00,BRT-5570,"Dunmore Estates Ltd",ar_receipt
+2026-01-28,-49.03,CHARGES-2026-01,"Bank",bank_fees
+2026-01-29,-15523.20,ICL-15833,"Ironbridge Components Ltd",ap_payment
+2026-01-31,34560.00,BRT-5546,"Welburn Opticians Group",ar_receipt
