@@ -64,9 +64,13 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   // the Analyst chat panel (plans/ANALYTICS.md M2) — open state survives
   // navigation and reloads; the conversation itself lives in the panel
   const [analystOpen, setAnalystOpen] = useState(false);
+  // the sidebar folds away (handle stays top-left) so content can breathe,
+  // especially with the Analyst panel open
+  const [navOpen, setNavOpen] = useState(true);
   useEffect(() => {
     try {
       if (localStorage.getItem("analystPanel") === "open") setAnalystOpen(true);
+      if (localStorage.getItem("sidebar") === "closed") setNavOpen(false);
     } catch {
       /* storage unavailable */
     }
@@ -79,6 +83,14 @@ export default function Shell({ children }: { children: React.ReactNode }) {
       /* storage unavailable */
     }
   };
+  const toggleNav = (open: boolean) => {
+    setNavOpen(open);
+    try {
+      localStorage.setItem("sidebar", open ? "open" : "closed");
+    } catch {
+      /* storage unavailable */
+    }
+  };
   const isActive = (it: Item) =>
     it.exact ? pathname === it.href : pathname === it.href || pathname.startsWith(it.href + "/");
   // a parent lights up for itself or any of its children
@@ -87,12 +99,22 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen">
       <aside
-        className="sticky top-0 hidden h-screen w-56 shrink-0 flex-col overflow-y-auto border-r px-3 py-5 md:flex"
+        className={`sticky top-0 h-screen w-56 shrink-0 flex-col overflow-y-auto border-r px-3 py-5 ${navOpen ? "hidden md:flex" : "hidden"}`}
         style={{ borderColor: "var(--border)", background: "var(--card)" }}
       >
-        <Link href="/" className="mb-6 px-2 text-base font-semibold tracking-tight">
-          AgenticFinance
-        </Link>
+        <div className="mb-6 flex items-center justify-between px-2">
+          <Link href="/" className="text-base font-semibold tracking-tight">
+            AgenticFinance
+          </Link>
+          <button
+            onClick={() => toggleNav(false)}
+            className="rounded-md px-1.5 py-0.5 text-sm transition-colors hover:text-[var(--accent)]"
+            style={{ color: "var(--muted)" }}
+            title="Fold the navigation away — the handle top-left brings it back"
+          >
+            ⟨
+          </button>
+        </div>
         <nav className="flex-1 space-y-1">
           {NAV.map((p) => (
             <div key={p.href} className="pb-1">
@@ -142,7 +164,17 @@ export default function Shell({ children }: { children: React.ReactNode }) {
           style={{ borderColor: "var(--border)", background: "color-mix(in srgb, var(--background) 85%, transparent)" }}
         >
           <div className="flex min-w-0 items-center gap-4">
-            <Link href="/" className="text-sm font-semibold md:hidden">
+            {!navOpen && (
+              <button
+                onClick={() => toggleNav(true)}
+                className="hidden rounded-md border px-2 py-1 text-sm transition-colors hover:text-[var(--accent)] md:block"
+                style={{ borderColor: "var(--border)", color: "var(--muted)" }}
+                title="Bring the navigation back"
+              >
+                ☰
+              </button>
+            )}
+            <Link href="/" className={`text-sm font-semibold ${navOpen ? "md:hidden" : ""}`}>
               AgenticFinance
             </Link>
             {/* area links mirror the sidebar parents — quick jumps on wide screens */}

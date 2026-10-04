@@ -220,6 +220,33 @@ export function Waterfall({
     </rect>
   );
 
+  /* Value labels: every label sits ABOVE its own bar's top (the space under
+   * a falling bar belongs to the next column), then a left-to-right sweep
+   * bumps a label upward whenever it would touch its neighbour — measured,
+   * not staggered blindly. The anchors join the chain so the first and last
+   * deltas clear the month totals too. */
+  const labelW = (text: string, fontSize: number) => text.length * fontSize * 0.62;
+  type Lab = { x: number; y: number; w: number };
+  const chainBump = (prev: Lab | undefined, cur: Lab): number => {
+    if (!prev) return cur.y;
+    const xOverlap = Math.abs(cur.x - prev.x) < (cur.w + prev.w) / 2 + 6;
+    return xOverlap ? Math.min(cur.y, prev.y - 10) : cur.y;
+  };
+  const startText = moneyCompact(start);
+  const endText = moneyCompact(end);
+  const deltaTexts = items.map((it) => `${it.delta >= 0 ? "+" : "−"}${compactK(it.delta)}`);
+  const labs: Lab[] = [];
+  const anchorY = (v: number) => (v >= 0 ? Math.min(y(v), y(0)) - 5 : Math.min(Math.max(y(v), y(0)) + 11, H - padB - 2));
+  labs.push({ x: cx(0), y: anchorY(start), w: labelW(startText, 9) });
+  items.forEach((it, i) => {
+    const top = Math.min(y(running[i]!), y(running[i + 1]!));
+    const lab: Lab = { x: cx(i + 1), y: top - 4, w: labelW(deltaTexts[i]!, 8) };
+    lab.y = Math.max(8, chainBump(labs[labs.length - 1], lab));
+    labs.push(lab);
+  });
+  const endLab: Lab = { x: cx(cols - 1), y: anchorY(end), w: labelW(endText, 9) };
+  endLab.y = end >= 0 ? Math.max(8, chainBump(labs[labs.length - 1], endLab)) : endLab.y;
+
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img">
       {ticks.map((t) => (
@@ -258,7 +285,7 @@ export function Waterfall({
           {/* total above a positive bar, below a negative one */}
           <text
             x={cx(i)}
-            y={v >= 0 ? Math.min(y(v), y(0)) - 5 : Math.min(Math.max(y(v), y(0)) + 11, H - padB - 2)}
+            y={i === 0 ? labs[0]!.y : endLab.y}
             textAnchor="middle"
             fontSize="9"
             fontWeight="600"
@@ -277,25 +304,19 @@ export function Waterfall({
       {items.map((it, i) => {
         const from = running[i]!;
         const to = running[i + 1]!;
-        const topY = Math.min(y(from), y(to));
-        const botY = Math.max(y(from), y(to));
         const rect = rectFor(from, to, i + 1, it.delta >= 0 ? FAV : ADV, `${it.label} · ${it.delta >= 0 ? "favourable" : "adverse"} ${money(it.delta)}`);
-        // favourable labels sit above, adverse below; consecutive same-sign
-        // neighbours stagger between two rows so small bars never collide
-        const sameSignBefore = items.slice(0, i).filter((x) => x.delta >= 0 === it.delta >= 0).length;
-        const stagger = (sameSignBefore % 2) * 9;
         return (
           <g key={`b${i}`}>
             {it.href ? <Link href={it.href}>{rect}</Link> : rect}
             <text
               x={cx(i + 1)}
-              y={it.delta >= 0 ? topY - 4 - stagger : Math.min(botY + 10 + stagger, H - padB - 2)}
+              y={labs[i + 1]!.y}
               textAnchor="middle"
               fontSize="8"
               fill="var(--muted)"
               className="num"
             >
-              {`${it.delta >= 0 ? "+" : "−"}${compactK(it.delta)}`}
+              {deltaTexts[i]}
             </text>
             <text
               x={cx(i + 1)}
