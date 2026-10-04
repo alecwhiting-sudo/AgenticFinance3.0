@@ -99,29 +99,37 @@ _Last updated: 2026-10-03_
 
 ## Backlog (agreed, not yet built)
 
-1. **Phase 4c follow-ons** — saved views on a dashboard; data permissions
+1. **Release governance** (`plans/RELEASE_GOVERNANCE.md`, decision
+   2026-10-04): eval runs currently execute against the live books — fine
+   for a disposable demo, not practice. Plan: M1 eval isolation (simulated
+   commands, never executed, never in the inbox) → M3a control-regression
+   diff on skill changes → M2 shadow replay with a measured impact report
+   (exceptions up/down by code, changed recommendations, cost per case) →
+   M3b AI release reviewer grounded in those measurements → M4 real test
+   environment + canary (production phase).
+2. **Phase 4c follow-ons** — saved views on a dashboard; data permissions
    (stubbed: every record-catalogue entity declares an `access` scope,
    enforcement designed in `plans/ANALYTICS.md` §3c). Core 4c built
    2026-10-03 incl. the record catalogue (`query_records` — the Analyst can
    scan actual records, not just the aggregate views).
-2. **LRS lock/certify/supersede** — lands as the month-end dashboard's lock
+3. **LRS lock/certify/supersede** — lands as the month-end dashboard's lock
    button + snapshot tables.
-3. **Commentary quality** — Close Agent output is too bland; skills +
+4. **Commentary quality** — Close Agent output is too bland; skills +
    evals that fail bland output (`plans/R2R.md` §9); reasoning tier only on
    eval evidence.
-4. **Phase 6 remainder** — guided demo tour, cross-process dashboard.
+5. **Phase 6 remainder** — guided demo tour, cross-process dashboard.
    (Demo scenarios + mission control at `/admin/pipeline` built 2026-10-03:
    month-by-month processing, timed full-speed 10x run with remembered
    side-by-side, simulate-a-day — `plans/DEMO_SCRIPTS.md`.)
-5. **Exceptions management M2** — M1 built 2026-10-03 (`/p2p/exceptions`
+6. **Exceptions management M2** — M1 built 2026-10-03 (`/p2p/exceptions`
    workbench: grounded costed options via `case.options`, 3-way diff,
    one-click apply). Remaining: supplier email drafts on options, tolerance
    parameter sets, option evals, O2C mirror (`plans/P2P.md` §10,
    `plans/O2C.md` §9).
-6. **A2R — Acquire to Retire** (fixed assets: capitalise from P2P,
+7. **A2R — Acquire to Retire** (fixed assets: capitalise from P2P,
    depreciation as engine-derived period ticks, disposals) — low priority
    (MASTER_PLAN Phase 7).
-7. **Phase 5 PM** — parked on user's call.
+8. **Phase 5 PM** — parked on user's call.
 
 ## How to resume a session
 
