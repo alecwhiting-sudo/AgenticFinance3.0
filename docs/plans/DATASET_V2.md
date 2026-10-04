@@ -153,6 +153,56 @@ As built, two deliberate deviations from the spec below:
   negatives. The board renderer uses the same primitives, so chat-built
   pages inherit the rules by construction; a person can override per board.
 
+### ⚠ KNOWN ISSUE (2026-10-04, OPEN — do not lose this)
+
+**The model-path Analyst abstains instead of proposing the board.** Alec
+ran the exact prompt on live ("Build me a page called Cash focus with the
+cash position and AP aging") and got outcome **abstained**: *"I can't build
+or save a workbench page … I'm read-only and have no page-creation tool"*
+— followed by a perfectly good text answer of both figures.
+
+**Diagnosis (high confidence, unverified):** instruction conflict inside
+the worker's system prompt (`apps/worker/src/runtime/agentLoop.ts`,
+`buildSystemPrompt`). The generic operating rule — *"You act only through
+your tools … such requests are out of scope — finish with outcome
+'abstained'"* — plus the analyst release's own *"read-only"* framing
+outweigh the board rule appended lower down. The refusal wording mirrors
+the operating rule almost verbatim, which is the conflict signature. The
+board rule asks for NO tool (it's one line of summary text), but the model
+pattern-matched "build a page" to "action I have no tool for". Secondary
+possibility to rule out first: the worker deploy had not restarted when
+the prompt ran (the rule ships worker-side) — reproduce once on the
+current deploy before changing anything.
+
+**Why evals didn't catch it:** the keyless fallback composes boards
+deterministically, so the analyst suite (3/3) passes without exercising
+the model's reading of the conflicting rules. The eval was green while the
+behaviour it stands for was not. That is itself a finding for the
+governance story: this case needs to run on the MODEL path to mean
+anything (there is no model-path eval environment locally — it would run
+on live, where the key exists, via the normal eval suite).
+
+**Candidate fixes for the next session (decide then, not now):**
+1. Reword the generic abstain rule so it applies to ACTIONS, not
+   proposals: "proposing content for a human to confirm is always in
+   scope". Smallest diff, worker-side, applies everywhere at once.
+2. Move the board convention out of the late operating-rules block and
+   into the analyst's release instructions / curated-views skill (a new
+   skill version → stale pin → governance refresh promotes it). More
+   architecturally honest: behaviour lives in the release, not the
+   harness; and the eval gate then actually governs it.
+3. Both — 1 removes the conflict, 2 puts the behaviour where it belongs.
+Also do: re-run the live analyst eval suite AFTER the fix (it runs the
+model path there) and re-test the exact prompt above; consider an
+assertion like `summary_contains "board:"` on a *live* run, since the
+keyless pass is not evidence for the model path.
+
+**What is NOT broken:** the whole human-confirmed pipeline downstream is
+verified — `board:` line parsing, the preview + "Create this page" button,
+POST /analytics/boards validation, the /analytics/boards/{slug} renderer,
+the lens, and the chart house rules. Only the model's willingness to emit
+the proposal line is at issue.
+
 Original spec:
 
 Describe tiles in the Analyst chat → a page gets built.

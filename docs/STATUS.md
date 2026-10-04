@@ -135,13 +135,19 @@ _Last updated: 2026-10-04_
    windows + /test/plants BUILT 2026-10-04** (wipe-and-load any month
    range from the Test panel — Jan–Jun/Apr–Sep presets + custom picker;
    /test/plants, off the main nav, renders the live test data map from the
-   dataset itself) → **E chat-built boards BUILT 2026-10-04** (ask the
+   dataset itself) → **E chat-built boards BUILT 2026-10-04, ONE OPEN DEFECT** (ask the
    Analyst to "build me a page…" → it proposes a `board:` composition from
    the curated views → one click creates it at /analytics/boards/{slug};
    core.dashboard table, migration 0015; boards honour the period lens;
    chart house rules UI_CONVENTIONS §4.8 — validated 6-slot categorical
    palette, consistent accounting-paren axis ticks — enforced by the shared
-   primitives, so chat-built pages inherit them; supersedes "saved views")
+   primitives, so chat-built pages inherit them; supersedes "saved views").
+   **OPEN DEFECT (2026-10-04): on the live MODEL path the Analyst abstains
+   ("no page-creation tool") instead of emitting the `board:` proposal —
+   instruction conflict in the worker's operating rules; keyless path and
+   evals green, everything downstream of the proposal verified. Full
+   diagnosis + candidate fixes in `plans/DATASET_V2.md` § Known issue —
+   START THE NEXT SESSION THERE.**
    → F home dashboard revamp (live motion over static totals — planned
    2026-10-04, see the plan doc).
 3. **Phase 4c follow-ons** — saved views on a dashboard; data permissions
@@ -167,6 +173,28 @@ _Last updated: 2026-10-04_
    depreciation as engine-derived period ticks, disposals) — low priority
    (MASTER_PLAN Phase 7).
 9. **Phase 5 PM** — parked on user's call.
+
+## Day log — 2026-10-04 (for a fast, safe pickup)
+
+Shipped today, in order, all pushed and deployed: **PR-B** period lens
+(month/quarter/YTD everywhere, user-verified) → **PR-C** dataset v2
+(Jan–Sep, multi-page invoices incl. the AC-75726 trap, wrong IBANs +
+`bank_detail_mismatch` and `total_mismatch` controls, poor scans, map
+finalised; invariant now 1797=1797) → statements fit nine months +
+loader runs in date order (user-reported, fixed) → **PR-D** scenario
+windows + the hidden /test/plants answer sheet → **PR-E** chat-built
+boards + chart house rules (§4.8 palette + accounting ticks;
+user-reported same-colour lines + inconsistent axes, fixed).
+
+Open when picking up:
+1. **PR-E model-path defect** (see backlog item 2 / plans/DATASET_V2.md
+   § Known issue) — decide fix 1/2/both, then verify on live with the
+   analyst eval suite AND the exact prompt.
+2. Live housekeeping Alec may not have done yet: a dataset reload for v2,
+   the stale-pin refresh (playbook/extraction skill versions), and the
+   transaction-generator manual promote.
+3. Next build: **PR-F** home dashboard revamp (planned in
+   plans/DATASET_V2.md).
 
 ## How to resume a session
 
