@@ -17,6 +17,15 @@
   --warn: #b45309;
   --bad: #dc2626;
   --good: #0d9488;
+  /* Categorical series palette (UI_CONVENTIONS §4.8): fixed hue order,
+   * validated (dataviz six checks) on the light card surface. s4 is sub-3:1
+   * on light by design — every chart ships a legend and a table view. */
+  --s1: #0d9488;
+  --s2: #2563eb;
+  --s3: #db2777;
+  --s4: #ca8a04;
+  --s5: #7c3aed;
+  --s6: #16a34a;
 }
 
 :root:not([data-theme="light"]) { color-scheme: light dark; }
@@ -33,6 +42,13 @@
     --warn: #f59e0b;
     --bad: #f87171;
     --good: #2dd4bf;
+    /* the same six hues, stepped for the dark card surface and re-validated */
+    --s1: #0d9488;
+    --s2: #3b82f6;
+    --s3: #ec4899;
+    --s4: #a16207;
+    --s5: #8b5cf6;
+    --s6: #16a34a;
   }
 }
 
@@ -47,6 +63,13 @@
     --warn: #f59e0b;
     --bad: #f87171;
     --good: #2dd4bf;
+    /* the same six hues, stepped for the dark card surface and re-validated */
+    --s1: #0d9488;
+    --s2: #3b82f6;
+    --s3: #ec4899;
+    --s4: #a16207;
+    --s5: #8b5cf6;
+    --s6: #16a34a;
 }
 
 body {

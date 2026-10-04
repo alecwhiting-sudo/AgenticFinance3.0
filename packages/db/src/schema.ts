@@ -51,6 +51,23 @@ export const auditLog = core.table("audit_log", {
   detail: text("detail"),
 });
 
+/** Chat-built analytics boards (plans/DATASET_V2.md PR-E): a page of tiles,
+ * each referencing ONLY the curated view catalogue — so every board stays
+ * grounded and book-filtered by construction. The Analyst proposes a board
+ * in chat; a human confirms, which creates/updates the row. */
+export const dashboard = core.table("dashboard", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  slug: text("slug").notNull().unique(),
+  title: text("title").notNull(),
+  description: text("description"),
+  /** [{ view, params?, chart?, title?, span? }] — validated against the
+   * view catalogue at the API boundary, never free-form SQL. */
+  tiles: jsonb("tiles").$type<Record<string, unknown>[]>().notNull(),
+  createdBy: text("created_by").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const erp = pgSchema("erp");
 
 export const accountType = erp.enum("account_type", [

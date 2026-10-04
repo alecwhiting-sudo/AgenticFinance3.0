@@ -135,9 +135,15 @@ _Last updated: 2026-10-04_
    windows + /test/plants BUILT 2026-10-04** (wipe-and-load any month
    range from the Test panel — Jan–Jun/Apr–Sep presets + custom picker;
    /test/plants, off the main nav, renders the live test data map from the
-   dataset itself) → E chat-built analytics dashboard pages (supersedes
-   the old "saved views" idea) → F home dashboard revamp (live motion
-   over static totals — planned 2026-10-04, see the plan doc).
+   dataset itself) → **E chat-built boards BUILT 2026-10-04** (ask the
+   Analyst to "build me a page…" → it proposes a `board:` composition from
+   the curated views → one click creates it at /analytics/boards/{slug};
+   core.dashboard table, migration 0015; boards honour the period lens;
+   chart house rules UI_CONVENTIONS §4.8 — validated 6-slot categorical
+   palette, consistent accounting-paren axis ticks — enforced by the shared
+   primitives, so chat-built pages inherit them; supersedes "saved views")
+   → F home dashboard revamp (live motion over static totals — planned
+   2026-10-04, see the plan doc).
 3. **Phase 4c follow-ons** — saved views on a dashboard; data permissions
    (stubbed: every record-catalogue entity declares an `access` scope,
    enforcement designed in `plans/ANALYTICS.md` §3c). Core 4c built

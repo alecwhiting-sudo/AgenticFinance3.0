@@ -313,3 +313,32 @@ export function parsePeriodLens(lens: string | null | undefined): ResolvedLens |
     };
   return null;
 }
+
+/** ---- Chat-built analytics boards (plans/DATASET_V2.md PR-E) --------------
+ * A board is a page of tiles; every tile references a CURATED VIEW by id,
+ * with whitelisted params — grounded and book-filtered by construction,
+ * never free-form SQL. The Analyst proposes a board as a `board:` JSON line
+ * in its chat answer; the human confirms, which creates/updates the row. */
+export const boardTileSchema = z.object({
+  /** a curated view id from the catalogue */
+  view: z.enum(["pl-trend", "flux", "aging", "counterparty", "cash"]),
+  /** whitelisted view params (side, dim, period, year, from, to, asOf) */
+  params: z.record(z.string().max(20)).default({}),
+  /** optional tile heading; the view's own title otherwise */
+  title: z.string().min(1).max(80).optional(),
+  /** grid width: 1 = half row (default), 2 = full row */
+  span: z.union([z.literal(1), z.literal(2)]).default(1),
+});
+export type BoardTile = z.infer<typeof boardTileSchema>;
+
+export const boardSchema = z.object({
+  slug: z
+    .string()
+    .min(2)
+    .max(60)
+    .regex(/^[a-z0-9][a-z0-9-]*$/, "lowercase letters, digits and dashes"),
+  title: z.string().min(1).max(120),
+  description: z.string().max(300).optional(),
+  tiles: z.array(boardTileSchema).min(1).max(8),
+});
+export type Board = z.infer<typeof boardSchema>;

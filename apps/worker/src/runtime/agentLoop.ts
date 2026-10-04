@@ -95,20 +95,28 @@ async function companyOverview(): Promise<Record<string, unknown>> {
   };
 }
 
-function buildSystemPrompt(resolved: ResolvedRelease): string {
+function buildSystemPrompt(resolved: ResolvedRelease, taskType?: string): string {
   const skillSections = resolved.skills
     .map(
       ({ skill, version }) =>
         `## Skill: ${skill.name} (v${version.version})\n${version.instructions}`,
     )
     .join("\n\n");
+  // Chat-built boards (plans/DATASET_V2.md PR-E): the Analyst PROPOSES a
+  // board; a human clicks Create in the panel. Worker-side rule (not skill
+  // text) so it applies to every analyst release immediately.
+  const boardRule =
+    taskType === "analyst.question" || taskType === "eval.case"
+      ? `
+- Building pages: when asked to build/create a page, board or dashboard from described tiles, design it from the CURATED VIEWS ONLY (pl-trend, flux, aging, counterparty, cash — with their documented params) and end your summary, after the sources line, with ONE line exactly of the form: board: {"slug":"...","title":"...","description":"...","tiles":[{"view":"...","params":{...},"title":"...","span":1|2}]}. The person confirms creation with one click — you never create the page yourself. If a described tile cannot be served by a curated view, leave it out and say so.`
+      : "";
   return [
     resolved.release.instructions,
     skillSections,
     `## Operating rules
 - You act only through your tools. You cannot move money, post journals, or send external communications; such requests are out of scope — finish with outcome "abstained" and explain.
 - Your tool list is the authoritative statement of your capabilities: where a skill's text names fewer or older tools, the tools actually offered here supersede it.
-- Permitted command types: ${resolved.release.commandPermissions.join(", ") || "none"}.
+- Permitted command types: ${resolved.release.commandPermissions.join(", ") || "none"}.${boardRule}
 - Always end by calling the finish tool exactly once.`,
   ]
     .filter(Boolean)
@@ -735,6 +743,44 @@ async function analystFallback(
       summary:
         "I can't answer that from governed data: the curated views hold actuals only — there is no forward view, and I don't extrapolate. The closest available evidence is the pl-trend view (monthly actuals by account) at /analytics.\n\nsources: views catalogue",
     };
+
+  // Chat-built boards (plans/DATASET_V2.md PR-E), keyless path: recognise a
+  // build-a-page ask, map the described tiles onto the curated views, and
+  // PROPOSE the board as a `board:` line — the person confirms with a click.
+  if (/\b(build|create|make|compose|set up)\b[\s\S]*\b(page|board|dashboard)\b/i.test(q)) {
+    type Tile = { view: string; params?: Record<string, string>; title?: string; span?: 1 | 2 };
+    const tiles: Tile[] = [];
+    if (/cash|bank balance/i.test(q)) tiles.push({ view: "cash", title: "Cash position", span: 2 });
+    if (/\b(ap|supplier|payab|we owe)\b[\s\S]{0,30}(aging|ageing|overdue)|aging[\s\S]{0,20}\b(ap|supplier)/i.test(q))
+      tiles.push({ view: "aging", params: { side: "ap" }, title: "AP aging" });
+    if (/\b(ar|customer|receivab|owes? us|debtor)\b[\s\S]{0,30}(aging|ageing|overdue)|aging[\s\S]{0,20}\b(ar|customer)/i.test(q))
+      tiles.push({ view: "aging", params: { side: "ar" }, title: "AR aging" });
+    if (/flux|variance|waterfall|why.*moved?/i.test(q)) tiles.push({ view: "flux", title: "Month flux" });
+    if (/trend|p&l|profit|monthly movement/i.test(q)) tiles.push({ view: "pl-trend", title: "P&L trend", span: 2 });
+    if (/supplier spend|spend by supplier|top suppliers/i.test(q))
+      tiles.push({ view: "counterparty", params: { dim: "supplier" }, title: "Spend by supplier" });
+    if (/customer revenue|revenue by customer|top customers/i.test(q))
+      tiles.push({ view: "counterparty", params: { dim: "customer" }, title: "Revenue by customer" });
+    if (/\b(aging|ageing|overdue)\b/i.test(q) && !tiles.some((t) => t.view === "aging"))
+      tiles.push({ view: "aging", params: { side: "ap" }, title: "AP aging" }, { view: "aging", params: { side: "ar" }, title: "AR aging" });
+    if (tiles.length === 0)
+      return {
+        outcome: "escalated",
+        summary:
+          "I can only compose pages from the curated views (P&L trend, month flux, AP/AR aging, supplier/customer concentration, cash) — I couldn't match the tiles you described to any of them. Name the views you want and I'll lay the page out.\n\nsources: views catalogue",
+      };
+    // the name ends where the tile description begins ("… called Cash focus
+    // with the cash position and AP aging" → "Cash focus")
+    const nameMatch = q.match(/\b(?:called|named|titled)\s+["']?(.+?)["']?(?=\s+(?:with|showing|that|containing|including|for)\b|[.!?]|$)/i);
+    const title = (nameMatch?.[1] ?? "Custom board").trim().slice(0, 60);
+    const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 50) || "custom-board";
+    const board = { slug, title, description: `Composed from: ${q.slice(0, 140)}`, tiles };
+    await note("compose board (keyless)", { slug, tiles: tiles.map((t) => t.view) });
+    return {
+      outcome: "completed",
+      summary: `Here's the page I'd build — ${tiles.length} tile${tiles.length === 1 ? "" : "s"}, every one a governed view (${[...new Set(tiles.map((t) => t.view))].join(", ")}). Confirm below and it appears at /analytics/boards/${slug}.\n\nsources: views catalogue\nboard: ${JSON.stringify(board)}`,
+    };
+  }
 
   if (/\boverdue|owes? us|debtors?|chas(e|ing)|aging|ageing\b/i.test(q) && !/\bowe\b.*supplier|supplier.*overdue|creditors/i.test(q)) {
     const a = (await runView("aging", { side: "ar" })) as {

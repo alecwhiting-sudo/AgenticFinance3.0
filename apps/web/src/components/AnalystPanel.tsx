@@ -17,14 +17,37 @@ const SUGGESTIONS = [
   "Why did the result move last month?",
   "Which customer is most overdue?",
   "What is our cash position?",
-  "Top suppliers by spend?",
+  "Build me a page called Cash focus with the cash position and AP aging",
 ];
+
+type BoardProposal = {
+  slug: string;
+  title: string;
+  description?: string;
+  tiles: { view: string; params?: Record<string, string>; title?: string; span?: number }[];
+};
+
+/** The Analyst proposes a board as a trailing `board: {json}` line; the
+ * person confirms creation here — agents propose, humans approve. */
+function parseBoard(text: string): { body: string; board: BoardProposal | null } {
+  const m = text.match(/\nboard:\s*(\{[\s\S]*\})\s*$/);
+  if (!m) return { body: text, board: null };
+  try {
+    const board = JSON.parse(m[1]!) as BoardProposal;
+    if (!board.slug || !board.title || !Array.isArray(board.tiles) || board.tiles.length === 0)
+      return { body: text, board: null };
+    return { body: text.slice(0, m.index).trimEnd(), board };
+  } catch {
+    return { body: text, board: null };
+  }
+}
 
 export default function AnalystPanel({ onClose }: { onClose: () => void }) {
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [created, setCreated] = useState<Record<string, boolean>>({});
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -73,14 +96,61 @@ export default function AnalystPanel({ onClose }: { onClose: () => void }) {
     [busy, msgs],
   );
 
+  const createBoard = async (board: BoardProposal) => {
+    setError(null);
+    try {
+      const res = await fetch(`${apiUrl}/analytics/boards`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(board),
+      });
+      const d = (await res.json()) as { slug?: string; created?: boolean; error?: string };
+      if (!res.ok || !d.slug) throw new Error(d.error ?? "could not create the board");
+      setCreated((c) => ({ ...c, [board.slug]: true }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  };
+
   const renderAnswer = (text: string) => {
-    const lines = text.split("\n");
+    const { body: withoutBoard, board } = parseBoard(text);
+    const lines = withoutBoard.split("\n");
     const srcIdx = lines.findLastIndex((l) => l.trim().toLowerCase().startsWith("sources:"));
-    const body = srcIdx >= 0 ? lines.filter((_, i) => i !== srcIdx).join("\n").trim() : text;
+    const body = srcIdx >= 0 ? lines.filter((_, i) => i !== srcIdx).join("\n").trim() : withoutBoard;
     const sources = srcIdx >= 0 ? lines[srcIdx]!.trim() : null;
     return (
       <>
         <div className="whitespace-pre-wrap">{body}</div>
+        {board && (
+          <div className="mt-2 rounded-lg border p-2.5" style={{ borderColor: "var(--accent)" }}>
+            <div className="text-xs font-semibold">{board.title}</div>
+            <ul className="mt-1 space-y-0.5 text-[11px]" style={{ color: "var(--muted)" }}>
+              {board.tiles.map((t, i) => (
+                <li key={i}>
+                  · {t.title ?? t.view}
+                  {t.params && Object.keys(t.params).length > 0 ? ` (${Object.entries(t.params).map(([k, v]) => `${k}=${v}`).join(", ")})` : ""}
+                </li>
+              ))}
+            </ul>
+            {created[board.slug] ? (
+              <Link
+                href={`/analytics/boards/${board.slug}`}
+                className="mt-2 inline-block rounded-lg border px-2.5 py-1 text-xs font-medium hover:underline"
+                style={{ borderColor: "var(--accent)", color: "var(--accent)" }}
+              >
+                Page created — open it →
+              </Link>
+            ) : (
+              <button
+                onClick={() => void createBoard(board)}
+                className="mt-2 rounded-lg px-2.5 py-1 text-xs font-medium text-white"
+                style={{ background: "var(--accent)" }}
+              >
+                Create this page
+              </button>
+            )}
+          </div>
+        )}
         {sources && (
           <div className="mt-1.5 border-t pt-1.5 text-[10px]" style={{ borderColor: "var(--border)", color: "var(--muted)" }}>
             {sources} ·{" "}

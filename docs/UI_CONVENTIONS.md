@@ -605,6 +605,53 @@ not eyeballed); surfaces = `--card` light/dark. Sparklines in Kpi `trend`
 slots use the muted ink with the current period in accent. One axis, always;
 every chart drills (§1.2); a table view exists for every chart.
 
+### 4.8 Chart house rules (2026-10-04, Alec feedback — the chat-built
+### analytics defaults)
+
+These are the DEFAULTS every chart gets — hand-built or chat-built. The
+chart primitives enforce them, so an Analyst-proposed board inherits them
+for free; a person can ask for different choices on a specific board, but
+the burden is on the request, not the default.
+
+**Categorical palette (series identity).** Six fixed slots, assigned in
+order, never cycled — tokens `--s1..--s6` in `globals.css`, validated with
+the dataviz six-checks script on BOTH card surfaces (CVD separation ≥8,
+normal-vision ≥15, contrast ≥3:1; the light yellow slot is sub-3:1 by
+design and relies on the always-present legend + table view):
+
+| slot | light (#fff card) | dark (#1c1917 card) | hue |
+|---|---|---|---|
+| s1 | `#0d9488` | `#0d9488` | teal (brand) |
+| s2 | `#2563eb` | `#3b82f6` | blue |
+| s3 | `#db2777` | `#ec4899` | pink |
+| s4 | `#ca8a04` | `#a16207` | yellow |
+| s5 | `#7c3aed` | `#8b5cf6` | violet |
+| s6 | `#16a34a` | `#16a34a` | green |
+
+A seventh series is never a seventh colour: fold into "Other" or facet.
+Colour follows the ENTITY, not its rank — filtering must not repaint the
+survivors. Re-run the validator if any hex changes; never eyeball it.
+
+**Colour by job.** Categorical = identity (the slots above). Sequential =
+one hue light→dark (the teal `ramp`, ONLY for ordered segments like aging
+buckets). Diverging = teal favourable ↔ amber adverse with grey neutral
+(the waterfall). Status tones (`--good/--warn/--bad`) are reserved and
+never appear as series colours.
+
+**Axes and value labels.** One axis, always — never dual scales. One tick
+formatter everywhere (`tickMoney`): compact £k/£m with ACCOUNTING
+PARENTHESES for negatives — the typographic minus is illegible at tick
+size; `(£200.0k)` never is, and it matches the money voice of every table.
+Waterfall deltas use the same convention (`+£58.2k` / `(£53.3k)`).
+
+**Marks and chrome.** Thin marks (2px lines, ≥2.5px markers), recessive
+hairline grid, legend swatch = the series colour at legible weight, labels
+in ink tokens (never the series colour), selective direct labels only.
+
+**Always.** A legend for ≥2 series; a table view on every chart; every
+figure drills to its postings; "to date" labelling on the in-progress
+month; no vanity precision (pence stay in tables and drills, not on axes).
+
 ## Part 5 — Content conventions
 
 ### 5.1 The skill template (2026-10-03)

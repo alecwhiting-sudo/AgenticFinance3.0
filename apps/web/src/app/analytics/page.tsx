@@ -82,7 +82,7 @@ export default async function AnalyticsPage({
   const today = new Date().toISOString().slice(0, 10);
   const asOf = L ? (monthEndDate(L.to) < today ? monthEndDate(L.to) : today) : null;
   const asOfQ = asOf ? `&asOf=${asOf}` : "";
-  const [flux, trend, apAging, arAging, suppliers, customers, cash] = await Promise.all([
+  const [flux, trend, apAging, arAging, suppliers, customers, cash, boards] = await Promise.all([
     getJson<Flux>(`/analytics/flux${fluxQ}`),
     getJson<Trend>(`/analytics/pl-trend${winQ}`),
     getJson<Aging>(`/analytics/aging?side=ap${asOfQ}`),
@@ -90,6 +90,7 @@ export default async function AnalyticsPage({
     getJson<Counterparty>(`/analytics/counterparty?dim=supplier${L ? `&from=${L.from}&to=${L.to}` : ""}`),
     getJson<Counterparty>(`/analytics/counterparty?dim=customer${L ? `&from=${L.from}&to=${L.to}` : ""}`),
     getJson<Cash>(`/analytics/cash${winQ}`),
+    getJson<{ boards: { slug: string; title: string; description: string | null; tiles: number }[] }>("/analytics/boards"),
   ]);
 
   if (!trend)
@@ -256,6 +257,25 @@ export default async function AnalyticsPage({
         />
         <PeriodPicker periods={flux?.periods ?? trend.months} lens={lens} />
       </div>
+
+      {/* chat-built boards (PR-E): ask the Analyst to "build me a page…" */}
+      {boards && boards.boards.length > 0 && (
+        <section className="flex flex-wrap items-center gap-2 text-xs">
+          <span style={{ color: "var(--muted)" }}>Your boards:</span>
+          {boards.boards.map((b) => (
+            <Link
+              key={b.slug}
+              href={`/analytics/boards/${b.slug}${lens ? `?lens=${encodeURIComponent(lens)}` : ""}`}
+              className="rounded-full border px-2.5 py-1 hover:underline"
+              style={{ borderColor: "var(--border)", background: "var(--card)" }}
+              title={b.description ?? undefined}
+            >
+              {b.title} · {b.tiles} tiles →
+            </Link>
+          ))}
+          <span style={{ color: "var(--muted)" }}>— ask the Analyst to build another</span>
+        </section>
+      )}
 
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi label="Cash balance" value={moneyCompact(cashNow)} hint={L ? `at window end (${L.label})` : "latest bank statement line"} href="/payments" />

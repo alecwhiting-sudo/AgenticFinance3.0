@@ -1,6 +1,9 @@
 import type { FastifyInstance } from "fastify";
-import { sql } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
+import { boardSchema } from "@af/shared";
+import { dashboard } from "@af/db";
 import { requireDb } from "../lib/db.js";
+import { emitActivity } from "../lib/activity.js";
 
 /** Phase 4c M1 (plans/ANALYTICS.md): the curated view catalogue. Every
  * endpoint here is a read-only derived aggregation over journal lines and
@@ -576,6 +579,82 @@ export function analyticsRoutes(app: FastifyInstance): void {
     }
     const parties = [...byParty.values()].sort((a, b) => b.totalMinor - a.totalMinor);
     return { view: "counterparty", dim, from, to, months, parties };
+  });
+
+  /** ---- Chat-built boards (plans/DATASET_V2.md PR-E) ----------------------
+   * Boards store TILE DEFINITIONS only — each tile names a curated view +
+   * whitelisted params, validated here by the shared schema. The web renders
+   * a board by calling the same governed view endpoints as /analytics.
+   * Creation is human-confirmed: the Analyst proposes a board in chat, the
+   * person clicks Create (agents propose; humans approve). */
+  app.get("/analytics/boards", async () => {
+    const db = requireDb();
+    const rows = await db.query.dashboard.findMany({ orderBy: (t) => desc(t.updatedAt) });
+    return {
+      boards: rows.map((b) => ({
+        slug: b.slug,
+        title: b.title,
+        description: b.description,
+        tiles: b.tiles.length,
+        createdBy: b.createdBy,
+        updatedAt: b.updatedAt,
+      })),
+    };
+  });
+
+  app.get<{ Params: { slug: string } }>("/analytics/boards/:slug", async (req, reply) => {
+    const db = requireDb();
+    const b = await db.query.dashboard.findFirst({ where: (t) => eq(t.slug, req.params.slug) });
+    if (!b) return reply.code(404).send({ error: "board not found" });
+    return { board: b };
+  });
+
+  app.post<{ Body: Record<string, unknown> }>("/analytics/boards", async (req, reply) => {
+    const db = requireDb();
+    const parsed = boardSchema.safeParse(req.body);
+    if (!parsed.success)
+      return reply.code(400).send({ error: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ") });
+    const board = parsed.data;
+    const existing = await db.query.dashboard.findFirst({ where: (t) => eq(t.slug, board.slug) });
+    if (existing) {
+      await db
+        .update(dashboard)
+        .set({ title: board.title, description: board.description ?? null, tiles: board.tiles, updatedAt: new Date() })
+        .where(eq(dashboard.id, existing.id));
+    } else {
+      await db.insert(dashboard).values({
+        slug: board.slug,
+        title: board.title,
+        description: board.description ?? null,
+        tiles: board.tiles,
+        createdBy: "workbench-user",
+      });
+    }
+    await emitActivity({
+      actorType: "human",
+      actorId: "workbench",
+      verb: existing ? "updated_board" : "created_board",
+      objectType: "dashboard",
+      objectId: board.slug,
+      summary: `${existing ? "Updated" : "Created"} analytics board "${board.title}" (${board.tiles.length} tiles) at /analytics/boards/${board.slug}`,
+    });
+    return { slug: board.slug, created: !existing };
+  });
+
+  app.delete<{ Params: { slug: string } }>("/analytics/boards/:slug", async (req, reply) => {
+    const db = requireDb();
+    const b = await db.query.dashboard.findFirst({ where: (t) => eq(t.slug, req.params.slug) });
+    if (!b) return reply.code(404).send({ error: "board not found" });
+    await db.delete(dashboard).where(eq(dashboard.id, b.id));
+    await emitActivity({
+      actorType: "human",
+      actorId: "workbench",
+      verb: "deleted_board",
+      objectType: "dashboard",
+      objectId: b.slug,
+      summary: `Deleted analytics board "${b.title}"`,
+    });
+    return { deleted: b.slug };
   });
 
   /** Cumulative bank balance by transaction date (all bank lines — the

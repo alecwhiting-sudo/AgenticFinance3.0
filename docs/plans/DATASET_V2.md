@@ -135,7 +135,25 @@ identically):
   Multi-page and poor-scan challenges have their own sections; the trap
   row is highlighted.
 
-## PR-E — Chat-built analytics dashboards
+## PR-E — Chat-built analytics dashboards · **BUILT 2026-10-04**
+
+As built, two deliberate deviations from the spec below:
+- **No `dashboard.compose` command.** Creation is human-confirmed instead:
+  the Analyst ends its answer with a `board:` JSON proposal (grounded on
+  the view catalogue), the panel renders a preview + "Create this page"
+  button, and the click POSTs `/analytics/boards` (Zod-validated, activity-
+  logged). Cleaner governance — agents propose, humans approve — and no
+  release-permission change needed on the live Analyst.
+- **Chart house rules landed with it** (user feedback 2026-10-04: same-
+  colour trend lines, inconsistent axis labels): UI_CONVENTIONS §4.8 — a
+  six-slot categorical palette validated with the dataviz six-checks script
+  on both card surfaces (`--s1..--s6`), colour-by-job (categorical =
+  identity, teal ramp = ordered segments only, teal↔amber = diverging),
+  and ONE tick formatter everywhere with accounting parentheses for
+  negatives. The board renderer uses the same primitives, so chat-built
+  pages inherit the rules by construction; a person can override per board.
+
+Original spec:
 
 Describe tiles in the Analyst chat → a page gets built.
 
@@ -186,5 +204,5 @@ answer a question a CFO actually asks; master-data counts belong in Admin.
 | B | Period lens | M | — | ✅ built |
 | C | Dataset v2 + IBAN control | L | drift guard | ✅ built |
 | D | Scenario windows + /test/plants | S–M | C | ✅ built |
-| E | Chat-built dashboards | L | B (lens) | next up |
+| E | Chat-built dashboards + chart house rules | L | B (lens) | ✅ built |
 | F | Home dashboard revamp (live motion) | M | — (shares primitives with E) | planned |

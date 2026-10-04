@@ -13,9 +13,26 @@ import { money, moneyCompact } from "@/lib/format";
 /* ---------- shared helpers ---------- */
 
 /** Sequential teal ramp position i of n: strongest first, fading toward the
- * muted ink — readable in both themes because both ends are theme tokens. */
+ * muted ink — for ORDERED segments only (aging buckets), where position
+ * carries magnitude. Never for series identity — that's seriesColor. */
 export const ramp = (i: number, n: number): string =>
   n <= 1 ? "var(--accent)" : `color-mix(in srgb, var(--accent) ${Math.round(100 - (i / (n - 1)) * 72)}%, var(--muted))`;
+
+/** Categorical series palette (UI_CONVENTIONS §4.8): six fixed slots defined
+ * per theme in globals.css, validated for CVD separation and contrast on both
+ * card surfaces. Hues are assigned in fixed order, never cycled — a 7th
+ * series is the caller's cue to fold into "Other" or facet. */
+export const SERIES_SLOTS = 6;
+export const seriesColor = (i: number): string => `var(--s${Math.min(i, SERIES_SLOTS - 1) + 1})`;
+
+/** Axis/value money: compact with ACCOUNTING PARENTHESES for negatives —
+ * the typographic minus is illegible at tick size, parens never are, and it
+ * matches the money convention everywhere else in the app. */
+export const tickMoney = (minor: number): string => {
+  const abs = Math.abs(minor) / 100;
+  const t = abs >= 1_000_000 ? `£${(abs / 1_000_000).toFixed(1)}m` : abs >= 1000 ? `£${(abs / 1000).toFixed(1)}k` : `£${Math.round(abs)}`;
+  return minor < 0 ? `(${t})` : t;
+};
 
 const FAV = "var(--accent)";
 const ADV = "var(--warn)";
@@ -112,7 +129,7 @@ export function TrendChart({
           <g key={t}>
             <line x1={padL} x2={W} y1={y(t)} y2={y(t)} stroke="var(--border)" strokeWidth="1" />
             <text x={padL - 6} y={y(t) + 3} textAnchor="end" fontSize="9" fill="var(--muted)" className="num">
-              {moneyCompact(t)}
+              {tickMoney(t)}
             </text>
           </g>
         ))}
@@ -128,10 +145,10 @@ export function TrendChart({
             .join(" ");
           return (
             <g key={s.label}>
-              <polyline points={pts} fill="none" stroke={ramp(si, series.length)} strokeWidth="1.5" />
+              <polyline points={pts} fill="none" stroke={seriesColor(si)} strokeWidth="2" />
               {s.values.map((v, i) =>
                 v == null ? null : (
-                  <circle key={i} cx={x(i)} cy={y(v)} r="2.5" fill={ramp(si, series.length)}>
+                  <circle key={i} cx={x(i)} cy={y(v)} r="2.5" fill={seriesColor(si)}>
                     <title>{`${s.label} · ${months[i]} · ${money(v)}`}</title>
                   </circle>
                 ),
@@ -143,7 +160,7 @@ export function TrendChart({
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
         {series.map((s, si) => (
           <span key={s.label} className="inline-flex items-center gap-1.5">
-            <span className="inline-block h-0.5 w-4 rounded" style={{ background: ramp(si, series.length) }} />
+            <span className="inline-block h-1 w-4 rounded" style={{ background: seriesColor(si) }} />
             {s.href ? (
               <Link href={s.href} className="hover:underline" style={{ color: "var(--muted)" }}>
                 {s.label} →
@@ -232,9 +249,10 @@ export function Waterfall({
     const xOverlap = Math.abs(cur.x - prev.x) < (cur.w + prev.w) / 2 + 6;
     return xOverlap ? Math.min(cur.y, prev.y - 10) : cur.y;
   };
-  const startText = moneyCompact(start);
-  const endText = moneyCompact(end);
-  const deltaTexts = items.map((it) => `${it.delta >= 0 ? "+" : "−"}${compactK(it.delta)}`);
+  const startText = tickMoney(start);
+  const endText = tickMoney(end);
+  // same accounting convention as the axes: parens for adverse, + for favourable
+  const deltaTexts = items.map((it) => (it.delta >= 0 ? `+${compactK(it.delta)}` : `(${compactK(it.delta)})`));
   const labs: Lab[] = [];
   const anchorY = (v: number) => (v >= 0 ? Math.min(y(v), y(0)) - 5 : Math.min(Math.max(y(v), y(0)) + 11, H - padB - 2));
   labs.push({ x: cx(0), y: anchorY(start), w: labelW(startText, 9) });
@@ -253,7 +271,7 @@ export function Waterfall({
         <g key={t}>
           <line x1={padL} x2={W - padR} y1={y(t)} y2={y(t)} stroke="var(--border)" strokeWidth="1" />
           <text x={padL - 6} y={y(t) + 3} textAnchor="end" fontSize="9" fill="var(--muted)" className="num">
-            {moneyCompact(t)}
+            {tickMoney(t)}
           </text>
         </g>
       ))}
@@ -292,7 +310,7 @@ export function Waterfall({
             fill="var(--foreground)"
             className="num"
           >
-            {moneyCompact(v)}
+            {tickMoney(v)}
           </text>
           <text x={cx(i)} y={H - padB + 14} textAnchor="middle" fontSize="10" fontWeight="600" fill="var(--foreground)">
             {label}
@@ -428,7 +446,7 @@ export function AreaTrend({
         <g key={t}>
           <line x1={padL} x2={W} y1={y(t)} y2={y(t)} stroke="var(--border)" strokeWidth="1" />
           <text x={padL - 6} y={y(t) + 3} textAnchor="end" fontSize="9" fill="var(--muted)" className="num">
-            {moneyCompact(t)}
+            {tickMoney(t)}
           </text>
         </g>
       ))}

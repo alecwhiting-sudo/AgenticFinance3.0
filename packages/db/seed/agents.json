@@ -1089,6 +1089,26 @@
        "value": "will be"
       }
      ]
+    },
+    {
+     "name": "composes a board proposal from described tiles, never creates it",
+     "input": {
+      "question": "Build me a page called Cash focus with the cash position and AP aging"
+     },
+     "assertions": [
+      {
+       "kind": "outcome",
+       "value": "completed"
+      },
+      {
+       "kind": "summary_contains",
+       "value": "board:"
+      },
+      {
+       "kind": "summary_contains",
+       "value": "cash"
+      }
+     ]
     }
    ],
    "process": "r2r"
