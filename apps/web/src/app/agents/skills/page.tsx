@@ -93,6 +93,7 @@ export default function SkillsLibraryPage() {
     commandPermissions: string[];
     evalCases: number;
     activeVersion: number;
+    inFlight?: { draftVersion: number; evalStatus: string; failed: number; failures: string[] };
     changes: { skillName: string; from: number | null; to: number; diff?: ControlDiff }[];
   };
   const [preview, setPreview] = useState<PreviewAgent[] | null>(null);
@@ -233,6 +234,20 @@ export default function SkillsLibraryPage() {
                   )}
                 </div>
                 <p className="mt-0.5" style={{ color: "var(--muted)" }}>{a.purpose}</p>
+                {a.inFlight && (
+                  <p className="mt-0.5" style={{ color: a.inFlight.evalStatus === "failed" ? "var(--bad)" : "var(--warn)" }}>
+                    A refresh draft v{a.inFlight.draftVersion} already exists — eval suite {a.inFlight.evalStatus}
+                    {a.inFlight.failed > 0 ? ` (${a.inFlight.failed} failed)` : ""}.{" "}
+                    {a.inFlight.evalStatus === "failed"
+                      ? "Confirming re-runs its evals; the failures:"
+                      : a.inFlight.evalStatus === "running"
+                        ? "If this persists, check the worker service is up."
+                        : "Confirming re-runs its evals."}
+                    {a.inFlight.failures.map((f, i) => (
+                      <span key={i} className="block">— {f}</span>
+                    ))}
+                  </p>
+                )}
                 <p className="mt-0.5">
                   <span style={{ color: "var(--muted)" }}>Proposes:</span>{" "}
                   {a.commandPermissions.filter((c) => !c.startsWith("case.")).join(", ") || "display-only output"}

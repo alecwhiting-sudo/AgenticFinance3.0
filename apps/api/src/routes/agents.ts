@@ -412,7 +412,8 @@ export function agentRoutes(app: FastifyInstance): void {
       commandPermissions: string[];
       evalCases: number;
       activeVersion: number;
-      changes: { skillName: string; from: number | null; to: number }[];
+      inFlight?: { draftVersion: number; evalStatus: string; failed: number; failures: string[] };
+      changes: { skillName: string; from: number | null; to: number; diff?: ReturnType<typeof controlRegressionDiff> }[];
       agentId: string;
       desired: string[];
     }[] = [];
@@ -456,7 +457,33 @@ export function agentRoutes(app: FastifyInstance): void {
       }
       if (changes.length === 0) continue;
       const cases = await db.query.evalCase.findMany({ where: (t) => eq(t.agentId, a.id) });
+      // surface any refresh draft already in flight and HOW its suite went,
+      // so "still stale" is never a mystery
+      let inFlight:
+        | { draftVersion: number; evalStatus: string; failed: number; failures: string[] }
+        | undefined;
+      const latestRelease = await db.query.agentRelease.findFirst({
+        where: (t) => eq(t.agentId, a.id),
+        orderBy: (t) => desc(t.version),
+      });
+      if (latestRelease && latestRelease.status === "draft" && (latestRelease.notes ?? "").includes("[auto-promote]")) {
+        const er = await db.query.evalRun.findFirst({
+          where: (t) => eq(t.releaseId, latestRelease.id),
+          orderBy: (t) => desc(t.startedAt),
+        });
+        const failures = ((er?.results ?? []) as { passed?: boolean; name?: string; failures?: string[] }[])
+          .filter((r) => r.passed === false)
+          .slice(0, 3)
+          .map((r) => `${r.name}: ${(r.failures ?? []).join("; ")}`);
+        inFlight = {
+          draftVersion: latestRelease.version,
+          evalStatus: er?.status ?? "no eval run recorded",
+          failed: er?.failed ?? 0,
+          failures,
+        };
+      }
       out.push({
+        ...(inFlight ? { inFlight } : {}),
         agentSlug: a.slug,
         agentName: a.name,
         purpose: a.purpose,
@@ -513,14 +540,49 @@ export function agentRoutes(app: FastifyInstance): void {
         results.push({ agentSlug: a.slug, status: "current" });
         continue;
       }
-      // skip when a refresh draft is already in flight (re-clicks are safe)
+      // a refresh draft may already exist from an earlier click — do the
+      // useful thing per its state rather than skipping blindly
       const latestRelease = await db.query.agentRelease.findFirst({
         where: (t) => eq(t.agentId, a.id),
         orderBy: (t) => desc(t.version),
       });
       if (latestRelease && latestRelease.status === "draft" && (latestRelease.notes ?? "").includes("[auto-promote]")) {
-        results.push({ agentSlug: a.slug, status: "refresh already in flight", draftVersion: latestRelease.version });
-        continue;
+        const draftPins = [...latestRelease.skillVersionIds].sort().join(",");
+        if (draftPins === desired.join(",")) {
+          const er = await db.query.evalRun.findFirst({
+            where: (t) => eq(t.releaseId, latestRelease.id),
+            orderBy: (t) => desc(t.startedAt),
+          });
+          if (er?.status === "running") {
+            results.push({
+              agentSlug: a.slug,
+              status: "draft evals still running — if this persists, check the worker is up",
+              draftVersion: latestRelease.version,
+              evalRunId: er.id,
+            });
+            continue;
+          }
+          // failed suite, or a suite graded before auto-promotion existed:
+          // re-run the evals on the SAME draft — a green suite promotes it
+          const restarted = await startEvalSuite(db, a, latestRelease);
+          results.push(
+            "error" in restarted
+              ? {
+                  agentSlug: a.slug,
+                  status: `draft v${latestRelease.version} waiting for MANUAL promotion (no eval cases — promote from the agent's page)`,
+                  draftVersion: latestRelease.version,
+                }
+              : {
+                  agentSlug: a.slug,
+                  status: `draft v${latestRelease.version} evals re-run (previous suite: ${er ? `${er.status}, ${er.failed} failed` : "none recorded"}) — promotes when green`,
+                  draftVersion: latestRelease.version,
+                  evalRunId: restarted.evalRun.id,
+                },
+          );
+          continue;
+        }
+        // the draft's pins are outdated (skills moved again) — supersede it
+        await db.update(agentRelease).set({ status: "retired" }).where(eq(agentRelease.id, latestRelease.id));
       }
       const [draft] = await db
         .insert(agentRelease)
