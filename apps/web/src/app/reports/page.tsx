@@ -1,10 +1,12 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { parsePeriodLens } from "@af/shared";
 import { getJson } from "@/lib/api";
 import { money } from "@/lib/format";
 import { ApiDownBanner } from "@/components/Chrome";
 import { Badge, Card, SectionTitle } from "@/components/ui";
 import Commentary from "@/components/Commentary";
+import PeriodPicker from "@/components/PeriodPicker";
 
 export const metadata: Metadata = { title: "Reports" };
 
@@ -12,6 +14,7 @@ type Statements = {
   basis: string;
   year: number;
   months: string[];
+  periods: string[];
   pl: { code: string; name: string; type: string; period_code: string; amount_minor: number }[];
   bs: { code: string; name: string; type: string; period_code: string; balance_minor: number }[];
   plCumulative: { period_code: string; balance_minor: number }[];
@@ -23,10 +26,12 @@ const show = (minor: number) => money(minor);
 export default async function ReportsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ year?: string }>;
+  searchParams: Promise<{ year?: string; lens?: string }>;
 }) {
-  const { year } = await searchParams;
-  const s = await getJson<Statements>(`/erp/statements${year ? `?year=${year}` : ""}`);
+  const { year, lens } = await searchParams;
+  const L = parsePeriodLens(lens);
+  const q = L ? `?from=${L.from}&to=${L.to}` : year ? `?year=${year}` : "";
+  const s = await getJson<Statements>(`/erp/statements${q}`);
 
   if (!s)
     return (
@@ -37,6 +42,7 @@ export default async function ReportsPage({
     );
 
   const months = s.months;
+  const drillQ = L ? `?from=${L.from}&to=${L.to}` : "";
   const cell = (rows: typeof s.pl, code: string, m: string, field: "amount_minor") =>
     rows.find((r) => r.code === code && r.period_code === m)?.[field] ?? 0;
   const bsCell = (code: string, m: string) => {
@@ -78,7 +84,7 @@ export default async function ReportsPage({
             {rows.map((a) => (
               <tr key={a.code} className="border-b last:border-0" style={{ borderColor: "var(--border)" }}>
                 <td className="py-1.5 pr-3">
-                  <Link href={`/ledger/${a.code}`} className="hover:underline">
+                  <Link href={`/ledger/${a.code}${drillQ}`} className="hover:underline">
                     <span className="tabular-nums" style={{ color: "var(--muted)" }}>{a.code}</span> {a.name}
                   </Link>
                 </td>
@@ -101,14 +107,17 @@ export default async function ReportsPage({
 
   return (
     <main className="max-w-4xl space-y-6">
-      <section className="flex items-baseline justify-between">
+      <section className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-semibold tracking-tight">Financial statements — {s.year}</h2>
+          <h2 className="text-2xl font-semibold tracking-tight">
+            Financial statements — {L ? L.label : s.year}
+          </h2>
           <p className="mt-1 text-sm" style={{ color: "var(--muted)" }}>
             Monthly view, drillable to the ledger. <Badge>Live</Badge> basis — certified
             reporting arrives with the close lifecycle.
           </p>
         </div>
+        <PeriodPicker periods={s.periods} lens={lens} />
       </section>
 
       {table(

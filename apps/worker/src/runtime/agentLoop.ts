@@ -661,11 +661,11 @@ async function invoiceExceptionFallback(
  * view endpoints, by id. Grounded by construction — there is no SQL tool and
  * no table access, so the model can only read what the catalogue serves. */
 const ANALYST_VIEWS: Record<string, { path: string; params: string[] }> = {
-  "pl-trend": { path: "/analytics/pl-trend", params: ["year"] },
-  flux: { path: "/analytics/flux", params: ["period"] },
+  "pl-trend": { path: "/analytics/pl-trend", params: ["year", "from", "to"] },
+  flux: { path: "/analytics/flux", params: ["period", "from", "to"] },
   aging: { path: "/analytics/aging", params: ["side", "asOf"] },
-  counterparty: { path: "/analytics/counterparty", params: ["dim"] },
-  cash: { path: "/analytics/cash", params: [] },
+  counterparty: { path: "/analytics/counterparty", params: ["dim", "from", "to"] },
+  cash: { path: "/analytics/cash", params: ["from", "to"] },
 };
 
 async function runView(viewId: string, params: Record<string, unknown>): Promise<unknown> {
@@ -979,7 +979,7 @@ export async function runAgentLoop(
     {
       name: "run_view",
       description:
-        "Run one curated analytics view (read-only, governed — the only way to read figures). Views: pl-trend (params: year), flux (params: period YYYY-MM, default latest), aging (params: side 'ap'|'ar', asOf YYYY-MM-DD), counterparty (params: dim 'supplier'|'customer'), cash (no params). All amounts return as integer pence.",
+        "Run one curated analytics view (read-only, governed — the only way to read figures). Views: pl-trend (params: year, or from/to YYYY-MM window), flux (params: period YYYY-MM default latest; or from/to YYYY-MM to compare that window to the equal-length prior window — use for quarter or YTD questions), aging (params: side 'ap'|'ar', asOf YYYY-MM-DD), counterparty (params: dim 'supplier'|'customer', from/to YYYY-MM), cash (params: from/to YYYY-MM). All amounts return as integer pence.",
       input_schema: {
         type: "object",
         properties: {

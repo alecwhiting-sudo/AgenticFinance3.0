@@ -12,15 +12,24 @@ export function r2rRoutes(app: FastifyInstance): void {
    * BS rows are cumulative balances at each month end (incl. prior years).
    * Sign convention: debit positive — the UI flips income/liability/equity
    * for display. */
-  app.get<{ Querystring: { year?: string } }>("/erp/statements", async (req) => {
+  app.get<{ Querystring: { year?: string; from?: string; to?: string } }>("/erp/statements", async (req) => {
     const db = requireDb();
     const year = /^\d{4}$/.test(req.query.year ?? "") ? Number(req.query.year) : new Date().getUTCFullYear();
+    // period-lens window (PR-B): from/to month codes narrow the statement to
+    // that window; without them the whole year shows, as before
+    const MONTH = /^\d{4}-\d{2}$/;
+    const from = MONTH.test(req.query.from ?? "") ? req.query.from! : `${year}-01`;
+    const to = MONTH.test(req.query.to ?? "") ? req.query.to! : `${year}-12`;
 
     const months = (
       await db.execute(sql`
         select distinct period_code from erp.journal
-        where book <> 'test' and period_code like ${`${year}-%`} order by 1
+        where book <> 'test' and period_code >= ${from} and period_code <= ${to} order by 1
       `)
+    ).rows.map((r) => (r as { period_code: string }).period_code);
+    // every period with postings, unfiltered — the period picker's options
+    const periods = (
+      await db.execute(sql`select distinct period_code from erp.journal where book <> 'test' order by 1`)
     ).rows.map((r) => (r as { period_code: string }).period_code);
 
     const pl = (
@@ -29,7 +38,7 @@ export function r2rRoutes(app: FastifyInstance): void {
         from erp.journal_line jl
         join erp.journal j on j.id = jl.journal_id and j.book <> 'test'
         join erp.account a on a.code = jl.account_code
-        where a.type in ('income', 'expense') and j.period_code like ${`${year}-%`}
+        where a.type in ('income', 'expense') and j.period_code >= ${from} and j.period_code <= ${to}
         group by a.code, a.name, a.type, j.period_code
         order by a.code
       `)
@@ -71,10 +80,13 @@ export function r2rRoutes(app: FastifyInstance): void {
     return {
       basis: "live",
       year,
+      from,
+      to,
       months,
+      periods,
       pl: pl.map((r) => ({ ...r, amount_minor: Number(r.amount_minor) })),
       bs: bs
-        .filter((r) => r.period_code <= `${year}-12`)
+        .filter((r) => r.period_code <= to)
         .map((r) => ({ ...r, balance_minor: Number(r.balance_minor) })),
       plCumulative: plCum.map((r) => ({ ...r, balance_minor: Number(r.balance_minor) })),
     };

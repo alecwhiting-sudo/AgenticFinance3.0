@@ -119,8 +119,12 @@ _Last updated: 2026-10-04_
    environment + canary (production phase).
 2. **Dataset v2 + period lens + chat dashboards** (`plans/DATASET_V2.md`,
    planned 2026-10-04): sequenced packages — A map of existing flaws
-   (`plans/TEST_DATA_MAP.md`, done) → B period lens (month/quarter/YTD on
-   TB, statements, analytics, aging) → C dataset v2 (Jan–Mar extension;
+   (`plans/TEST_DATA_MAP.md`, done) → **B period lens BUILT 2026-10-04**
+   (month/quarter/YTD picker on TB, statements, analytics + account drill;
+   one shared lens model in `@af/shared`, `?lens=` in the URL +
+   localStorage so it follows you between pages; quarter/YTD flux compares
+   the window to the equal-length prior window; aging as-of window end;
+   Analyst views take the same from/to params) → C dataset v2 (Jan–Mar extension;
    5 multi-page invoices incl. one subtotal-mismatch trap; supplier bank
    details + planted wrong IBANs + new `bank_detail_mismatch` intake
    control; poor-scan tier; extraction evals; invariant sweep) → D

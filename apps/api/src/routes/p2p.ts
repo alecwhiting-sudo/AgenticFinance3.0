@@ -186,26 +186,30 @@ export function p2pRoutes(app: FastifyInstance): void {
   });
 
   /** Ledger drill: all journal lines for an account. */
-  app.get<{ Params: { code: string }; Querystring: { period?: string } }>(
+  app.get<{ Params: { code: string }; Querystring: { period?: string; from?: string; to?: string } }>(
     "/erp/accounts/:code",
     async (req, reply) => {
       const db = requireDb();
       const acct = await db.query.account.findFirst({ where: (t) => eq(t.code, req.params.code) });
       if (!acct) return reply.code(404).send({ error: "account not found" });
       // optional period filter so analytics charts drill to exactly the
-      // postings behind one month's figure
-      const period = /^\d{4}-\d{2}$/.test(req.query.period ?? "") ? req.query.period! : null;
+      // postings behind one month's figure; from/to is the period-lens window
+      const MONTH = /^\d{4}-\d{2}$/;
+      const period = MONTH.test(req.query.period ?? "") ? req.query.period! : null;
+      const from = period ?? (MONTH.test(req.query.from ?? "") ? req.query.from! : null);
+      const to = period ?? (MONTH.test(req.query.to ?? "") ? req.query.to! : null);
       const rows = (
         await db.execute(sql`
           select jl.amount_minor, jl.memo as line_memo, j.id as journal_id, j.number,
                  j.journal_date, j.memo, j.source_type, j.source_id
           from erp.journal_line jl join erp.journal j on j.id = jl.journal_id and j.book <> 'test'
           where jl.account_code = ${req.params.code}
-            and (${period}::text is null or j.period_code = ${period})
+            and (${from}::text is null or j.period_code >= ${from})
+            and (${to}::text is null or j.period_code <= ${to})
           order by j.journal_date desc, j.number desc limit 200
         `)
       ).rows;
-      return { account: acct, period, lines: rows };
+      return { account: acct, period, from, to, lines: rows };
     },
   );
 
@@ -255,24 +259,42 @@ export function p2pRoutes(app: FastifyInstance): void {
     return rows;
   });
 
-  /** Trial balance from journal lines (debit positive, credit negative). */
-  app.get("/erp/trial-balance", async () => {
+  /** Trial balance from journal lines (debit positive, credit negative).
+   * Optional period-lens window (PR-B): `from`/`to` month codes restrict the
+   * balances to journals posted in that window. Whole journals balance, so
+   * any window still nets to zero. */
+  app.get<{ Querystring: { from?: string; to?: string } }>("/erp/trial-balance", async (req) => {
     const db = requireDb();
+    const MONTH = /^\d{4}-\d{2}$/;
+    const from = MONTH.test(req.query.from ?? "") ? req.query.from! : null;
+    const to = MONTH.test(req.query.to ?? "") ? req.query.to! : null;
     const rows = (
       await db.execute(sql`
         select a.code, a.name, a.type, coalesce(sum(jl.amount_minor), 0)::int as balance_minor
         from erp.account a
-        left join (erp.journal_line jl join erp.journal j on j.id = jl.journal_id and j.book <> 'test') on jl.account_code = a.code
+        left join (erp.journal_line jl join erp.journal j on j.id = jl.journal_id and j.book <> 'test'
+                   and (${from}::text is null or j.period_code >= ${from})
+                   and (${to}::text is null or j.period_code <= ${to})) on jl.account_code = a.code
         group by a.code, a.name, a.type
         order by a.code
       `)
     ).rows as { code: string; name: string; type: string; balance_minor: number }[];
     const [{ total }] = (
-      await db.execute(sql`select coalesce(sum(jl.amount_minor),0)::bigint as total from erp.journal_line jl join erp.journal j on j.id = jl.journal_id and j.book <> 'test'`)
+      await db.execute(sql`
+        select coalesce(sum(jl.amount_minor),0)::bigint as total
+        from erp.journal_line jl join erp.journal j on j.id = jl.journal_id and j.book <> 'test'
+        where (${from}::text is null or j.period_code >= ${from})
+          and (${to}::text is null or j.period_code <= ${to})`)
     ).rows as { total: string }[];
     const [{ n: journals }] = (
-      await db.execute(sql`select count(*)::int as n from erp.journal where book <> 'test'`)
+      await db.execute(sql`
+        select count(*)::int as n from erp.journal where book <> 'test'
+          and (${from}::text is null or period_code >= ${from})
+          and (${to}::text is null or period_code <= ${to})`)
     ).rows as { n: number }[];
-    return { accounts: rows, controlTotalMinor: Number(total), journals };
+    const periods = (
+      await db.execute(sql`select distinct period_code from erp.journal where book <> 'test' order by 1`)
+    ).rows.map((r) => (r as { period_code: string }).period_code);
+    return { accounts: rows, controlTotalMinor: Number(total), journals, from, to, periods };
   });
 }

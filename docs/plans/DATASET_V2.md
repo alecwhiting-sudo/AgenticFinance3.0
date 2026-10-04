@@ -57,7 +57,7 @@ bank lines, today-dated drips, the test book, no supplier bank details);
 §3 the planned v2 additions. Updated in the same commit as any dataset
 change from here on.
 
-## PR-B — Period lens (month / quarter / YTD) · **build first**
+## PR-B — Period lens (month / quarter / YTD) · **BUILT 2026-10-04**
 
 One shared period model, applied everywhere figures are shown.
 

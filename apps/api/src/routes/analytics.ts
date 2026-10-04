@@ -16,14 +16,14 @@ export const VIEW_CATALOGUE = [
     id: "pl-trend",
     title: "P&L trend",
     question: "How are income and expense lines moving month to month?",
-    params: { year: "YYYY (default: latest year with journals)" },
+    params: { year: "YYYY (default: latest year with journals)", from: "YYYY-MM window start", to: "YYYY-MM window end" },
     drill: "/ledger/{code}?period={period}",
   },
   {
     id: "flux",
     title: "Month flux",
-    question: "Why did the result move versus the prior month?",
-    params: { period: "YYYY-MM (default: latest period with P&L activity)" },
+    question: "Why did the result move versus the prior month (or prior quarter/YTD window)?",
+    params: { period: "YYYY-MM (default: latest period with P&L activity)", from: "YYYY-MM — with `to`, compares the window to the equal-length prior window", to: "YYYY-MM" },
     drill: "/ledger/{code}?period={period}",
   },
   {
@@ -37,14 +37,14 @@ export const VIEW_CATALOGUE = [
     id: "counterparty",
     title: "Supplier spend / customer revenue",
     question: "Where does spend or revenue concentrate?",
-    params: { dim: "supplier | customer" },
+    params: { dim: "supplier | customer", from: "YYYY-MM (invoice month window)", to: "YYYY-MM" },
     drill: "/p2p/suppliers/{code} (supplier) · /o2c (customer)",
   },
   {
     id: "cash",
     title: "Cash position",
     question: "What is the bank balance doing over time?",
-    params: {},
+    params: { from: "YYYY-MM (trim returned dates; balance stays cumulative)", to: "YYYY-MM" },
     drill: "/payments",
   },
 ] as const;
@@ -318,8 +318,9 @@ export function analyticsRoutes(app: FastifyInstance): void {
 
   /** Monthly movement per P&L account for a year. Sign convention is the
    * ledger's (debit positive); the UI flips income for display. */
-  app.get<{ Querystring: { year?: string } }>("/analytics/pl-trend", async (req) => {
+  app.get<{ Querystring: { year?: string; from?: string; to?: string } }>("/analytics/pl-trend", async (req) => {
     const db = requireDb();
+    const MONTH = /^\d{4}-\d{2}$/;
     let year = /^\d{4}$/.test(req.query.year ?? "") ? Number(req.query.year) : undefined;
     if (!year) {
       const latest = (
@@ -327,13 +328,16 @@ export function analyticsRoutes(app: FastifyInstance): void {
       ).rows[0] as { p: string | null };
       year = latest.p ? Number(latest.p.slice(0, 4)) : new Date().getUTCFullYear();
     }
+    // period-lens window overrides the year default
+    const from = MONTH.test(req.query.from ?? "") ? req.query.from! : `${year}-01`;
+    const to = MONTH.test(req.query.to ?? "") ? req.query.to! : `${year}-12`;
     const rows = (
       await db.execute(sql`
         select a.code, a.name, a.type, j.period_code, sum(jl.amount_minor)::bigint as amount_minor
         from erp.journal_line jl
         join erp.journal j on j.id = jl.journal_id and j.book <> 'test'
         join erp.account a on a.code = jl.account_code
-        where a.type in ('income', 'expense') and j.period_code like ${`${year}-%`}
+        where a.type in ('income', 'expense') and j.period_code >= ${from} and j.period_code <= ${to}
         group by a.code, a.name, a.type, j.period_code
         order by a.code, j.period_code
       `)
@@ -342,6 +346,8 @@ export function analyticsRoutes(app: FastifyInstance): void {
     return {
       view: "pl-trend",
       year,
+      from,
+      to,
       months,
       rows: rows.map((r) => ({ ...r, amount_minor: Number(r.amount_minor) })),
     };
@@ -349,11 +355,67 @@ export function analyticsRoutes(app: FastifyInstance): void {
 
   /** Per-account movement delta: period vs prior month, P&L accounts.
    * Feeds the waterfall — favourable/adverse is decided by the UI from
-   * account type and sign (meaning, not raw sign). */
-  app.get<{ Querystring: { period?: string } }>("/analytics/flux", async (req, reply) => {
+   * account type and sign (meaning, not raw sign).
+   * Period-lens windows (PR-B): `from`/`to` month codes aggregate the window
+   * and compare it to the equal-length window immediately before it (Q3 vs
+   * Q2, YTD Sep vs the preceding nine months). Without them, single month vs
+   * prior month as before. */
+  app.get<{ Querystring: { period?: string; from?: string; to?: string } }>("/analytics/flux", async (req, reply) => {
     const db = requireDb();
+    const MONTH = /^\d{4}-\d{2}$/;
+    const wFrom = MONTH.test(req.query.from ?? "") ? req.query.from! : undefined;
+    const wTo = MONTH.test(req.query.to ?? "") ? req.query.to! : undefined;
     let period = /^\d{4}-\d{2}$/.test(req.query.period ?? "") ? req.query.period! : undefined;
     const currentMonth = new Date().toISOString().slice(0, 7);
+    if (wFrom && wTo && wFrom <= wTo && wFrom !== wTo) {
+      // window mode: [from..to] vs the same-length window ending just before
+      const len = monthsBetween(wFrom, wTo);
+      const priorTo = shiftMonth(wFrom, -1);
+      const priorFrom = shiftMonth(priorTo, -(len - 1));
+      const rows = (
+        await db.execute(sql`
+          select a.code, a.name, a.type,
+            coalesce(sum(jl.amount_minor) filter (where j.period_code >= ${wFrom} and j.period_code <= ${wTo}), 0)::bigint as this_minor,
+            coalesce(sum(jl.amount_minor) filter (where j.period_code >= ${priorFrom} and j.period_code <= ${priorTo}), 0)::bigint as prev_minor
+          from erp.journal_line jl
+          join erp.journal j on j.id = jl.journal_id and j.book <> 'test'
+          join erp.account a on a.code = jl.account_code
+          where a.type in ('income', 'expense')
+            and j.period_code >= ${priorFrom} and j.period_code <= ${wTo}
+          group by a.code, a.name, a.type
+          having coalesce(sum(jl.amount_minor) filter (where j.period_code >= ${wFrom} and j.period_code <= ${wTo}), 0) <> 0
+              or coalesce(sum(jl.amount_minor) filter (where j.period_code >= ${priorFrom} and j.period_code <= ${priorTo}), 0) <> 0
+          order by a.code
+        `)
+      ).rows as { code: string; name: string; type: string; this_minor: string; prev_minor: string }[];
+      const periods = (
+        await db.execute(sql`
+          select distinct j.period_code from erp.journal j
+          join erp.journal_line jl on jl.journal_id = j.id and j.book <> 'test'
+          join erp.account a on a.code = jl.account_code
+          where a.type in ('income','expense') order by 1
+        `)
+      ).rows.map((r) => (r as { period_code: string }).period_code);
+      return {
+        view: "flux",
+        period: wTo,
+        prior: priorTo,
+        from: wFrom,
+        to: wTo,
+        priorFrom,
+        priorTo,
+        partial: wTo >= currentMonth,
+        periods,
+        rows: rows.map((r) => ({
+          code: r.code,
+          name: r.name,
+          type: r.type,
+          thisMinor: Number(r.this_minor),
+          prevMinor: Number(r.prev_minor),
+          deltaMinor: Number(r.this_minor) - Number(r.prev_minor),
+        })),
+      };
+    }
     if (!period) {
       // Default to the latest COMPLETE month: comparing a 3-day-old month to
       // a full prior month reads as "revenue collapsed" and means nothing.
@@ -465,10 +527,13 @@ export function analyticsRoutes(app: FastifyInstance): void {
   /** Ranked counterparty totals with a monthly series each — invoiced gross
    * (AP) / billed gross (AR), from the invoice tables (period = invoice
    * month). Concentration, not cash timing. */
-  app.get<{ Querystring: { dim?: string } }>("/analytics/counterparty", async (req, reply) => {
+  app.get<{ Querystring: { dim?: string; from?: string; to?: string } }>("/analytics/counterparty", async (req, reply) => {
     const db = requireDb();
     const dim = req.query.dim === "customer" ? "customer" : req.query.dim === "supplier" || !req.query.dim ? "supplier" : null;
     if (!dim) return reply.code(400).send({ error: "dim must be supplier or customer" });
+    const MONTH = /^\d{4}-\d{2}$/;
+    const from = MONTH.test(req.query.from ?? "") ? req.query.from! : null;
+    const to = MONTH.test(req.query.to ?? "") ? req.query.to! : null;
     const rows = (
       await db.execute(
         dim === "supplier"
@@ -477,6 +542,8 @@ export function analyticsRoutes(app: FastifyInstance): void {
                      sum(i.gross_minor)::bigint as gross_minor, count(*)::int as invoices
               from erp.ap_invoice i join erp.supplier s on s.id = i.supplier_id and i.book <> 'test'
               where i.status <> 'rejected'
+                and (${from}::text is null or to_char(i.invoice_date, 'YYYY-MM') >= ${from})
+                and (${to}::text is null or to_char(i.invoice_date, 'YYYY-MM') <= ${to})
               group by s.code, s.name, to_char(i.invoice_date, 'YYYY-MM')
               order by s.code, to_char(i.invoice_date, 'YYYY-MM')
             `
@@ -484,6 +551,8 @@ export function analyticsRoutes(app: FastifyInstance): void {
               select c.code, c.name, to_char(i.invoice_date, 'YYYY-MM') as period_code,
                      sum(i.gross_minor)::bigint as gross_minor, count(*)::int as invoices
               from erp.ar_invoice i join erp.customer c on c.id = i.customer_id
+              where (${from}::text is null or to_char(i.invoice_date, 'YYYY-MM') >= ${from})
+                and (${to}::text is null or to_char(i.invoice_date, 'YYYY-MM') <= ${to})
               group by c.code, c.name, to_char(i.invoice_date, 'YYYY-MM')
               order by c.code, to_char(i.invoice_date, 'YYYY-MM')
             `,
@@ -499,23 +568,37 @@ export function analyticsRoutes(app: FastifyInstance): void {
       byParty.set(r.code, e);
     }
     const parties = [...byParty.values()].sort((a, b) => b.totalMinor - a.totalMinor);
-    return { view: "counterparty", dim, months, parties };
+    return { view: "counterparty", dim, from, to, months, parties };
   });
 
   /** Cumulative bank balance by transaction date (all bank lines — the
-   * statement is the truth of cash whether or not it is matched yet). */
-  app.get("/analytics/cash", async () => {
+   * statement is the truth of cash whether or not it is matched yet).
+   * The balance is always cumulative from the start of the feed; a
+   * period-lens window only trims which dates are RETURNED, so the line
+   * still shows the true balance within the window. */
+  app.get<{ Querystring: { from?: string; to?: string } }>("/analytics/cash", async (req) => {
     const db = requireDb();
+    const MONTH = /^\d{4}-\d{2}$/;
+    const from = MONTH.test(req.query.from ?? "") ? req.query.from! : null;
+    const to = MONTH.test(req.query.to ?? "") ? req.query.to! : null;
     const rows = (
       await db.execute(sql`
-        select txn_date, sum(amount_minor)::bigint as day_minor,
-               sum(sum(amount_minor)) over (order by txn_date)::bigint as balance_minor
-        from erp.bank_transaction
-        group by txn_date order by txn_date
+        with daily as (
+          select txn_date, sum(amount_minor)::bigint as day_minor,
+                 sum(sum(amount_minor)) over (order by txn_date)::bigint as balance_minor
+          from erp.bank_transaction
+          group by txn_date
+        )
+        select * from daily
+        where (${from}::text is null or to_char(txn_date, 'YYYY-MM') >= ${from})
+          and (${to}::text is null or to_char(txn_date, 'YYYY-MM') <= ${to})
+        order by txn_date
       `)
     ).rows as { txn_date: string; day_minor: string; balance_minor: string }[];
     return {
       view: "cash",
+      from,
+      to,
       points: rows.map((r) => ({
         date: r.txn_date,
         dayMinor: Number(r.day_minor),
@@ -526,7 +609,18 @@ export function analyticsRoutes(app: FastifyInstance): void {
 }
 
 function priorPeriod(period: string): string {
+  return shiftMonth(period, -1);
+}
+
+function shiftMonth(period: string, by: number): string {
   const [y, m] = period.split("-").map(Number) as [number, number];
-  const d = new Date(Date.UTC(y, m - 2, 1));
+  const d = new Date(Date.UTC(y, m - 1 + by, 1));
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+/** Inclusive month count: 2026-07..2026-09 → 3. */
+function monthsBetween(from: string, to: string): number {
+  const [fy, fm] = from.split("-").map(Number) as [number, number];
+  const [ty, tm] = to.split("-").map(Number) as [number, number];
+  return (ty - fy) * 12 + (tm - fm) + 1;
 }

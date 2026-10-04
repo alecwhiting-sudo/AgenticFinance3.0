@@ -22,13 +22,20 @@ export default async function AccountPage({
   searchParams,
 }: {
   params: Promise<{ code: string }>;
-  searchParams: Promise<{ period?: string }>;
+  searchParams: Promise<{ period?: string; from?: string; to?: string }>;
 }) {
   const { code } = await params;
-  const { period } = await searchParams;
+  const { period, from, to } = await searchParams;
+  const MONTH = /^\d{4}-\d{2}$/;
   // analytics charts drill here with ?period= so a bar lands on exactly the
-  // postings behind one month's figure
-  const q = period && /^\d{4}-\d{2}$/.test(period) ? `?period=${period}` : "";
+  // postings behind one month's figure; the period lens drills with ?from&to
+  const q =
+    period && MONTH.test(period)
+      ? `?period=${period}`
+      : from && to && MONTH.test(from) && MONTH.test(to)
+        ? `?from=${from}&to=${to}`
+        : "";
+  const windowLabel = period ?? (q ? (from === to ? from : `${from} – ${to}`) : null);
   const d = await getJson<Detail>(`/erp/accounts/${code}${q}`);
   if (!d) return <main>Account not found.</main>;
   const balance = d.lines.reduce((n, l) => n + l.amount_minor, 0);
@@ -41,10 +48,10 @@ export default async function AccountPage({
           {d.account.code} · {d.account.name}
         </h2>
         <p className="mt-1 text-sm" style={{ color: "var(--muted)" }}>
-          {d.account.type} · {q ? `${period} movement` : "balance"} {money(balance)} · {d.lines.length} postings shown
+          {d.account.type} · {q ? `${windowLabel} movement` : "balance"} {money(balance)} · {d.lines.length} postings shown
           {q && (
             <>
-              {" · filtered to "}{period}{" — "}
+              {" · filtered to "}{windowLabel}{" — "}
               <Link href={`/ledger/${code}`} className="hover:underline" style={{ color: "var(--accent)" }}>
                 show all
               </Link>

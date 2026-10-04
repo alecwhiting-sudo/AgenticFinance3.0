@@ -1,21 +1,30 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { monthEndDate, monthLabel, parsePeriodLens } from "@af/shared";
 import { getJson } from "@/lib/api";
 import { money, moneyCompact } from "@/lib/format";
 import { Kpi, PageHeader } from "@/components/ui";
 import { AreaTrend, ChartCard, HBars, TrendChart, Waterfall } from "@/components/charts";
+import PeriodPicker from "@/components/PeriodPicker";
 
 export const metadata: Metadata = { title: "Analytics" };
 
 /** Phase 4c M1 (plans/ANALYTICS.md): the curated views, charted. Everything
  * on this page is derived aggregation the API serves read-only; every figure
- * drills to the rows behind it and every chart has a table view. */
+ * drills to the rows behind it and every chart has a table view. The period
+ * lens (PR-B) windows every view: quarter/YTD flux compares the window to
+ * the equal-length window before it. */
 
 type Flux = {
   period: string;
   prior: string;
-  /** true when the period is the in-progress calendar month */
+  /** true when the period is (or the window ends in) the in-progress month */
   partial: boolean;
+  /** present in window mode (quarter / YTD lens) */
+  from?: string;
+  to?: string;
+  priorFrom?: string;
+  priorTo?: string;
   periods: string[];
   rows: { code: string; name: string; type: string; thisMinor: number; prevMinor: number; deltaMinor: number }[];
 };
@@ -54,18 +63,33 @@ const thR = "py-1.5 text-right text-[10px] uppercase tracking-wide";
 export default async function AnalyticsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ period?: string }>;
+  searchParams: Promise<{ period?: string; lens?: string }>;
 }) {
-  const { period } = await searchParams;
-  const q = period && /^\d{4}-\d{2}$/.test(period) ? `?period=${period}` : "";
+  const { period, lens } = await searchParams;
+  const L = parsePeriodLens(lens);
+  // month lens (or the legacy ?period= chips) = single month vs prior month;
+  // quarter/YTD lens = window vs the equal-length prior window
+  const windowed = L !== null && L.grain !== "month";
+  const fluxQ = windowed
+    ? `?from=${L!.from}&to=${L!.to}`
+    : L
+      ? `?period=${L.to}`
+      : period && /^\d{4}-\d{2}$/.test(period)
+        ? `?period=${period}`
+        : "";
+  const winQ = L ? `?from=${L.from}&to=${L.to}` : "";
+  // open items: as-of the lens window's end, capped at today
+  const today = new Date().toISOString().slice(0, 10);
+  const asOf = L ? (monthEndDate(L.to) < today ? monthEndDate(L.to) : today) : null;
+  const asOfQ = asOf ? `&asOf=${asOf}` : "";
   const [flux, trend, apAging, arAging, suppliers, customers, cash] = await Promise.all([
-    getJson<Flux>(`/analytics/flux${q}`),
-    getJson<Trend>("/analytics/pl-trend"),
-    getJson<Aging>("/analytics/aging?side=ap"),
-    getJson<Aging>("/analytics/aging?side=ar"),
-    getJson<Counterparty>("/analytics/counterparty?dim=supplier"),
-    getJson<Counterparty>("/analytics/counterparty?dim=customer"),
-    getJson<Cash>("/analytics/cash"),
+    getJson<Flux>(`/analytics/flux${fluxQ}`),
+    getJson<Trend>(`/analytics/pl-trend${winQ}`),
+    getJson<Aging>(`/analytics/aging?side=ap${asOfQ}`),
+    getJson<Aging>(`/analytics/aging?side=ar${asOfQ}`),
+    getJson<Counterparty>(`/analytics/counterparty?dim=supplier${L ? `&from=${L.from}&to=${L.to}` : ""}`),
+    getJson<Counterparty>(`/analytics/counterparty?dim=customer${L ? `&from=${L.from}&to=${L.to}` : ""}`),
+    getJson<Cash>(`/analytics/cash${winQ}`),
   ]);
 
   if (!trend)
@@ -74,6 +98,18 @@ export default async function AnalyticsPage({
         <PageHeader title="Analytics" context="The analytics API is unavailable." />
       </main>
     );
+
+  /* ---- lens labels + drill windows ---- */
+  const fluxDrillQ = windowed && flux ? `?from=${flux.from}&to=${flux.to}` : flux ? `?period=${flux.period}` : "";
+  const fluxThisLabel = windowed && L ? L.label : flux ? monthName(flux.period) : "";
+  const fluxPriorLabel =
+    windowed && flux?.priorFrom && flux?.priorTo
+      ? flux.priorFrom === flux.priorTo
+        ? monthLabel(flux.priorTo)
+        : `${monthLabel(flux.priorFrom)} – ${monthLabel(flux.priorTo)}`
+      : flux
+        ? monthName(flux.prior)
+        : "";
 
   /* ---- flux waterfall: profit prior → per-account contributions → profit this ---- */
   const fluxItems = (flux?.rows ?? [])
@@ -213,17 +249,20 @@ export default async function AnalyticsPage({
 
   return (
     <main className="space-y-6">
-      <PageHeader
-        title="Analytics"
-        context="Curated read-only views over the ledger and open items — derived aggregation only, never separate measurement. Every chart drills to the postings behind it and has a table view."
-      />
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <PageHeader
+          title="Analytics"
+          context="Curated read-only views over the ledger and open items — derived aggregation only, never separate measurement. Every chart drills to the postings behind it and has a table view."
+        />
+        <PeriodPicker periods={flux?.periods ?? trend.months} lens={lens} />
+      </div>
 
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Kpi label="Cash balance" value={moneyCompact(cashNow)} hint="latest bank statement line" href="/payments" />
+        <Kpi label="Cash balance" value={moneyCompact(cashNow)} hint={L ? `at window end (${L.label})` : "latest bank statement line"} href="/payments" />
         <Kpi
-          label={flux ? `${monthName(flux.period)} result${flux.partial ? " (to date)" : ""}` : "Result"}
+          label={flux ? `${fluxThisLabel} result${flux.partial ? " (to date)" : ""}` : "Result"}
           value={moneyCompact(profitThis)}
-          hint={flux ? `prior month ${moneyCompact(profitPrior)}` : undefined}
+          hint={flux ? `prior ${windowed ? "window" : "month"} ${moneyCompact(profitPrior)}` : undefined}
           href="/reports"
         />
         <Kpi label="AR overdue" value={moneyCompact(arAging?.overdueMinor ?? 0)} hint={`of ${moneyCompact(arAging?.totalMinor ?? 0)} open`} href="/o2c" />
@@ -233,19 +272,21 @@ export default async function AnalyticsPage({
       <div className="grid gap-4 xl:grid-cols-2">
         {flux && (
           <ChartCard
-            title={`Month flux — ${monthName(flux.period)}${flux.partial ? " (month to date)" : ""} vs ${monthName(flux.prior)}`}
+            title={`${windowed ? "Flux" : "Month flux"} — ${fluxThisLabel}${flux.partial && !windowed ? " (month to date)" : ""} vs ${fluxPriorLabel}`}
             question={
-              flux.partial
-                ? `${monthName(flux.period)} is still in progress — a partial month against a full one reads as everything falling; compare complete months for the real story.`
-                : "Why did the result move? Teal bars helped, amber bars hurt; grey anchors are each month's result."
+              flux.partial && !windowed
+                ? `${fluxThisLabel} is still in progress — a partial month against a full one reads as everything falling; compare complete months for the real story.`
+                : flux.partial && windowed
+                  ? `The window ends in the in-progress month, so the comparison is incomplete. Teal bars helped, amber bars hurt; grey anchors are each window's result.`
+                  : `Why did the result move? Teal bars helped, amber bars hurt; grey anchors are each ${windowed ? "window's" : "month's"} result.`
             }
             table={
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b" style={{ borderColor: "var(--border)", color: "var(--muted)" }}>
                     <th className={th}>Account</th>
-                    <th className={thR}>{flux.prior}</th>
-                    <th className={thR}>{flux.period}</th>
+                    <th className={thR}>{windowed ? fluxPriorLabel : flux.prior}</th>
+                    <th className={thR}>{windowed ? fluxThisLabel : flux.period}</th>
                     <th className={thR}>Contribution</th>
                   </tr>
                 </thead>
@@ -253,7 +294,7 @@ export default async function AnalyticsPage({
                   {fluxItems.map((r) => (
                     <tr key={r.code} className="border-b last:border-0" style={{ borderColor: "var(--border)" }}>
                       <td className="py-1">
-                        <Link href={`/ledger/${r.code}?period=${flux.period}`} className="hover:underline">
+                        <Link href={`/ledger/${r.code}${fluxDrillQ}`} className="hover:underline">
                           {r.code} {r.name}
                         </Link>
                       </td>
@@ -268,43 +309,45 @@ export default async function AnalyticsPage({
               </table>
             }
           >
-            <div className="mb-2 flex flex-wrap items-center gap-1">
-              <span className="mr-1 text-[10px]" style={{ color: "var(--muted)" }}>Month:</span>
-              {flux.periods.map((p) => (
-                <Link
-                  key={p}
-                  href={p === flux.period ? "/analytics" : `/analytics?period=${p}`}
-                  className="rounded-full border px-2 py-0.5 text-[10px]"
-                  style={
-                    p === flux.period
-                      ? { borderColor: "var(--accent)", color: "var(--accent)", fontWeight: 500 }
-                      : { borderColor: "var(--border)", color: "var(--muted)" }
-                  }
-                >
-                  {new Date(`${p}-01T00:00:00Z`).toLocaleDateString("en-GB", { month: "short" })}
-                  {p === new Date().toISOString().slice(0, 7) ? " · to date" : ""}
-                </Link>
-              ))}
-            </div>
+            {!windowed && (
+              <div className="mb-2 flex flex-wrap items-center gap-1">
+                <span className="mr-1 text-[10px]" style={{ color: "var(--muted)" }}>Month:</span>
+                {flux.periods.map((p) => (
+                  <Link
+                    key={p}
+                    href={`/analytics?lens=${p}`}
+                    className="rounded-full border px-2 py-0.5 text-[10px]"
+                    style={
+                      p === flux.period
+                        ? { borderColor: "var(--accent)", color: "var(--accent)", fontWeight: 500 }
+                        : { borderColor: "var(--border)", color: "var(--muted)" }
+                    }
+                  >
+                    {new Date(`${p}-01T00:00:00Z`).toLocaleDateString("en-GB", { month: "short" })}
+                    {p === new Date().toISOString().slice(0, 7) ? " · to date" : ""}
+                  </Link>
+                ))}
+              </div>
+            )}
             <Waterfall
-              startLabel={monthName(flux.prior).slice(0, 3)}
+              startLabel={windowed ? "Prior" : monthName(flux.prior).slice(0, 3)}
               start={profitPrior}
               items={[
                 ...shown.map((r) => ({
                   label: r.name,
                   delta: r.contrib,
-                  href: `/ledger/${r.code}?period=${flux.period}`,
+                  href: `/ledger/${r.code}${fluxDrillQ}`,
                 })),
                 ...(otherContrib !== 0 ? [{ label: `Other (${fluxItems.length - shown.length})`, delta: otherContrib }] : []),
               ]}
-              endLabel={monthName(flux.period).slice(0, 3)}
+              endLabel={windowed && L ? L.label : monthName(flux.period).slice(0, 3)}
               end={profitThis}
             />
           </ChartCard>
         )}
 
         <ChartCard
-          title={`P&L trend ${trend.year}`}
+          title={L ? `P&L trend — ${L.label}` : `P&L trend ${trend.year}`}
           question="Monthly movement for the six largest P&L lines (income and expenses both shown as positive amounts)."
           table={
             <table className="w-full text-xs">

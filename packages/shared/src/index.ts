@@ -241,3 +241,72 @@ export const activityEventSchema = z.object({
   summary: z.string(),
 });
 export type ActivityEvent = z.infer<typeof activityEventSchema>;
+
+/** ---- Period lens (plans/DATASET_V2.md PR-B) -------------------------------
+ * One shared way to say "show me this month / quarter / year-to-date" across
+ * the trial balance, statements and analytics. A lens is a short string that
+ * fits in a URL and resolves to an inclusive month-code window:
+ *   "2026-09"      → month    (from 2026-09 to 2026-09)
+ *   "2026-Q3"      → quarter  (from 2026-07 to 2026-09)
+ *   "ytd@2026-09"  → YTD      (from 2026-01 to 2026-09; FY = calendar year)
+ * APIs take plain from/to month codes so they stay lens-agnostic; the web
+ * resolves the lens once and passes the window. */
+export type PeriodGrain = "month" | "quarter" | "ytd";
+export type ResolvedLens = {
+  grain: PeriodGrain;
+  /** canonical lens string (what goes in the URL) */
+  lens: string;
+  /** inclusive month-code window */
+  from: string;
+  to: string;
+  /** human label, e.g. "Sep 2026" / "Q3 2026" / "YTD Sep 2026" */
+  label: string;
+};
+
+const MONTH_CODE = /^\d{4}-(0[1-9]|1[0-2])$/;
+
+export const monthLabel = (p: string): string =>
+  new Date(`${p}-01T00:00:00Z`).toLocaleDateString("en-GB", { month: "short", year: "numeric" });
+
+/** The quarter lens string containing a month, e.g. 2026-08 → 2026-Q3. */
+export const quarterOfMonth = (p: string): string =>
+  `${p.slice(0, 4)}-Q${Math.ceil(Number(p.slice(5, 7)) / 3)}`;
+
+/** The canonical lens string for a grain anchored at a month. */
+export const lensForGrain = (grain: PeriodGrain, month: string): string =>
+  grain === "month" ? month : grain === "quarter" ? quarterOfMonth(month) : `ytd@${month}`;
+
+/** Last calendar day of a month code — the as-of date for open-item views. */
+export const monthEndDate = (p: string): string => {
+  const [y, m] = p.split("-").map(Number) as [number, number];
+  return new Date(Date.UTC(y, m, 0)).toISOString().slice(0, 10);
+};
+
+export function parsePeriodLens(lens: string | null | undefined): ResolvedLens | null {
+  if (!lens) return null;
+  if (MONTH_CODE.test(lens))
+    return { grain: "month", lens, from: lens, to: lens, label: monthLabel(lens) };
+  const q = /^(\d{4})-[Qq]([1-4])$/.exec(lens);
+  if (q) {
+    const year = q[1]!;
+    const n = Number(q[2]);
+    const pad = (m: number) => String(m).padStart(2, "0");
+    return {
+      grain: "quarter",
+      lens: `${year}-Q${n}`,
+      from: `${year}-${pad(3 * n - 2)}`,
+      to: `${year}-${pad(3 * n)}`,
+      label: `Q${n} ${year}`,
+    };
+  }
+  const y = /^ytd@(\d{4}-\d{2})$/i.exec(lens);
+  if (y && MONTH_CODE.test(y[1]!))
+    return {
+      grain: "ytd",
+      lens: `ytd@${y[1]}`,
+      from: `${y[1]!.slice(0, 4)}-01`,
+      to: y[1]!,
+      label: `YTD ${monthLabel(y[1]!)}`,
+    };
+  return null;
+}
