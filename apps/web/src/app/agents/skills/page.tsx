@@ -81,11 +81,57 @@ export default function SkillsLibraryPage() {
   const sel = rows.find((s) => s.slug === selected) ?? null;
 
   // stale = some agent's active release pins an older version than the
-  // latest skill text; the refresh drafts rebuilt releases from the central
-  // map, evals them, and auto-promotes on a fully green suite
+  // latest skill text. The refresh is deliberately two-step: a preview names
+  // every agent being updated, what it proposes (the consequence surface if
+  // a skill is wrong) and how strong its eval gate is — only then confirm.
   const staleAgents = [...new Set(rows.flatMap((s) => s.usedBy.filter((u) => u.stale).map((u) => u.agentSlug)))];
+  type PreviewAgent = {
+    agentSlug: string;
+    agentName: string;
+    purpose: string;
+    commandPermissions: string[];
+    evalCases: number;
+    activeVersion: number;
+    changes: { skillName: string; from: number | null; to: number }[];
+  };
+  const [preview, setPreview] = useState<PreviewAgent[] | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const refreshStale = async () => {
+  const [baselined, setBaselined] = useState(false);
+
+  const loadPreview = async () => {
+    setMsg(null);
+    try {
+      const res = await fetch(`${apiUrl}/agents/releases/refresh-stale`);
+      const d = (await res.json()) as { agents?: PreviewAgent[]; error?: string };
+      if (!res.ok) setMsg(d.error ?? "preview failed");
+      else setPreview(d.agents ?? []);
+    } catch {
+      setMsg(`Cannot reach the API at ${apiUrl}.`);
+    }
+  };
+
+  /** The "before" measurement: run every stale agent's eval suite against
+   * its CURRENT active release, so there is a baseline to compare the
+   * post-refresh suites with on each agent's page. */
+  const runBaselines = async () => {
+    if (!preview) return;
+    const started: string[] = [];
+    for (const a of preview.filter((x) => x.evalCases > 0)) {
+      try {
+        const res = await fetch(`${apiUrl}/agents/${a.agentSlug}/evals/run`, { method: "POST" });
+        if (res.ok) started.push(a.agentSlug);
+      } catch {
+        /* reported below by omission */
+      }
+    }
+    setBaselined(true);
+    setMsg(
+      `Baseline eval suites started for ${started.length} agent${started.length === 1 ? "" : "s"} against their CURRENT releases. ` +
+        `Results land on each agent's page (eval history) in under a minute — compare them with the post-refresh suites there.`,
+    );
+  };
+
+  const confirmRefresh = async () => {
     setRefreshing(true);
     setMsg(null);
     try {
@@ -102,12 +148,13 @@ export default function SkillsLibraryPage() {
       }
       const drafted = (d.results ?? []).filter((r) => r.draftVersion);
       setMsg(
-        `${drafted.length} rebuilt release${drafted.length === 1 ? "" : "s"} drafted; evals running — each promotes itself when its suite is green. ` +
+        `${drafted.length} rebuilt release${drafted.length === 1 ? "" : "s"} drafted; eval suites are running against the drafts — each promotes itself only when fully green. ` +
           (d.results ?? [])
             .filter((r) => r.status.includes("manual"))
-            .map((r) => `${r.agentSlug}: promote manually (no eval cases).`)
+            .map((r) => `${r.agentSlug}: no eval gate — read the draft and promote manually from its page.`)
             .join(" "),
       );
+      setPreview(null);
       // the worker promotes within seconds in demo mode — poll until clean
       for (let i = 0; i < 10; i++) {
         await new Promise((r) => setTimeout(r, 3000));
@@ -129,7 +176,7 @@ export default function SkillsLibraryPage() {
       />
       {msg && <p className="text-sm" style={{ color: "var(--muted)" }}>{msg}</p>}
 
-      {staleAgents.length > 0 && (
+      {staleAgents.length > 0 && !preview && (
         <div
           className="flex flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-3"
           style={{ borderColor: "var(--warn)", background: "var(--card)" }}
@@ -137,12 +184,81 @@ export default function SkillsLibraryPage() {
           <p className="text-sm">
             <span style={{ color: "var(--warn)" }}>Stale pins:</span>{" "}
             {staleAgents.length} agent{staleAgents.length === 1 ? "" : "s"} ({staleAgents.join(", ")}) run
-            older skill versions than the latest text. Refresh drafts a rebuilt release per agent from the
-            central map, runs its eval suite against the draft, and promotes it only when every eval passes.
+            older skill versions than the latest text. Review exactly what a refresh would change before
+            anything happens.
           </p>
-          <Button variant="primary" onClick={refreshStale} disabled={refreshing} title={refreshing ? "Re-enables when the refresh round finishes" : undefined}>
-            {refreshing ? "Refreshing…" : "Refresh stale releases"}
+          <Button variant="outline" onClick={loadPreview} disabled={refreshing}>
+            Review refresh…
           </Button>
+        </div>
+      )}
+
+      {preview && (
+        <div className="space-y-4 rounded-xl border p-4" style={{ borderColor: "var(--warn)", background: "var(--card)" }}>
+          <div>
+            <h3 className="text-sm font-semibold">
+              Refresh would update {preview.length} agent{preview.length === 1 ? "" : "s"}
+            </h3>
+            <p className="mt-1 text-xs" style={{ color: "var(--muted)" }}>
+              A wrong skill cannot move money — every proposal still waits for your approval at the gateway —
+              but it degrades what reaches your inbox: bad resolution recommendations, mis-coded postings to
+              approve, poorly drafted customer letters, and real issues buried in noise. The eval gate below
+              is what stands between a bad skill edit and an active release.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            {preview.map((a) => (
+              <div key={a.agentSlug} className="rounded-lg border px-3 py-2 text-xs" style={{ borderColor: "var(--border)" }}>
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <span>
+                    <Link href={`/agents/${a.agentSlug}`} className="text-sm font-medium hover:underline">
+                      {a.agentName}
+                    </Link>{" "}
+                    <span style={{ color: "var(--muted)" }}>v{a.activeVersion} → v{a.activeVersion + 1} draft</span>
+                  </span>
+                  {a.evalCases > 0 ? (
+                    <Badge tone="good">{a.evalCases} eval case{a.evalCases === 1 ? "" : "s"} gate promotion</Badge>
+                  ) : (
+                    <Badge tone="warn">no eval cases — NO automatic gate, manual promote</Badge>
+                  )}
+                </div>
+                <p className="mt-0.5" style={{ color: "var(--muted)" }}>{a.purpose}</p>
+                <p className="mt-0.5">
+                  <span style={{ color: "var(--muted)" }}>Proposes:</span>{" "}
+                  {a.commandPermissions.filter((c) => !c.startsWith("case.")).join(", ") || "display-only output"}
+                  {" · "}
+                  <span style={{ color: "var(--muted)" }}>Skill changes:</span>{" "}
+                  {a.changes.map((c) => `${c.skillName} ${c.from ? `v${c.from}` : "(new)"}→v${c.to}`).join("; ")}
+                </p>
+              </div>
+            ))}
+            {preview.length === 0 && <p className="text-sm" style={{ color: "var(--muted)" }}>Nothing is stale any more.</p>}
+          </div>
+
+          <div className="rounded-lg border px-3 py-2 text-xs" style={{ borderColor: "var(--border)", color: "var(--muted)" }}>
+            <span className="font-medium" style={{ color: "var(--foreground)" }}>Using the eval framework around this:</span>{" "}
+            1) Run the baseline first — it evals each agent's CURRENT release, so after the refresh you can compare
+            before/after pass rates on the agent's page (eval history survives flushes). 2) If a skill's new text
+            promises behaviour no eval checks (its Quality bar section lists what should be checked), that behaviour is
+            unguarded — add a case before refreshing, or spot-check a live run afterwards (Test panel → simulate a day,
+            or investigate an exception). 3) The refresh itself evals every draft and promotes only a fully green
+            suite; a red suite leaves the draft unpromoted for you to inspect.
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" onClick={runBaselines} disabled={refreshing || baselined || preview.length === 0}
+              title={baselined ? "Baselines already started this round" : "Evals each agent's current release for a before/after comparison"}>
+              {baselined ? "Baselines running" : "1 · Run baseline evals"}
+            </Button>
+            <Button variant="primary" onClick={confirmRefresh} disabled={refreshing || preview.length === 0}
+              title={refreshing ? "Re-enables when the refresh round finishes" : undefined}>
+              {refreshing ? "Refreshing…" : `2 · Confirm refresh (${preview.length} agent${preview.length === 1 ? "" : "s"})`}
+            </Button>
+            <Button variant="ghost" onClick={() => { setPreview(null); setBaselined(false); }} disabled={refreshing}>
+              Cancel
+            </Button>
+          </div>
         </div>
       )}
 

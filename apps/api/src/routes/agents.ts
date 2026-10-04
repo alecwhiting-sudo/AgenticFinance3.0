@@ -388,6 +388,78 @@ export function agentRoutes(app: FastifyInstance): void {
     return created;
   });
 
+  /** What a stale-pin refresh WOULD touch: per stale agent, who they are,
+   * what they may propose (the consequence surface if a skill is wrong),
+   * exactly which skill pins change, and how strong the eval gate is. The
+   * UI shows this before the user confirms. */
+  async function staleAgentDetails(db: ReturnType<typeof requireDb>) {
+    const agents = await db.query.agent.findMany();
+    const allSkills = await db.query.skill.findMany();
+    const allVersions = await db.query.skillVersion.findMany();
+    const skillById = new Map(allSkills.map((s) => [s.id, s]));
+    const versionById = new Map(allVersions.map((v) => [v.id, v]));
+    const latestBySkill = new Map<string, { id: string; version: number }>();
+    for (const v of allVersions) {
+      const cur = latestBySkill.get(v.skillId);
+      if (!cur || v.version > cur.version) latestBySkill.set(v.skillId, { id: v.id, version: v.version });
+    }
+    const out: {
+      agentSlug: string;
+      agentName: string;
+      purpose: string;
+      commandPermissions: string[];
+      evalCases: number;
+      activeVersion: number;
+      changes: { skillName: string; from: number | null; to: number }[];
+      agentId: string;
+      desired: string[];
+    }[] = [];
+    for (const a of agents) {
+      const active = await db.query.agentRelease.findFirst({
+        where: (t) => and(eq(t.agentId, a.id), eq(t.status, "active")),
+      });
+      if (!active) continue;
+      const mapped = await db.query.agentSkill.findMany({ where: (t) => eq(t.agentId, a.id) });
+      const pinnedBySkill = new Map<string, number>();
+      for (const vid of active.skillVersionIds) {
+        const v = versionById.get(vid);
+        if (v) pinnedBySkill.set(v.skillId, v.version);
+      }
+      const changes: { skillName: string; from: number | null; to: number }[] = [];
+      const desired: string[] = [];
+      for (const m of mapped) {
+        const latest = latestBySkill.get(m.skillId);
+        if (!latest) continue;
+        desired.push(latest.id);
+        const pinned = pinnedBySkill.get(m.skillId) ?? null;
+        if (pinned !== latest.version)
+          changes.push({ skillName: skillById.get(m.skillId)?.name ?? m.skillId, from: pinned, to: latest.version });
+      }
+      if (changes.length === 0) continue;
+      const cases = await db.query.evalCase.findMany({ where: (t) => eq(t.agentId, a.id) });
+      out.push({
+        agentSlug: a.slug,
+        agentName: a.name,
+        purpose: a.purpose,
+        commandPermissions: active.commandPermissions,
+        evalCases: cases.length,
+        activeVersion: active.version,
+        changes,
+        agentId: a.id,
+        desired: desired.sort(),
+      });
+    }
+    return out;
+  }
+
+  app.get("/agents/releases/refresh-stale", async () => {
+    const db = requireDb();
+    const details = await staleAgentDetails(db);
+    return {
+      agents: details.map(({ agentId: _a, desired: _d, ...rest }) => rest),
+    };
+  });
+
   /** The stale-pin cleanup: for every agent whose active release does not
    * pin the latest version of each centrally-mapped skill, draft a rebuilt
    * release from the map and start its eval suite against THAT draft. A
