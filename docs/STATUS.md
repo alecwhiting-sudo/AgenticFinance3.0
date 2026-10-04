@@ -6,7 +6,7 @@ decision. Detail lives in `MASTER_PLAN.md` (phases), `ARCHITECTURE.md`
 (decisions D1–D16), `docs/plans/*` (per-process), and the living diagram
 `docs/architecture.html` (in-app at `/admin/architecture`).
 
-_Last updated: 2026-10-03_
+_Last updated: 2026-10-04_
 
 ## Phase tracker
 
@@ -117,29 +117,39 @@ _Last updated: 2026-10-03_
    target a specific release). Remaining: M2 shadow replay with measured
    impact report → M3b AI release reviewer grounded in it → M4 real test
    environment + canary (production phase).
-2. **Phase 4c follow-ons** — saved views on a dashboard; data permissions
+2. **Dataset v2 + period lens + chat dashboards** (`plans/DATASET_V2.md`,
+   planned 2026-10-04): sequenced packages — A map of existing flaws
+   (`plans/TEST_DATA_MAP.md`, done) → B period lens (month/quarter/YTD on
+   TB, statements, analytics, aging) → C dataset v2 (Jan–Mar extension;
+   5 multi-page invoices incl. one subtotal-mismatch trap; supplier bank
+   details + planted wrong IBANs + new `bank_detail_mismatch` intake
+   control; poor-scan tier; extraction evals; invariant sweep) → D
+   six-month/arbitrary scenario windows → E chat-built analytics dashboard
+   pages (supersedes the old "saved views" idea). Do-first: Studio v1
+   byte-identical regen check.
+3. **Phase 4c follow-ons** — saved views on a dashboard; data permissions
    (stubbed: every record-catalogue entity declares an `access` scope,
    enforcement designed in `plans/ANALYTICS.md` §3c). Core 4c built
    2026-10-03 incl. the record catalogue (`query_records` — the Analyst can
    scan actual records, not just the aggregate views).
-3. **LRS lock/certify/supersede** — lands as the month-end dashboard's lock
+4. **LRS lock/certify/supersede** — lands as the month-end dashboard's lock
    button + snapshot tables.
-4. **Commentary quality** — Close Agent output is too bland; skills +
+5. **Commentary quality** — Close Agent output is too bland; skills +
    evals that fail bland output (`plans/R2R.md` §9); reasoning tier only on
    eval evidence.
-5. **Phase 6 remainder** — guided demo tour, cross-process dashboard.
+6. **Phase 6 remainder** — guided demo tour, cross-process dashboard.
    (Demo scenarios + mission control at `/admin/pipeline` built 2026-10-03:
    month-by-month processing, timed full-speed 10x run with remembered
    side-by-side, simulate-a-day — `plans/DEMO_SCRIPTS.md`.)
-6. **Exceptions management M2** — M1 built 2026-10-03 (`/p2p/exceptions`
+7. **Exceptions management M2** — M1 built 2026-10-03 (`/p2p/exceptions`
    workbench: grounded costed options via `case.options`, 3-way diff,
    one-click apply). Remaining: supplier email drafts on options, tolerance
    parameter sets, option evals, O2C mirror (`plans/P2P.md` §10,
    `plans/O2C.md` §9).
-7. **A2R — Acquire to Retire** (fixed assets: capitalise from P2P,
+8. **A2R — Acquire to Retire** (fixed assets: capitalise from P2P,
    depreciation as engine-derived period ticks, disposals) — low priority
    (MASTER_PLAN Phase 7).
-8. **Phase 5 PM** — parked on user's call.
+9. **Phase 5 PM** — parked on user's call.
 
 ## How to resume a session
 
