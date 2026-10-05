@@ -238,6 +238,10 @@ export function analyticsRoutes(app: FastifyInstance): void {
               select count(*)::int as total, coalesce(sum(i.gross_minor), 0)::bigint as sum_gross_minor,
                      count(*) filter (where i.purchase_id is not null)::int as with_purchase,
                      count(*) filter (where i.purchase_id is null)::int as without_purchase,
+                     (select jsonb_object_agg(code, n) from (
+                        select i3.exception_code as code, count(*)::int as n from erp.ap_invoice i3
+                        where i3.status = 'exception' and i3.book <> 'test' and i3.exception_code is not null
+                        group by 1) e(code, n)) as by_exception,
                      (select jsonb_object_agg(status, n) from (
                         select i2.status::text, count(*)::int as n from erp.ap_invoice i2
                         join erp.supplier s2 on s2.id = i2.supplier_id and i2.book <> 'test'

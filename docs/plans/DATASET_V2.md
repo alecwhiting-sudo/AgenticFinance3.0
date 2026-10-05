@@ -370,7 +370,31 @@ Build shape (one PR, ~M-L):
 Dependencies: none hard; nicest after F. Licence: Apache-2.0 with
 attribution noted in the skill's notes field.
 
-## PR-I — Company rename (PLAN ONLY, not implemented) · planned 2026-10-05
+## PR-H — Board pack as a slide deck · built 2026-10-05 (branch `claude/pr-h-board-deck`, PR pending review)
+
+**Why:** the first pack renderer was a text memo — correct but flat. The
+user wants the YouTube-demo feel: a PowerPoint-like HTML deck with charts,
+tables, commentary and branding.
+
+**Design — narrative stored, charts live.** No schema or worker change: the
+agent keeps drafting the five narrative sections (`exec-summary`, `pnl`,
+`cash`, `working-capital`, `controls`) via `report.board_pack.save`; the
+renderer (`/reports/board/[id]`) marries each stored section to a LIVE chart
+from the same governed views the agent read, scoped to the pack's lens
+window — so visuals follow the chart house rules (§4.8) by construction and
+cannot drift from the governed data. The provenance slide states the split:
+narrative frozen at draft time, charts live at view time.
+
+Slides: (1) branded cover (teal gradient, Brightline wordmark, period chip);
+(2) exec summary — KPI tiles from stored figures + commentary; (3) P&L —
+windowed flux Waterfall + top-movers table; (4) cash — AreaTrend + closing/
+movement KPIs; (5) working capital — AR & AP aging HBars side by side;
+(6) controls — open exceptions by code (fraud codes in red) + fraud-hold
+callout, fed by a new `by_exception` aggregate on
+`/analytics/records?entity=ap_invoices`; extra sections → appendix slides;
+(7) sources & audit trail. Slide footers `Brightline Ltd · <title> · n/N`;
+print CSS emits one A4-landscape page per slide. Drafting/failed banners and
+the skill-edit loop box unchanged.
 
 **Why:** "Brightline Ltd" is a real registered UK company — the demo should
 not wear a real business's name, least of all on rendered invoices and
@@ -427,5 +451,5 @@ domains (already safe by design).
 | E | Chat-built dashboards + chart house rules | L | B (lens) | ✅ built |
 | F | Home dashboard revamp (live motion) | M | — | ✅ built, merged via PR #1 |
 | G | Board Pack Agent (ported from Claude finance skills, Apache-2.0) | M–L | — | ✅ built (jumped queue) |
-| H | Board pack v2: slide-deck presentation (visuals, branding) | M | G | in progress |
+| H | Board pack v2: slide-deck presentation (visuals, branding) | M | G | ✅ built, PR pending review |
 | I | Company rename (Brightline is a real UK co) | M | — | planned only |
