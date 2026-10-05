@@ -142,12 +142,13 @@ _Last updated: 2026-10-04_
    chart house rules UI_CONVENTIONS §4.8 — validated 6-slot categorical
    palette, consistent accounting-paren axis ticks — enforced by the shared
    primitives, so chat-built pages inherit them; supersedes "saved views").
-   **OPEN DEFECT (2026-10-04): on the live MODEL path the Analyst abstains
-   ("no page-creation tool") instead of emitting the `board:` proposal —
-   instruction conflict in the worker's operating rules; keyless path and
-   evals green, everything downstream of the proposal verified. Full
-   diagnosis + candidate fixes in `plans/DATASET_V2.md` § Known issue —
-   START THE NEXT SESSION THERE.**
+   **Defect RESOLVED 2026-10-05:** the board rule never reached the live
+   prompt (`buildSystemPrompt` call site dropped `taskType`); fixed, plus
+   the abstain rule now exempts PROPOSALS, and the convention moved into
+   the curated-views skill (v3) so governance owns it — analyst release
+   refreshed and auto-promoted on a green suite. Verify on live: refresh
+   stale pins, run the analyst evals (model path), retry the prompt.
+   Root-cause record: `plans/DATASET_V2.md` § Known issue.
    → F home dashboard revamp (live motion over static totals — planned
    2026-10-04, see the plan doc).
 3. **Phase 4c follow-ons** — saved views on a dashboard; data permissions
@@ -186,10 +187,11 @@ windows + the hidden /test/plants answer sheet → **PR-E** chat-built
 boards + chart house rules (§4.8 palette + accounting ticks;
 user-reported same-colour lines + inconsistent axes, fixed).
 
-Open when picking up:
-1. **PR-E model-path defect** (see backlog item 2 / plans/DATASET_V2.md
-   § Known issue) — decide fix 1/2/both, then verify on live with the
-   analyst eval suite AND the exact prompt.
+Open when picking up (updated 2026-10-05):
+1. **PR-E model-path defect FIXED 2026-10-05** — root cause was the
+   `taskType` never passed to `buildSystemPrompt`; see the plan doc.
+   Remaining: verify on LIVE (refresh stale pins, run analyst evals,
+   retry the build-a-page prompt).
 2. Live housekeeping Alec may not have done yet: a dataset reload for v2,
    the stale-pin refresh (playbook/extraction skill versions), and the
    transaction-generator manual promote.

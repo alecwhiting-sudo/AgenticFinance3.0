@@ -153,7 +153,33 @@ As built, two deliberate deviations from the spec below:
   negatives. The board renderer uses the same primitives, so chat-built
   pages inherit the rules by construction; a person can override per board.
 
-### ⚠ KNOWN ISSUE (2026-10-04, OPEN — do not lose this)
+### Known issue — RESOLVED 2026-10-05
+
+**Root cause found (simpler than the conflict theory):** the board rule
+was never in the live system prompt at all. `buildSystemPrompt` had been
+given a `taskType` parameter, but the call site still read
+`buildSystemPrompt(resolved)` — so the rule gated on
+`taskType === "analyst.question"` never attached, and the model only ever
+saw "you act only through your tools … abstain", which is exactly what it
+echoed. The conflict risk was real too, so all three logged candidates
+shipped:
+1. the call site passes `taskType` (the actual bug);
+2. the generic abstain rule now distinguishes ACTIONS from PROPOSALS
+   ("proposing is not acting — a board: line is text in your summary,
+   always in scope, never a reason to abstain");
+3. the board convention moved into the governed home: the
+   **curated-views skill** gained a "Building pages" section (seed v3 →
+   stale pin → refresh → suite green → auto-promoted; the active analyst
+   release now pins v3), with "never abstain from a build-a-page request"
+   in its Escalation section.
+Verified locally: keyless proposal + create + render green, analyst suite
+3/3, 30 unit tests. The MODEL path is verified on live by (a) the analyst
+eval suite there (the board case asserts `summary_contains "board:"` on
+the model) and (b) re-running the exact prompt. The lesson stands in the
+governance plan: a keyless-green eval is not evidence for the model path.
+
+Original record of the defect (kept for the audit trail):
+### ⚠ KNOWN ISSUE (2026-10-04, as logged)
 
 **The model-path Analyst abstains instead of proposing the board.** Alec
 ran the exact prompt on live ("Build me a page called Cash focus with the

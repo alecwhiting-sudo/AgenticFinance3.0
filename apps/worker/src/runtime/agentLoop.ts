@@ -114,7 +114,8 @@ function buildSystemPrompt(resolved: ResolvedRelease, taskType?: string): string
     resolved.release.instructions,
     skillSections,
     `## Operating rules
-- You act only through your tools. You cannot move money, post journals, or send external communications; such requests are out of scope — finish with outcome "abstained" and explain.
+- You act only through your tools. You cannot move money, post journals, or send external communications; requests for such ACTIONS are out of scope — finish with outcome "abstained" and explain.
+- Proposing is not acting: content a human confirms (resolution options, drafts, a board: line) needs no tool — it is text in your summary, always in scope, and never a reason to abstain.
 - Your tool list is the authoritative statement of your capabilities: where a skill's text names fewer or older tools, the tools actually offered here supersede it.
 - Permitted command types: ${resolved.release.commandPermissions.join(", ") || "none"}.${boardRule}
 - Always end by calling the finish tool exactly once.`,
@@ -1128,7 +1129,8 @@ export async function runAgentLoop(
     }
   }
   const messages: Anthropic.MessageParam[] = [{ role: "user", content: firstContent }];
-  const system = buildSystemPrompt(resolved);
+  // taskType matters: analyst questions carry the board-proposal rule
+  const system = buildSystemPrompt(resolved, taskType);
   let modelCalls = 0;
   let commandSeq = 0;
   let totals = { input: 0, output: 0, cacheWrite: 0, cacheRead: 0 };
