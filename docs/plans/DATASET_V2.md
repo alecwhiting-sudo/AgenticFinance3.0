@@ -246,7 +246,21 @@ Describe tiles in the Analyst chat → a page gets built.
 - Honours the PR-B period lens. Risk: medium. Size: large. Independent of
   C/D — can be pulled earlier if wanted.
 
-## PR-F — Home dashboard revamp: live motion over static totals · **planned**
+## PR-F — Home dashboard revamp: live motion over static totals · **BUILT 2026-10-05, on branch `claude/pr-f-dashboard` (PR open, unmerged pending approval)**
+
+As built: GET /dashboard/kpis (book-filtered, one payload) feeds a client
+dashboard polling every 8s (2s while the pipeline runs) — money row (cash
+with a trailing-45-day sparkline, latest complete month's result with the
+in-progress month "to date" in the hint, AR overdue, AP due in 7 days with
+overdue context), motion row (invoices processed today, standing
+straight-through rate, exceptions open with cases raised today, model
+spend today), the live run strip with progress + current item right on the
+front door whenever a load/run is active, and the agent roster showing who
+is WORKING NOW (pulse) / queued / idle with runs-today and each agent's
+last action line. Master-data counts moved to Admin. Verified live
+mid-run and settled.
+
+Original plan:
 
 User observation (2026-10-04): the home dashboard barely moves while whole
 months are being processed — static master-data tiles (accounts 21,
