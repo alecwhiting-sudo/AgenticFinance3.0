@@ -149,8 +149,12 @@ _Last updated: 2026-10-04_
    refreshed and auto-promoted on a green suite. Verify on live: refresh
    stale pins, run the analyst evals (model path), retry the prompt.
    Root-cause record: `plans/DATASET_V2.md` § Known issue.
-   → F home dashboard revamp (live motion over static totals — planned
-   2026-10-04, see the plan doc).
+   → **F home dashboard revamp BUILT 2026-10-05**, merged via the
+   repo's first reviewed GitHub PR (alecwhiting-sudo/AgenticFinance3.0#1):
+   money row with cash sparkline, motion row (invoices today,
+   straight-through %, exceptions, model spend), live run strip on the
+   front door during loads, agent roster showing who is working NOW;
+   master-data counts moved to Admin. **All plan packages A–G built.**
 3. **Board Pack Agent (PR-G) — BUILT 2026-10-05** (jumped the queue):
    R2R → Board packs. Pick month/quarter/YTD → the board-reporter agent
    drafts a five-section pack (exec summary, P&L movers, cash, working
