@@ -298,6 +298,117 @@ async function invoiceCaptureFallback(
   };
 }
 
+/** Keyless board pack (plans/DATASET_V2.md PR-G): compose the decision-ready
+ * pack for the lens window from the governed views — real figures only —
+ * and propose report.board_pack.save. The model path does the same with
+ * judgement; this proves the plumbing and keeps the demo keyless-green. */
+async function boardPackFallback(
+  resolved: ResolvedRelease,
+  runId: string,
+  payload: Record<string, unknown>,
+  steps: TranscriptStep[],
+): Promise<LoopResult> {
+  const packId = String(payload.packId ?? "");
+  const lens = (payload.lens ?? {}) as { grain?: string; from?: string; to?: string; label?: string };
+  if (!packId || !lens.from || !lens.to)
+    return { outcome: "escalated", summary: "Board pack task is missing its packId or lens window — a human should re-draft from /reports/board." };
+  const label = lens.label ?? `${lens.from}..${lens.to}`;
+  const monthEnd = (p: string) => {
+    const [y, m] = p.split("-").map(Number) as [number, number];
+    return new Date(Date.UTC(y, m, 0)).toISOString().slice(0, 10);
+  };
+  const today = new Date().toISOString().slice(0, 10);
+  const asOf = monthEnd(lens.to) < today ? monthEnd(lens.to) : today;
+  const note = async (labelText: string, detail: Record<string, unknown>) =>
+    appendStep(runId, steps, { kind: "tool_call", label: labelText, detail });
+
+  const windowed = lens.from !== lens.to;
+  const flux = (await runView("flux", windowed ? { from: lens.from, to: lens.to } : { period: lens.to })) as {
+    rows?: { code: string; name: string; type: string; thisMinor: number; prevMinor: number; deltaMinor: number }[];
+    prior?: string; priorFrom?: string; priorTo?: string;
+  };
+  await note("run_view flux", { rows: flux.rows?.length });
+  const ar = (await runView("aging", { side: "ar", asOf })) as { totalMinor: number; overdueMinor: number; parties: { name: string; totalMinor: number; buckets: number[] }[] };
+  const ap = (await runView("aging", { side: "ap", asOf })) as typeof ar;
+  await note("run_view aging", { asOf, arParties: ar.parties?.length, apParties: ap.parties?.length });
+  const cash = (await runView("cash", { from: lens.from, to: lens.to })) as { points: { date: string; balanceMinor: number }[] };
+  await note("run_view cash", { points: cash.points?.length });
+  const exc = await apiFetch(`/analytics/records?entity=ap_invoices&status=exception&limit=50`, { method: "GET" })
+    .then((r) => r.json() as Promise<{ rows: { exception_code: string | null; gross_minor: number }[] }>)
+    .catch(() => ({ rows: [] as { exception_code: string | null; gross_minor: number }[] }));
+  await note("query_records ap_invoices (exceptions)", { open: exc.rows.length });
+
+  const rows = flux.rows ?? [];
+  const contrib = (m: number) => -m;
+  const resultThis = rows.reduce((n, r) => n + contrib(r.thisMinor), 0);
+  const resultPrior = rows.reduce((n, r) => n + contrib(r.prevMinor), 0);
+  const movers = rows
+    .map((r) => ({ ...r, c: contrib(r.deltaMinor) }))
+    .filter((r) => r.c !== 0)
+    .sort((a, b) => Math.abs(b.c) - Math.abs(a.c));
+  const fav = movers.filter((m) => m.c > 0).slice(0, 3);
+  const adv = movers.filter((m) => m.c < 0).slice(0, 3);
+  const endCash = cash.points?.at(-1)?.balanceMinor ?? 0;
+  const startCash = cash.points?.[0]?.balanceMinor ?? 0;
+  const byCode = new Map<string, number>();
+  for (const r of exc.rows) byCode.set(r.exception_code ?? "unknown", (byCode.get(r.exception_code ?? "unknown") ?? 0) + 1);
+  const fraudHolds = (byCode.get("bank_detail_change") ?? 0) + (byCode.get("bank_detail_mismatch") ?? 0);
+  const priorLabel = windowed && flux.priorFrom && flux.priorTo ? `${flux.priorFrom}..${flux.priorTo}` : (flux.prior ?? "prior month");
+  const signed = (m: number) => `${m < 0 ? "a loss of " : "a profit of "}${gbpMinor(Math.abs(m))}`;
+
+  const sections = [
+    {
+      id: "exec-summary",
+      heading: `Executive summary — ${label}`,
+      body: `The ${label} result is ${signed(resultThis)}, against ${signed(resultPrior)} in the prior window (${priorLabel}). Cash closed the window at ${gbpMinor(endCash)} (${endCash >= startCash ? "up" : "down"} from ${gbpMinor(startCash)} at the start). Receivables stand at ${gbpMinor(ar.totalMinor)} with ${gbpMinor(ar.overdueMinor)} past due; payables at ${gbpMinor(ap.totalMinor)} with ${gbpMinor(ap.overdueMinor)} past due. ${exc.rows.length} supplier invoices are held in the exceptions queue${fraudHolds ? `, including ${fraudHolds} fraud-risk hold${fraudHolds === 1 ? "" : "s"} awaiting out-of-band verification` : ""}. Figures are actuals from the governed views; no forecast is included.`,
+      figures: [
+        { label: "Result", value: gbpMinor(resultThis) },
+        { label: "Cash at window end", value: gbpMinor(endCash) },
+        { label: "AR overdue", value: gbpMinor(ar.overdueMinor) },
+        { label: "AP overdue", value: gbpMinor(ap.overdueMinor) },
+      ],
+    },
+    {
+      id: "pnl",
+      heading: "P&L — what moved the result",
+      body: `Versus the prior window, the largest favourable movements were ${fav.map((m) => `${m.name} (+${gbpMinor(m.c)})`).join(", ") || "none"}. The largest adverse movements were ${adv.map((m) => `${m.name} ((${gbpMinor(-m.c)}))`).join(", ") || "none"}. The full account-by-account flux, with drill-through to postings, is on the Analytics page with the period lens set to ${label}.`,
+    },
+    {
+      id: "cash",
+      heading: "Cash",
+      body: `The bank balance moved from ${gbpMinor(startCash)} to ${gbpMinor(endCash)} over the window — a ${endCash >= startCash ? "net inflow" : "net outflow"} of ${gbpMinor(Math.abs(endCash - startCash))}. The balance is the bank statement's truth, matched or not.`,
+    },
+    {
+      id: "working-capital",
+      heading: "Working capital",
+      body: `Receivables: ${gbpMinor(ar.totalMinor)} open, ${gbpMinor(ar.overdueMinor)} past due; the largest open balance is ${ar.parties?.[0] ? `${ar.parties[0].name} at ${gbpMinor(ar.parties[0].totalMinor)}` : "n/a"}. Payables: ${gbpMinor(ap.totalMinor)} open, ${gbpMinor(ap.overdueMinor)} past due; the largest is ${ap.parties?.[0] ? `${ap.parties[0].name} at ${gbpMinor(ap.parties[0].totalMinor)}` : "n/a"}. Aging as at ${asOf}.`,
+    },
+    {
+      id: "controls",
+      heading: "Controls & exceptions",
+      body: `${exc.rows.length} supplier invoices are currently held by the automated controls${byCode.size ? `: ${[...byCode.entries()].map(([c, n]) => `${n} × ${c.replace(/_/g, " ")}`).join(", ")}` : ""}. ${fraudHolds ? `${fraudHolds} are fraud-risk holds (bank-detail screens) that only a human may release after out-of-band verification. ` : ""}Every hold is on the exceptions workbench with the agent's grounded options; nothing posts or pays until a person decides.`,
+    },
+  ];
+  const sources = [
+    windowed ? `flux (from=${lens.from}, to=${lens.to})` : `flux (period=${lens.to})`,
+    `aging (side=ar, asOf=${asOf})`,
+    `aging (side=ap, asOf=${asOf})`,
+    `cash (from=${lens.from}, to=${lens.to})`,
+    "records: ap_invoices (status=exception)",
+  ];
+  const { ok, data } = await proposeCommand(runId, 1, "report.board_pack.save", {
+    packId,
+    title: `Board pack — ${label}`,
+    sections,
+    sources,
+  }, steps);
+  if (!ok) return { outcome: "failed", summary: `Gateway rejected the board pack: ${String((data as { error?: string }).error ?? "unknown")}` };
+  return {
+    outcome: "completed",
+    summary: `Board pack for ${label} drafted: result ${gbpMinor(resultThis)}, cash ${gbpMinor(endCash)}, ${exc.rows.length} exception holds noted. Five sections saved for human review at /reports/board.\n\nsources: ${sources.join("; ")}`,
+  };
+}
+
 /** Keyless cash application (plans/O2C.md §4): exact amount + unique
  * candidate → propose; reference contained in a candidate number → propose;
  * else escalate. Every application needs a human (ar.receipt.apply). */
@@ -914,6 +1025,9 @@ async function deterministicHandler(
   }
   if (taskType === "analyst.question" || (taskType === "eval.case" && typeof payload.question === "string")) {
     return analystFallback(resolved, runId, payload, steps);
+  }
+  if (taskType === "board.pack" || (taskType === "eval.case" && typeof payload.packId === "string")) {
+    return boardPackFallback(resolved, runId, payload, steps);
   }
   if (taskType === "hello.greet" || taskType === "eval.case") {
     const topic = String(payload.topic ?? "the business");

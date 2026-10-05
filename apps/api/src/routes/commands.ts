@@ -83,6 +83,39 @@ async function executeCommand(
       });
       return { saved: true, periodCode: p.periodCode };
     }
+    case "report.board_pack.save": {
+      const p = params as {
+        packId: string;
+        title: string;
+        sections: Record<string, unknown>[];
+        sources: string[];
+      };
+      const { boardPack } = await import("@af/db");
+      const { currentBook, TEST_BOOK } = await import("../lib/bookContext.js");
+      let row = await db.query.boardPack.findFirst({ where: (t) => eq(t.id, p.packId) });
+      if (!row && currentBook() === TEST_BOOK) {
+        // eval runs (D16): the synthetic packId gets a TEST-book row, so the
+        // suite exercises the full pipeline while /reports/board never sees it
+        [row] = await db
+          .insert(boardPack)
+          .values({ id: p.packId, book: TEST_BOOK, lensGrain: "month", periodFrom: "0000-00", periodTo: "0000-00", label: "eval", title: p.title, createdBy: "eval-harness" })
+          .returning();
+      }
+      if (!row) throw Object.assign(new Error("board pack not found — draft it from /reports/board first"), { statusCode: 404 });
+      await db
+        .update(boardPack)
+        .set({ title: p.title, sections: p.sections, sources: p.sources, status: "draft", updatedAt: new Date() })
+        .where(eq(boardPack.id, p.packId));
+      await emitActivity({
+        actorType: "agent",
+        actorId: actor,
+        verb: "drafted_board_pack",
+        objectType: "board_pack",
+        objectId: p.packId,
+        summary: `Board pack "${p.title}" (${row.label}) drafted — ready for review at /reports/board`,
+      });
+      return { saved: true, packId: p.packId, status: "draft" };
+    }
     case "bank.txn.post": {
       const { postBankTxn } = await import("../services/bankRec.js");
       const p = params as { bankTransactionId: string; accountCode: string; rationale: string };

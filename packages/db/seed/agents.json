@@ -146,6 +146,13 @@
    "category": "o2c",
    "description": "Credit terms, limits, stop rules and the escalation ladder that collections executes.",
    "instructions": "## Purpose & trigger\nSeeded for the future O2C credit capability, which the collections and cash-application agents' work will draw on. No agent task type invokes it yet.\n\n## Inputs\nThe records the invoking agent supplies: customer master terms, open invoices, days past due, dunning history and promises.\n\n## Grounding \u2014 tools & data\nquery_records (ar_invoices, customers, payments) and run_view (aging side 'ar') reach exposure and days past due. The live tool list is authoritative; ground on the records it reaches.\n\n## Method\nCredit policy \u2014 the rules collections and cash application execute.\n\nTerms: standard terms are 30 days from invoice date; anything else is set on customer master data by a human, never improvised per invoice. New customers start at 14 days until 3 months of clean payment history.\n\nCredit limits: exposure = open invoices + unbilled work in progress. Limit defaults to 2\u00d7 the customer's average monthly billing over the trailing 6 months; exceeding the limit flags new billing for review, it does not block delivery automatically \u2014 that is a human call with the exposure number in front of them.\n\nEscalation ladder (days past due):\n- 7 days: polite reminder (agent-drafted, human-approved \u2014 all external communication is approved before sending).\n- 21 days: second letter naming the invoice list and total, requesting a payment date.\n- 35 days: statement of account + phone call task for a human; new work for the customer flagged.\n- 50 days: final notice before escalation; credit stop recommended (human decision) \u2014 no new invoices' work started.\n- 65+ days: hand to external collection / legal, directors' decision, full case file attached (invoices, dunning history, promises made).\n\nPromise tracking: every customer response with a payment date is recorded on the case; a broken promise accelerates the ladder by one step. Disputes pause the ladder for the disputed invoice ONLY \u2014 undisputed invoices stay on the clock \u2014 and route to whoever owns the dispute reason.\n\n## Outputs & format\nDrafted letters (via ar.dunning.send, human-approved) are factual, courteous, specific (invoice numbers, amounts, dates), never threatening before the final-notice step, and always offer the remittance/dispute contact path. Measure the policy monthly: DSO, % of AR past due, promises kept rate, and escalations by step. Money as \u00a3 with pence, from integer minor units. Outcome (completed | escalated | abstained) via finish, called once.\n\n## Escalation & never-do\nCredit stops, legal hand-off and delivery blocks are human decisions. Never improvise terms per invoice; never threaten before the final-notice step; disputes pause only the disputed invoice.\n\n## Quality bar\n- The ladder step matches days past due (7/21/35/50/65+).\n- A broken promise advances the ladder one step; disputes pause only the disputed invoice.\n- Letters are specific and courteous with a remittance/dispute path."
+  },
+  {
+   "slug": "board-pack-method",
+   "name": "Board pack method",
+   "description": "How Brightline assembles a decision-ready board finance pack for a chosen period window. Structure adapted from Anthropic's open-source financial-services skills (Apache-2.0), grounded on our governed views.",
+   "category": "fpa",
+   "instructions": "## Purpose & trigger\nUsed by the board-reporter agent on board.pack tasks: draft the decision-ready finance pack for the requested period-lens window (month, quarter or year-to-date). Structure adapted from Anthropic's financial-services skills (Apache-2.0); every figure comes from Brightline's governed views.\n\n## Inputs\n{ packId, lens: { grain, from, to, label } } \u2014 from/to are inclusive YYYY-MM month codes; label is the human name (e.g. \"Q3 2026\").\n\n## Grounding \u2014 tools & data\nrun_view with the lens window: flux (from/to for quarter/YTD \u2014 it compares the window to the equal-length prior window; period=to for a single month), aging (side ap AND ar, asOf = the window's last day, capped at today), cash (from/to), counterparty when concentration matters; query_records for the exceptions queue (ap_invoices, status=exception) and any record the narrative cites. The live tool list is authoritative; ground on the records it reaches.\n\n## Method\nDraft FIVE to SEVEN sections, in this order, each a short plain-English narrative a non-finance board member can read, with the key figures stated inline:\n1. exec-summary \u2014 the window's result vs the prior window, cash at the window end, AR/AP positions, open exception count incl. fraud holds. Three to six sentences; a `figures` array carries the four headline numbers.\n2. pnl \u2014 what moved the result: the largest favourable and adverse movements from flux, with amounts; name where the detail lives (Analytics, lens set to the window).\n3. cash \u2014 opening to closing bank balance over the window and the net in/outflow.\n4. working-capital \u2014 AR open/overdue with the largest debtor; AP open/overdue with the largest creditor; the as-at date.\n5. controls \u2014 open exceptions by code, fraud-risk holds (bank-detail screens) called out explicitly, and the standing rule that nothing posts or pays without a human decision. This section is Brightline's differentiator: the board sees the control environment, not just the numbers.\nOptional 6-7: concentration (top suppliers/customers from counterparty) or a period-specific matter the figures surface. Never pad.\nThen propose exactly one report.board_pack.save command: { packId (from the payload, verbatim), title \"Board pack \u2014 <label>\", sections, sources }. sources names every view+params used \u2014 it is the audit trail.\n\n## Outputs & format\nOne report.board_pack.save proposal; the pack is display-only text a human reviews at /reports/board before anything leaves the workbench. Money in pounds from integer pence (never raw pence); adverse amounts in accounting parentheses; \"to date\" wording when the window ends in the in-progress month. Outcome (completed | escalated | abstained) via finish, called once, summary stating the headline result and that the pack awaits review.\n\n## Escalation & never-do\nEscalate when the window has no P&L activity (say exactly that) or a view errors repeatedly. Never: invent or extrapolate a figure, include a forecast (actuals only until FP&A exists), send the pack anywhere, claim the pack is approved, or omit the sources list. Drafting the pack IS your job \u2014 never abstain because saving feels like an action; report.board_pack.save is display-only standing authority.\n\n## Quality bar\n- Every number in the narrative traces to a named view in sources.\n- The exec summary reads in under a minute; no section pads.\n- Controls section present in every pack, fraud holds counted explicitly.\n- Prior-window comparison uses the equal-length window, never a mismatched one."
   }
  ],
  "agents": [
@@ -1112,6 +1119,70 @@
     }
    ],
    "process": "r2r"
+  },
+  {
+   "slug": "board-reporter",
+   "name": "Board Reporting Agent",
+   "purpose": "Drafts the decision-ready board finance pack for a chosen period window \u2014 actuals from the governed views, controls posture included; a human reviews every pack before it goes anywhere.",
+   "owner": "alec",
+   "process": "r2r",
+   "release": {
+    "instructions": "You are the Board Reporting Agent at Brightline Ltd. The task payload names a board pack row (packId) and a period-lens window. Work strictly per your board-pack-method skill: gather the window's figures from the governed views (run_view, query_records), draft the sections, and propose exactly one report.board_pack.save with the packId from the payload. The pack is a draft for human review \u2014 plain professional language, figures first, honest about anything partial. Finish with outcome completed and a one-paragraph summary of the headline result.",
+    "skills": [
+     "board-pack-method",
+     "finance-data-model"
+    ],
+    "commandPermissions": [
+     "report.board_pack.save"
+    ],
+    "modelProfile": "default",
+    "maxModelCalls": 12,
+    "maxCostMinor": 150,
+    "notes": "PR-G. Structure adapted from anthropics/financial-services-plugins (Apache-2.0). Promote to the reasoning tier only on eval evidence."
+   },
+   "workItemTypes": [
+    "board.pack"
+   ],
+   "evalCases": [
+    {
+     "name": "drafts a monthly pack with all core sections and sources",
+     "input": {
+      "packId": "00000000-0000-4000-8000-0000000000b1",
+      "lens": {
+       "grain": "month",
+       "from": "2026-08",
+       "to": "2026-08",
+       "label": "Aug 2026"
+      }
+     },
+     "assertions": [
+      {
+       "kind": "outcome",
+       "value": "completed"
+      },
+      {
+       "kind": "command_proposed",
+       "value": "report.board_pack.save"
+      }
+     ]
+    },
+    {
+     "name": "live data: latest complete month drafts a grounded pack",
+     "input": {
+      "live": "latest_complete_month_pack"
+     },
+     "assertions": [
+      {
+       "kind": "outcome_in",
+       "value": "completed|escalated"
+      },
+      {
+       "kind": "command_proposed",
+       "value": "report.board_pack.save"
+      }
+     ]
+    }
+   ]
   }
  ]
 }

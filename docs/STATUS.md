@@ -151,12 +151,17 @@ _Last updated: 2026-10-04_
    Root-cause record: `plans/DATASET_V2.md` § Known issue.
    → F home dashboard revamp (live motion over static totals — planned
    2026-10-04, see the plan doc).
-3. **Board Pack Agent (PR-G, planned 2026-10-05)** — port of the "board
-   report generator" idea from Anthropic's finance skills: feasible as a
-   PORT (skill content + output pattern, Apache-2.0), not an install
-   (their packaging targets Claude Code/Cowork, not our worker). Board
-   pack method skill + board-reporter agent + /reports/board/[period]
-   HTML→PDF renderer + evals. Full plan: `plans/DATASET_V2.md` PR-G.
+3. **Board Pack Agent (PR-G) — BUILT 2026-10-05** (jumped the queue):
+   R2R → Board packs. Pick month/quarter/YTD → the board-reporter agent
+   drafts a five-section pack (exec summary, P&L movers, cash, working
+   capital, controls & exceptions incl. fraud holds) via one display-only
+   `report.board_pack.save`; packs persist with drafting/draft/failed
+   status (safe to leave the page), book-scoped so eval packs never show;
+   "edit the Board pack method skill → eval gate → re-draft" loop linked
+   from both pages; print/save-as-PDF. Suite 2/2 incl. a live selector.
+   Adapted from anthropics/financial-services-plugins (Apache-2.0).
+   Remaining on live: refresh stale pins + run the suite (model path).
+   Detail: `plans/DATASET_V2.md` PR-G.
 4. **Phase 4c follow-ons** — saved views on a dashboard; data permissions
    (stubbed: every record-catalogue entity declares an `access` scope,
    enforcement designed in `plans/ANALYTICS.md` §3c). Core 4c built

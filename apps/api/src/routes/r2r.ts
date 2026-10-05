@@ -1,8 +1,10 @@
 import type { FastifyInstance } from "fastify";
-import { desc, eq, sql } from "drizzle-orm";
-import { reportCommentary, workItem } from "@af/db";
+import { and, desc, eq, ne, sql } from "drizzle-orm";
+import { boardPack, reportCommentary, workItem } from "@af/db";
+import { parsePeriodLens } from "@af/shared";
 import { requireDb } from "../lib/db.js";
 import { emitActivity } from "../lib/activity.js";
+import { TEST_BOOK } from "../lib/bookContext.js";
 
 /** R2R reporting + month-end dashboard (plans/R2R.md §4). Everything here
  * is derived aggregation over journal lines — never alternative measurement
@@ -124,6 +126,103 @@ export function r2rRoutes(app: FastifyInstance): void {
     ).rows.map((r) => (r as { period_code: string }).period_code);
 
     return { period, periods, bank, monthEnd, openExceptions, failedEvents };
+  });
+
+  /** ---- Board packs (plans/DATASET_V2.md PR-G) ---------------------------
+   * The decision-ready finance pack for a chosen period-lens window. A
+   * draft request creates a row (status 'drafting') and queues the Board
+   * Reporting Agent; the row persists, so the user can leave the page and
+   * the pack is waiting at /reports/board when they return. Book-filtered:
+   * eval-run packs (test book) never appear here. */
+  app.post<{ Body: { lens?: string } }>("/r2r/board-packs/draft", async (req, reply) => {
+    const db = requireDb();
+    const L = parsePeriodLens(req.body?.lens);
+    if (!L) return reply.code(400).send({ error: "lens required: YYYY-MM, YYYY-Qn or ytd@YYYY-MM" });
+    const agentRow = await db.query.agent.findFirst({ where: (t) => eq(t.slug, "board-reporter") });
+    if (!agentRow) return reply.code(409).send({ error: "board-reporter agent not seeded yet — redeploy/seed first" });
+    const [pack] = await db
+      .insert(boardPack)
+      .values({
+        lensGrain: L.grain,
+        periodFrom: L.from,
+        periodTo: L.to,
+        label: L.label,
+        title: `Board pack — ${L.label}`,
+        status: "drafting",
+      })
+      .returning();
+    const [wi] = await db
+      .insert(workItem)
+      .values({
+        type: "board.pack",
+        agentId: agentRow.id,
+        payload: { packId: pack!.id, lens: { grain: L.grain, from: L.from, to: L.to, label: L.label } },
+        priority: 4,
+      })
+      .returning();
+    await db.update(boardPack).set({ workItemId: wi!.id }).where(eq(boardPack.id, pack!.id));
+    await emitActivity({
+      actorType: "human",
+      actorId: "workbench",
+      verb: "requested_board_pack",
+      objectType: "board_pack",
+      objectId: pack!.id,
+      summary: `Board pack requested for ${L.label} — Board Reporting Agent drafting`,
+    });
+    return { packId: pack!.id, workItemId: wi!.id, label: L.label };
+  });
+
+  app.get("/r2r/board-packs", async () => {
+    const db = requireDb();
+    const rows = await db.query.boardPack.findMany({
+      where: (t) => ne(t.book, TEST_BOOK),
+      orderBy: (t) => desc(t.createdAt),
+      limit: 50,
+    });
+    // a drafting pack whose work item has FINISHED without saving sections
+    // (run failed/escalated) is surfaced as failed, never left stuck
+    const pending = rows.filter((r) => r.status === "drafting" && r.workItemId);
+    const failedIds = new Set<string>();
+    for (const r of pending) {
+      const wi = await db.query.workItem.findFirst({ where: (t) => eq(t.id, r.workItemId!) });
+      if (wi && (wi.status === "completed" || wi.status === "escalated")) {
+        failedIds.add(r.id);
+        await db.update(boardPack).set({ status: "failed", updatedAt: new Date() }).where(eq(boardPack.id, r.id));
+      }
+    }
+    return {
+      packs: rows.map((r) => ({
+        id: r.id,
+        label: r.label,
+        title: r.title,
+        status: failedIds.has(r.id) ? "failed" : r.status,
+        lensGrain: r.lensGrain,
+        periodFrom: r.periodFrom,
+        periodTo: r.periodTo,
+        sections: r.sections.length,
+        createdAt: r.createdAt,
+        updatedAt: r.updatedAt,
+      })),
+    };
+  });
+
+  app.get<{ Params: { id: string } }>("/r2r/board-packs/:id", async (req, reply) => {
+    const db = requireDb();
+    const row = await db.query.boardPack.findFirst({
+      where: (t) => and(eq(t.id, req.params.id), ne(t.book, TEST_BOOK)),
+    });
+    if (!row) return reply.code(404).send({ error: "board pack not found" });
+    return { pack: row };
+  });
+
+  app.delete<{ Params: { id: string } }>("/r2r/board-packs/:id", async (req, reply) => {
+    const db = requireDb();
+    const row = await db.query.boardPack.findFirst({
+      where: (t) => and(eq(t.id, req.params.id), ne(t.book, TEST_BOOK)),
+    });
+    if (!row) return reply.code(404).send({ error: "board pack not found" });
+    await db.delete(boardPack).where(eq(boardPack.id, row.id));
+    return { deleted: row.id };
   });
 
   /** Latest draft commentary across all periods (so the UI can find where

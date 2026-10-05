@@ -272,7 +272,37 @@ answer a question a CFO actually asks; master-data counts belong in Admin.
 - Size: M. Depends on nothing; best after E so chat-built tiles and the
   dashboard share primitives.
 
-## PR-G — Board Pack Agent (ported from Claude finance skills) · **planned 2026-10-05**
+## PR-G — Board Pack Agent (ported from Claude finance skills) · **BUILT 2026-10-05**
+
+As built (jumped the queue on Alec's call), beyond the spec below:
+- **The known place**: R2R → Board packs (/reports/board). Draft control =
+  grain toggle (month/quarter/YTD) + period select; every pack persists as
+  a `core.board_pack` row with a status — a "drafting…" pack carries on if
+  you leave the page and is waiting on return (the page says exactly that);
+  failed drafts surface as failed with a re-draft hint, never stuck.
+- **Eval-driven improvement loop made visible**: both pages carry "Not
+  happy with a pack? → edit the Board pack method skill (new versions pass
+  the eval gate), draft again — the old pack stays for comparison."
+- **Governance**: board-reporter agent (r2r, default tier) proposes ONE
+  display-only `report.board_pack.save`; packs are book-scoped (D16), and
+  eval runs save into test-book rows (the gateway creates them there), so
+  the real list never sees eval packs — verified: suite 2/2 (manufactured
+  + live latest-complete-month selector) with both eval packs in book
+  'test'. Keyless fallback composes the five core sections from real view
+  figures, so demos and evals stay green without a key.
+- **Product**: five sections (exec summary with headline figure tiles, P&L
+  movers, cash, working capital, controls & exceptions incl. fraud holds —
+  the differentiator), sources line as audit trail, print stylesheet +
+  "Print / save as PDF" (browser print; headless-rendered PDF deferred).
+- Verified locally end-to-end: Q3 2026 and YTD Sept packs drafted from the
+  real books in seconds; model path verifies on live via the eval suite
+  (lesson applied: the live case asserts command_proposed on the model).
+- **Boards "canvas" question answered**: no new architecture needed — each
+  chat-built board already IS a persistent page at /analytics/boards/{slug},
+  listed on /analytics. Follow-on idea (not built): "promote a board to a
+  named standard report" surfacing chosen boards in the R2R nav.
+
+Original feasibility note:
 
 User ask: can we include "the Claude finance skills board report generator"?
 **Feasibility: YES — as a port, not an install.** Researched 2026-10-05:
@@ -336,4 +366,4 @@ attribution noted in the skill's notes field.
 | D | Scenario windows + /test/plants | S–M | C | ✅ built |
 | E | Chat-built dashboards + chart house rules | L | B (lens) | ✅ built |
 | F | Home dashboard revamp (live motion) | M | — (shares primitives with E) | planned |
-| G | Board Pack Agent (ported from Claude finance skills, Apache-2.0) | M–L | nicest after F | planned |
+| G | Board Pack Agent (ported from Claude finance skills, Apache-2.0) | M–L | — | ✅ built (jumped queue) |

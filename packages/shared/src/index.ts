@@ -105,6 +105,31 @@ export const commandDefs = {
       text: z.string().min(40).max(8000),
     }),
   },
+  /** Save a drafted board pack's sections onto its row (plans/DATASET_V2.md
+   * PR-G). Display-only text for human review — standing authority; the
+   * pack never leaves the workbench without a person exporting it. */
+  "report.board_pack.save": {
+    requiresApproval: false,
+    params: z.object({
+      packId: z.string().uuid(),
+      title: z.string().min(1).max(160),
+      sections: z
+        .array(
+          z.object({
+            id: z.string().min(1).max(40),
+            heading: z.string().min(1).max(120),
+            body: z.string().min(1).max(6000),
+            figures: z
+              .array(z.object({ label: z.string().max(80), value: z.string().max(40) }))
+              .max(8)
+              .optional(),
+          }),
+        )
+        .min(3)
+        .max(10),
+      sources: z.array(z.string().max(120)).min(1).max(20),
+    }),
+  },
   /** Apply a customer receipt to an AR invoice — a judgement call when the
    * deterministic matcher couldn't decide, so ALWAYS human-approved
    * (plans/O2C.md §4). */

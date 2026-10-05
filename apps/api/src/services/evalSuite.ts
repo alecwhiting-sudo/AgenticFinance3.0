@@ -6,7 +6,8 @@
  *    test book (D16), so live-data evals cannot touch the main books.
  * A live case with no matching record is recorded as skipped (passed, with
  * a note) so the suite still completes — absence of data is not a failure. */
-import { desc, eq } from "drizzle-orm";
+import { randomUUID } from "node:crypto";
+import { desc, eq, sql } from "drizzle-orm";
 import { evalRun, workItem, type Db, type agent as agentTable, type agentRelease } from "@af/db";
 
 type LiveResolution = { input: Record<string, unknown>; note: string } | null;
@@ -36,6 +37,30 @@ const LIVE_SELECTORS: Record<string, (db: Db) => Promise<LiveResolution>> = {
           "Investigate using get_invoice_context, then (1) propose case.options with 2-3 grounded, costed resolution options and (2) propose ap.invoice.resolve for your single recommended option. Never resolve bank_detail_change.",
       },
       note: `live record: ${inv.supplierInvoiceNumber} (${inv.exceptionCode})`,
+    };
+  },
+  /** A board pack for the latest COMPLETE month with P&L activity — the
+   * packId is synthetic; the gateway's test-book path (D16) creates the row
+   * on save, so live books stay untouched. */
+  latest_complete_month_pack: async (db) => {
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    const latest = (
+      await db.execute(sql`
+        select max(j.period_code) filter (where j.period_code < ${currentMonth}) as complete
+        from erp.journal j
+        join erp.journal_line jl on jl.journal_id = j.id and j.book <> 'test'
+        join erp.account a on a.code = jl.account_code
+        where a.type in ('income', 'expense')
+      `)
+    ).rows[0] as { complete: string | null };
+    if (!latest.complete) return null;
+    const m = latest.complete;
+    return {
+      input: {
+        packId: randomUUID(),
+        lens: { grain: "month", from: m, to: m, label: `${m} (live eval)` },
+      },
+      note: `live window: ${m}`,
     };
   },
   /** The most overdue posted AR invoice, as /o2c/chase would queue it. */

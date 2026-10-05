@@ -36,7 +36,8 @@ const NAV: Parent[] = [
     short: "R2R",
     children: [
       { href: "/ledger", label: "Ledger" },
-      { href: "/reports", label: "Reports" },
+      { href: "/reports", label: "Reports", exact: true },
+      { href: "/reports/board", label: "Board packs" },
       { href: "/analytics", label: "Analytics" },
     ],
   },

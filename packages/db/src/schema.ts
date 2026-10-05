@@ -68,6 +68,33 @@ export const dashboard = core.table("dashboard", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/** Board packs (plans/DATASET_V2.md PR-G): the decision-ready finance pack
+ * for a chosen period-lens window, drafted by the Board Reporting Agent and
+ * reviewed by a human. Rows persist with a status so a draft survives the
+ * user leaving the page; book-scoped (D16) so eval runs never pollute the
+ * real list. */
+export const boardPack = core.table("board_pack", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  book: text("book").notNull().default("main"),
+  /** period lens window */
+  lensGrain: text("lens_grain").notNull(), // month | quarter | ytd
+  periodFrom: text("period_from").notNull(), // YYYY-MM
+  periodTo: text("period_to").notNull(),
+  label: text("label").notNull(), // e.g. "Q3 2026"
+  title: text("title").notNull(),
+  /** drafting = agent at work (safe to leave the page); draft = ready for
+   * review; failed = the run errored (re-draft) */
+  status: text("status").notNull().default("drafting"),
+  /** [{ id, heading, body, figures?: [{label, value}] }] */
+  sections: jsonb("sections").$type<Record<string, unknown>[]>().notNull().default([]),
+  /** the audit trail: which views/params grounded the pack */
+  sources: jsonb("sources").$type<string[]>().notNull().default([]),
+  workItemId: uuid("work_item_id"),
+  createdBy: text("created_by").notNull().default("workbench-user"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const erp = pgSchema("erp");
 
 export const accountType = erp.enum("account_type", [
