@@ -151,29 +151,35 @@ _Last updated: 2026-10-04_
    Root-cause record: `plans/DATASET_V2.md` § Known issue.
    → F home dashboard revamp (live motion over static totals — planned
    2026-10-04, see the plan doc).
-3. **Phase 4c follow-ons** — saved views on a dashboard; data permissions
+3. **Board Pack Agent (PR-G, planned 2026-10-05)** — port of the "board
+   report generator" idea from Anthropic's finance skills: feasible as a
+   PORT (skill content + output pattern, Apache-2.0), not an install
+   (their packaging targets Claude Code/Cowork, not our worker). Board
+   pack method skill + board-reporter agent + /reports/board/[period]
+   HTML→PDF renderer + evals. Full plan: `plans/DATASET_V2.md` PR-G.
+4. **Phase 4c follow-ons** — saved views on a dashboard; data permissions
    (stubbed: every record-catalogue entity declares an `access` scope,
    enforcement designed in `plans/ANALYTICS.md` §3c). Core 4c built
    2026-10-03 incl. the record catalogue (`query_records` — the Analyst can
    scan actual records, not just the aggregate views).
-4. **LRS lock/certify/supersede** — lands as the month-end dashboard's lock
+5. **LRS lock/certify/supersede** — lands as the month-end dashboard's lock
    button + snapshot tables.
-5. **Commentary quality** — Close Agent output is too bland; skills +
+6. **Commentary quality** — Close Agent output is too bland; skills +
    evals that fail bland output (`plans/R2R.md` §9); reasoning tier only on
    eval evidence.
-6. **Phase 6 remainder** — guided demo tour, cross-process dashboard.
+7. **Phase 6 remainder** — guided demo tour, cross-process dashboard.
    (Demo scenarios + mission control at `/admin/pipeline` built 2026-10-03:
    month-by-month processing, timed full-speed 10x run with remembered
    side-by-side, simulate-a-day — `plans/DEMO_SCRIPTS.md`.)
-7. **Exceptions management M2** — M1 built 2026-10-03 (`/p2p/exceptions`
+8. **Exceptions management M2** — M1 built 2026-10-03 (`/p2p/exceptions`
    workbench: grounded costed options via `case.options`, 3-way diff,
    one-click apply). Remaining: supplier email drafts on options, tolerance
    parameter sets, option evals, O2C mirror (`plans/P2P.md` §10,
    `plans/O2C.md` §9).
-8. **A2R — Acquire to Retire** (fixed assets: capitalise from P2P,
+9. **A2R — Acquire to Retire** (fixed assets: capitalise from P2P,
    depreciation as engine-derived period ticks, disposals) — low priority
    (MASTER_PLAN Phase 7).
-9. **Phase 5 PM** — parked on user's call.
+10. **Phase 5 PM** — parked on user's call.
 
 ## Day log — 2026-10-04 (for a fast, safe pickup)
 

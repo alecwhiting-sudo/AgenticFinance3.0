@@ -272,6 +272,60 @@ answer a question a CFO actually asks; master-data counts belong in Admin.
 - Size: M. Depends on nothing; best after E so chat-built tiles and the
   dashboard share primitives.
 
+## PR-G — Board Pack Agent (ported from Claude finance skills) · **planned 2026-10-05**
+
+User ask: can we include "the Claude finance skills board report generator"?
+**Feasibility: YES — as a port, not an install.** Researched 2026-10-05:
+Anthropic's finance team runs an internal Board Reporting agent (not
+published); the open-source `anthropics/financial-services-plugins` repo
+(Apache-2.0) has no literal board-report skill but carries the ingredients
+— Month-End Closer (variance commentary), `pptx-author`/`xlsx-author`
+(headless deck/Excel), `deck-refresh`, SKILL.md packaging. Their packaging
+targets Claude Code / Cowork / Managed Agents, NOT our worker runtime — so
+nothing installs directly, but the skill CONTENT and output pattern port
+cleanly under Apache-2.0 (attribute in the skill notes).
+
+Why the fit is high — we already have the hard parts:
+- the governed data surface (curated views + query_records + statements)
+  plays the role of their data connectors;
+- Close Agent flux commentary = their variance commentary;
+- our versioned, eval-gated skills library = their SKILL.md (adapted);
+- chart house rules + the boards renderer = the pack's visuals;
+- headless Chromium (invoice rendering) = the PDF path;
+- propose→human-confirm (boards, options) = the approval posture a board
+  pack needs ("drafts analyst work product for human review" — their own
+  disclaimer, same as our finance safety rule).
+
+Build shape (one PR, ~M-L):
+1. **Skill**: "Board pack method" (category fpa) — 7-heading template;
+   method adapted from the Apache-2.0 material + our own close/commentary
+   skills: exec summary with the period lens (month/quarter/YTD), P&L vs
+   prior with flux reading, cash + runway, working capital (AR/AP aging,
+   overdue concentrations), controls & exceptions section (open cases by
+   code, fraud holds — our differentiator), strictly actuals (no forecast
+   until FP&A lands). Never-do: no invented figures, every number cites
+   its view, nothing sent anywhere without approval.
+2. **Agent**: board-reporter (process r2r, modelProfile default; promote
+   to reasoning only on eval evidence). Tools it already has access
+   patterns for: run_view, query_records, + a small `get_statements`
+   read tool (the /erp/statements payload). Output: proposes a
+   `report.board_pack.save` display-only command (like commentary) with
+   structured sections; human reviews in the workbench.
+3. **Renderer**: /reports/board/[period] — HTML pack (cover, sections,
+   charts via the shared primitives, commentary blocks) with print CSS;
+   "Download PDF" via the existing Chromium path. pptx deferred — port
+   `pptx-author` later only if a deck is demanded (PDF pack first).
+4. **Evals**: manufactured case (fixed figures → sections present, every
+   number traceable, no invented data) + a live case (latest complete
+   month → pack drafts without error, sources cited). Model-path verify
+   on live (lesson from the boards defect).
+5. Later options from the same repo worth noting, not building now:
+   due-diligence data packs, earnings-analysis patterns for supplier/
+   customer reviews, xlsx-author for an Excel annex.
+
+Dependencies: none hard; nicest after F. Licence: Apache-2.0 with
+attribution noted in the skill's notes field.
+
 ## Sequence summary
 
 | # | Package | Size | Depends on | Status |
@@ -282,3 +336,4 @@ answer a question a CFO actually asks; master-data counts belong in Admin.
 | D | Scenario windows + /test/plants | S–M | C | ✅ built |
 | E | Chat-built dashboards + chart house rules | L | B (lens) | ✅ built |
 | F | Home dashboard revamp (live motion) | M | — (shares primitives with E) | planned |
+| G | Board Pack Agent (ported from Claude finance skills, Apache-2.0) | M–L | nicest after F | planned |
