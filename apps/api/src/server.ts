@@ -21,6 +21,7 @@ import { o2cRoutes } from "./routes/o2c.js";
 import { exceptionRoutes } from "./routes/exceptions.js";
 import { analyticsRoutes } from "./routes/analytics.js";
 import { analystRoutes } from "./routes/analyst.js";
+import { dashboardRoutes } from "./routes/dashboard.js";
 
 const VERSION = "0.2.0";
 const SERVICE = "api";
@@ -112,6 +113,7 @@ dripRoutes(app);
 paymentRoutes(app);
 r2rRoutes(app);
 adminRoutes(app);
+dashboardRoutes(app);
 o2cRoutes(app);
 
 const port = Number(process.env.PORT ?? 3001);
