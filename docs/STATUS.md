@@ -166,6 +166,13 @@ _Last updated: 2026-10-04_
    Adapted from anthropics/financial-services-plugins (Apache-2.0).
    Remaining on live: refresh stale pins + run the suite (model path).
    Detail: `plans/DATASET_V2.md` PR-G.
+   **PR-H deck renderer BUILT 2026-10-05** (branch `claude/pr-h-board-deck`,
+   GitHub PR pending the user's review): the pack page is now a branded
+   slide deck — teal cover, KPI tiles, live P&L waterfall / cash trend /
+   AR+AP aging / exceptions-by-code charts from the governed views at the
+   pack's lens, appendix + provenance slides, one landscape page per slide
+   on print. Narrative stays as drafted; charts are live (stated on the
+   provenance slide). Detail: `plans/DATASET_V2.md` PR-H.
 4. **Company rename (PR-I, PLAN ONLY, 2026-10-05)** — Brightline Ltd is a
    real UK company; rename to a deliberately unlikely one (shortlist +
    full impact analysis incl. regenerating every rendered document and a
