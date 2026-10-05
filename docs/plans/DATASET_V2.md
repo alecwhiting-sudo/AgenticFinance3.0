@@ -370,6 +370,52 @@ Build shape (one PR, ~M-L):
 Dependencies: none hard; nicest after F. Licence: Apache-2.0 with
 attribution noted in the skill's notes field.
 
+## PR-I — Company rename (PLAN ONLY, not implemented) · planned 2026-10-05
+
+**Why:** "Brightline Ltd" is a real registered UK company — the demo should
+not wear a real business's name, least of all on rendered invoices and
+fraud-scenario emails. Rename to something that could not plausibly be a
+real trading company.
+
+**Name brainstorm (deliberately unlikely; verify against the Companies
+House register before choosing — searchable free at
+find-and-update.company-information.service.gov.uk):**
+- **Umbrage & Flange Ltd** — reads like a Victorian ironmonger invented by
+  a sketch show; front-runner for memorability in demos.
+- **Perihelion Biscuit Works Ltd** — astronomy + baked goods; nothing real
+  trades under this.
+- **Ostensible Widgets Ltd** — says "placeholder" out loud, in a suit.
+- **Quorn & Quibble Associates Ltd** — alliterative nonsense (check Quorn
+  foods trademark adjacency before using).
+- **Gribbleflotsam Trading Co Ltd** — an invented word; zero collision risk,
+  slightly silly on a board pack cover.
+Recommendation: Umbrage & Flange Ltd, pending a Companies House +
+trademark sanity check. Keep the fictional address and `.example` email
+domains (already safe by design).
+
+**What a rename actually touches (why this is its own PR):**
+1. `packages/db/seed/brightline.json` — company name/code (code "BRT"
+   appears in AR invoice numbers BRT-5xxx; decide whether invoice prefixes
+   change too, which ripples into bank references and the dataset).
+2. The Studio: templates print "Bill to: Brightline Ltd …" on every AP
+   invoice, the AR letterhead, contracts (MSA parties), remittances, drip
+   emails (To: accounts@brightline.example), and `extend.ts`/`pools.ts`
+   copy — so a rename means REGENERATING AND RE-RENDERING EVERY COMMITTED
+   DOCUMENT (~1,700 PDFs/XMLs/emails + dataset.json): a large but
+   mechanical binary churn, one commit.
+3. App copy: Shell footer "Brightline Ltd · demo", dashboard header,
+   Test panel copy, purchase document view, payments service remittance
+   text, worker agent instructions + 22 skills in agents.json ("You are
+   the X Agent at Brightline Ltd…") — a new seed version per skill, so
+   expect a FULL stale-pin refresh cycle after deploy.
+4. Docs: STATUS, plans, TEST_DATA_MAP, UI_CONVENTIONS examples,
+   architecture.html.
+5. Invariants: dataset bytes change wholesale → re-run the validate suite
+   and re-pin the "v1 byte-identical" promise to the renamed baseline
+   (the old drift guard retires; a new one starts).
+**Not changed:** schema, logic, controls — content only. Size: M
+(mostly regeneration time + the sweep). Do in a quiet moment, not mid-demo.
+
 ## Sequence summary
 
 | # | Package | Size | Depends on | Status |
@@ -381,3 +427,5 @@ attribution noted in the skill's notes field.
 | E | Chat-built dashboards + chart house rules | L | B (lens) | ✅ built |
 | F | Home dashboard revamp (live motion) | M | — | ✅ built, merged via PR #1 |
 | G | Board Pack Agent (ported from Claude finance skills, Apache-2.0) | M–L | — | ✅ built (jumped queue) |
+| H | Board pack v2: slide-deck presentation (visuals, branding) | M | G | in progress |
+| I | Company rename (Brightline is a real UK co) | M | — | planned only |
