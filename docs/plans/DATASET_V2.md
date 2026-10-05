@@ -246,7 +246,7 @@ Describe tiles in the Analyst chat → a page gets built.
 - Honours the PR-B period lens. Risk: medium. Size: large. Independent of
   C/D — can be pulled earlier if wanted.
 
-## PR-F — Home dashboard revamp: live motion over static totals · **BUILT 2026-10-05, on branch `claude/pr-f-dashboard` (PR open, unmerged pending approval)**
+## PR-F — Home dashboard revamp: live motion over static totals · **BUILT 2026-10-05 — reviewed via alecwhiting-sudo/AgenticFinance3.0#1 (screenshots as evidence) and merged; the branch-PR review flow is the new normal, with Railway PR environments as the upgrade when wanted**
 
 As built: GET /dashboard/kpis (book-filtered, one payload) feeds a client
 dashboard polling every 8s (2s while the pipeline runs) — money row (cash
@@ -379,5 +379,5 @@ attribution noted in the skill's notes field.
 | C | Dataset v2 + IBAN control | L | drift guard | ✅ built |
 | D | Scenario windows + /test/plants | S–M | C | ✅ built |
 | E | Chat-built dashboards + chart house rules | L | B (lens) | ✅ built |
-| F | Home dashboard revamp (live motion) | M | — (shares primitives with E) | planned |
+| F | Home dashboard revamp (live motion) | M | — | ✅ built, merged via PR #1 |
 | G | Board Pack Agent (ported from Claude finance skills, Apache-2.0) | M–L | — | ✅ built (jumped queue) |
