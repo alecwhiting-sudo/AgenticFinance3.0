@@ -396,6 +396,16 @@ callout, fed by a new `by_exception` aggregate on
 print CSS emits one A4-landscape page per slide. Drafting/failed banners and
 the skill-edit loop box unchanged.
 
+**H2 format fix (same day, user review of the first cut):** every slide is
+now the SAME fixed 1280×720 canvas (PowerPoint's 16:9) — a ResizeObserver
+scales the deck uniformly to the window, so no slide changes shape with its
+content. Print maps each slide 1:1 onto a 960×540pt page (`@page size`
+equals the canvas, screen scale removed, margins zeroed) and prints in the
+EXACT on-screen theme: a beforeprint hook pins the resolved theme onto
+`<html>` (system dark otherwise re-evaluates to light in the print pass) and
+`print-color-adjust: exact` keeps the backgrounds — dark mode prints dark.
+Verified: 7 slides → 7 identical 16:9 PDF pages in both themes.
+
 **Why:** "Brightline Ltd" is a real registered UK company — the demo should
 not wear a real business's name, least of all on rendered invoices and
 fraud-scenario emails. Rename to something that could not plausibly be a
