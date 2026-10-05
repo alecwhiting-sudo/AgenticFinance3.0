@@ -188,6 +188,26 @@ export default function BoardPackPage({ params }: { params: Promise<{ id: string
   const [live, setLive] = useState<Live | null>(null);
   const { ref: deckRef, scale } = useDeckScale();
 
+  /* presenter paging: ONE slide on screen, next/prev snaps to the next one.
+   * Print still lays out every slide (the offstage class only hides on
+   * screen). totalRef lets the one keydown listener see the live count. */
+  const [cur, setCur] = useState(0);
+  const totalRef = useRef(1);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight" || e.key === "PageDown" || e.key === " ") {
+        e.preventDefault();
+        setCur((p) => Math.min(totalRef.current - 1, p + 1));
+      } else if (e.key === "ArrowLeft" || e.key === "PageUp") {
+        e.preventDefault();
+        setCur((p) => Math.max(0, p - 1));
+      } else if (e.key === "Home") setCur(0);
+      else if (e.key === "End") setCur(totalRef.current - 1);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   const load = useCallback(async () => {
     try {
       const res = await fetch(`${apiUrl}/r2r/board-packs/${id}`);
@@ -528,6 +548,9 @@ export default function BoardPackPage({ params }: { params: Promise<{ id: string
     );
 
   const total = slides.length + 1; // + cover
+  totalRef.current = total;
+  const page = Math.min(cur, total - 1);
+  const go = (d: number) => setCur(Math.max(0, Math.min(total - 1, page + d)));
 
   return (
     <main className="deck-page space-y-5">
@@ -540,13 +563,15 @@ export default function BoardPackPage({ params }: { params: Promise<{ id: string
           aside, header, .no-print { display: none !important; }
           html, body { background: var(--card) !important; }
           main { max-width: none !important; margin: 0 !important; padding: 0 !important; }
-          .deck-page > * { margin: 0 !important; }
-          .slide-wrap { height: ${SLIDE_H}px !important; margin: 0 !important; break-after: page; overflow: hidden; }
-          .slide-wrap:last-child { break-after: auto; }
+          .deck-page > *, .deck-item { margin: 0 !important; }
+          .deck-item { display: block !important; break-after: page; }
+          .deck-item:last-child { break-after: auto; }
+          .slide-wrap { height: ${SLIDE_H}px !important; margin: 0 !important; overflow: hidden; }
           .slide-scale { transform: none !important; }
           .slide { border: none !important; border-radius: 0 !important; box-shadow: none !important; }
           .slide, .slide * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
         }
+        @media screen { .deck-offstage { display: none; } }
       `}</style>
 
       <div className="no-print">
@@ -579,8 +604,9 @@ export default function BoardPackPage({ params }: { params: Promise<{ id: string
         </div>
       )}
 
-      <div ref={deckRef} className="w-full space-y-5">
+      <div ref={deckRef} className="w-full">
         {/* cover — same fixed canvas as every other slide */}
+        <div className={`deck-item${page === 0 ? "" : " deck-offstage"}`}>
         <SlideFrame scale={scale}>
           <section
             className="slide relative flex flex-col justify-between overflow-hidden rounded-2xl p-14 text-white shadow-sm"
@@ -609,8 +635,36 @@ export default function BoardPackPage({ params }: { params: Promise<{ id: string
             </div>
           </section>
         </SlideFrame>
+        </div>
 
-        {slides.map((render, i) => render(i + 2, total))}
+        {slides.map((render, i) => (
+          <div key={i} className={`deck-item${page === i + 1 ? "" : " deck-offstage"}`}>
+            {render(i + 2, total)}
+          </div>
+        ))}
+      </div>
+
+      {/* presenter controls: snap between slides; ← → / PgUp PgDn / space work too */}
+      <div className="no-print flex items-center justify-center gap-4">
+        <Button onClick={() => go(-1)} variant="outline" disabled={page === 0}>← Previous</Button>
+        <span className="flex items-center gap-1.5">
+          {Array.from({ length: total }, (_, i) => (
+            <button
+              key={i}
+              onClick={() => setCur(i)}
+              aria-label={`Slide ${i + 1}`}
+              className="h-2.5 w-2.5 rounded-full transition-colors"
+              style={{ background: i === page ? "var(--accent)" : "color-mix(in srgb, var(--muted) 35%, transparent)" }}
+            />
+          ))}
+        </span>
+        <span className="num w-14 text-center text-sm" style={{ color: "var(--muted)" }}>
+          {page + 1} / {total}
+        </span>
+        <Button onClick={() => go(1)} variant="outline" disabled={page === total - 1}>Next →</Button>
+        <span className="hidden text-xs sm:inline" style={{ color: "var(--muted)" }}>
+          ← → keys work
+        </span>
       </div>
 
       {pack.status === "draft" && (
