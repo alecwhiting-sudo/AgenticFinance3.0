@@ -251,6 +251,16 @@ for (const a of agentData.agents) {
       await db
         .insert(evalCase)
         .values({ agentId: agentRow.id, name: c.name, input: c.input, assertions: c.assertions });
+    } else if (
+      JSON.stringify(existing.input) !== JSON.stringify(c.input) ||
+      JSON.stringify(existing.assertions) !== JSON.stringify(c.assertions)
+    ) {
+      // seed-defined cases are curriculum: a raised quality bar ships by
+      // updating the case in place (matched by agent + name)
+      await db
+        .update(evalCase)
+        .set({ input: c.input, assertions: c.assertions })
+        .where(eq(evalCase.id, existing.id));
     }
   }
 }

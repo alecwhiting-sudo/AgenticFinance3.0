@@ -19,6 +19,18 @@ if (process.env.MIGRATE_ON_BOOT !== "false") {
     console.log("migrations applied");
     await seedCore(boot.db);
     console.log("registry seed refreshed");
+    // Stale-pin refresh on every deploy: the seed may have shipped new skill
+    // versions, so draft the rebuilt releases now and queue their eval
+    // suites — the worker auto-promotes each on a green suite. Governance is
+    // preserved: control-regression moves (M3a) are skipped here and wait
+    // for the human preview on the Agents page, and agents without eval
+    // cases still need a manual promote. Opt out: REFRESH_PINS_ON_BOOT=false.
+    if (process.env.REFRESH_PINS_ON_BOOT !== "false") {
+      const { refreshStaleReleases } = await import("../services/releaseRefresh.js");
+      const results = await refreshStaleReleases(boot.db, "boot", { requireCleanDiff: true });
+      for (const r of results) if (r.status !== "current") console.log(`stale-pin refresh: ${r.agentSlug} — ${r.status}`);
+      if (results.every((r) => r.status === "current")) console.log("stale-pin refresh: all pins current");
+    }
   } catch (err) {
     // never block the API from starting; the admin panel can still load
     console.error(`boot migrate/seed failed (non-fatal): ${err instanceof Error ? err.message : String(err)}`);

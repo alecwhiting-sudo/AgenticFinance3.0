@@ -99,7 +99,13 @@ Railway project. Each service builds from the **repo root** with its
 `scripts/deploy.sh <name>` or `railway up` from the repo root with the service
 linked. **Migrations and the registry seed run automatically on api boot**
 (`loadDataset.js` applies pending migrations + a non-destructive `seedCore`
-refresh before the server starts; opt out with `MIGRATE_ON_BOOT=false`) — so
-a push is a complete deploy; `railway run pnpm db:migrate` remains for manual
+refresh before the server starts; opt out with `MIGRATE_ON_BOOT=false`), and
+**stale skill pins refresh themselves on the same boot**
+(`REFRESH_PINS_ON_BOOT=false` to opt out): drafts are created per the skill
+map and their eval suites queued, the worker auto-promotes on green;
+control-regression moves auto-accept only for seed-authored versions (the
+commit review is the acceptance) — UI-authored ones wait for the Agents-page
+confirm, and agents without eval cases still need a manual promote — so
+a push is a complete deploy, skill governance included; `railway run pnpm db:migrate` remains for manual
 use. Don't introduce other deploy mechanisms without updating the
 architecture doc.

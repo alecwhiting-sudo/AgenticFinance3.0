@@ -339,7 +339,8 @@ export const evalCase = ag.table("eval_case", {
   agentId: uuid("agent_id").notNull().references(() => agent.id),
   name: text("name").notNull(),
   input: jsonb("input").$type<Record<string, unknown>>().notNull(),
-  /** assertions: [{kind: "outcome"|"summary_contains"|"summary_not_contains"|"command_proposed"|"not_command_proposed", value: string}] */
+  /** assertions: [{kind: "outcome"|"outcome_in"|"summary_contains"|"summary_not_contains"|"command_proposed"|"not_command_proposed"
+   *                     |"payload_contains"|"payload_not_contains"|"payload_min_money" (value "<commandType>::<arg>"), value: string}] */
   assertions: jsonb("assertions").$type<{ kind: string; value: string }[]>().notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

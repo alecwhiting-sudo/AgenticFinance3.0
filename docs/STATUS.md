@@ -6,7 +6,7 @@ decision. Detail lives in `MASTER_PLAN.md` (phases), `ARCHITECTURE.md`
 (decisions D1–D16), `docs/plans/*` (per-process), and the living diagram
 `docs/architecture.html` (in-app at `/admin/architecture`).
 
-_Last updated: 2026-10-04_
+_Last updated: 2026-10-07_
 
 ## Phase tracker
 
@@ -116,7 +116,17 @@ _Last updated: 2026-10-04_
    acceptance); **M2a built** (live-data eval cases via selectors —
    oldest open exception, most overdue AR — invariant assertions incl.
    `outcome_in`, skipped-passed when no record matches, eval suites now
-   target a specific release). Remaining: M2 shadow replay with measured
+   target a specific release). **Boot-time stale-pin refresh BUILT
+   2026-10-07**: every api boot (deploy) drafts refresh releases from the
+   skill map, queues their eval suites, and the worker auto-promotes on
+   green — no manual "refresh stale pins" step remains. Control-regression
+   moves auto-accept ONLY for seed-authored skill versions (the commit is
+   the acceptance, logged loudly at boot); UI-authored ones still wait for
+   the Agents-page confirm; agents with no eval cases (transaction-
+   generator) still get a manual-promote draft. Opt out:
+   `REFRESH_PINS_ON_BOOT=false`. Seed now also UPDATES changed eval cases
+   in place (matched by agent+name), so a raised quality bar ships.
+   Remaining: M2 shadow replay with measured
    impact report → M3b AI release reviewer grounded in it → M4 real test
    environment + canary (production phase).
 2. **Dataset v2 + period lens + chat dashboards** (`plans/DATASET_V2.md`,
@@ -146,8 +156,9 @@ _Last updated: 2026-10-04_
    prompt (`buildSystemPrompt` call site dropped `taskType`); fixed, plus
    the abstain rule now exempts PROPOSALS, and the convention moved into
    the curated-views skill (v3) so governance owns it — analyst release
-   refreshed and auto-promoted on a green suite. Verify on live: refresh
-   stale pins, run the analyst evals (model path), retry the prompt.
+   refreshed and auto-promoted on a green suite. Live pins now refresh
+   themselves on every deploy (boot refresh, 2026-10-07); still worth one
+   model-path retry of the build-a-page prompt on live.
    Root-cause record: `plans/DATASET_V2.md` § Known issue.
    → **F home dashboard revamp BUILT 2026-10-05**, merged via the
    repo's first reviewed GitHub PR (alecwhiting-sudo/AgenticFinance3.0#1):
@@ -164,7 +175,7 @@ _Last updated: 2026-10-04_
    "edit the Board pack method skill → eval gate → re-draft" loop linked
    from both pages; print/save-as-PDF. Suite 2/2 incl. a live selector.
    Adapted from anthropics/financial-services-plugins (Apache-2.0).
-   Remaining on live: refresh stale pins + run the suite (model path).
+   Live pins refresh themselves on deploy since 2026-10-07 (boot refresh).
    Detail: `plans/DATASET_V2.md` PR-G.
    **PR-H deck renderer BUILT 2026-10-05** (branch `claude/pr-h-board-deck`,
    GitHub PR pending the user's review): the pack page is now a branded
@@ -184,9 +195,17 @@ _Last updated: 2026-10-04_
    scan actual records, not just the aggregate views).
 6. **LRS lock/certify/supersede** — lands as the month-end dashboard's lock
    button + snapshot tables.
-7. **Commentary quality** — Close Agent output is too bland; skills +
-   evals that fail bland output (`plans/R2R.md` §9); reasoning tier only on
-   eval evidence.
+7. **Commentary quality — BUILT 2026-10-07** (`plans/R2R.md` §9):
+   flux-commentary-style v2 + board-pack-method v2 (headline with both
+   results and the % change, income-vs-expense split, drivers with two
+   figures + % each, £500-or-5% materiality line, banned filler list);
+   keyless fallbacks upgraded to the same bar; NEW eval assertion kinds
+   grade the proposed command's CONTENT (`payload_contains`,
+   `payload_not_contains`, `payload_min_money "<cmd>::<n>"` — bland
+   output that names too few £ figures now FAILS the suite); close suite
+   3/3 incl. a new mixed income/cost case, board-reporter 2/2, all
+   auto-promoted through the boot refresh. Reasoning tier still only on
+   eval evidence — the default tier passes the bar.
 8. **Phase 6 remainder** — guided demo tour, cross-process dashboard.
    (Demo scenarios + mission control at `/admin/pipeline` built 2026-10-03:
    month-by-month processing, timed full-speed 10x run with remembered

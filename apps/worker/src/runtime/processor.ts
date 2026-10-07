@@ -117,6 +117,36 @@ async function gradeEvalCase(
     ) {
       failures.push(`summary must not contain "${assertion.value}"`);
     }
+    // Payload assertions grade the CONTENT of a proposed command, value
+    // "<commandType>::<arg>" — the commentary-quality bar (plans/R2R.md §9):
+    // bland output that names no figures fails here, not in a human review.
+    if (
+      assertion.kind === "payload_contains" ||
+      assertion.kind === "payload_not_contains" ||
+      assertion.kind === "payload_min_money"
+    ) {
+      const sep = assertion.value.indexOf("::");
+      const cmdType = sep === -1 ? assertion.value : assertion.value.slice(0, sep);
+      const arg = sep === -1 ? "" : assertion.value.slice(sep + 2);
+      const cmd = await db.query.command.findFirst({
+        where: (t) => and(eq(t.runId, runId), eq(t.type, cmdType)),
+      });
+      if (!cmd) {
+        failures.push(`no ${cmdType} command to check ${assertion.kind}`);
+      } else {
+        const text = JSON.stringify(cmd.params);
+        if (assertion.kind === "payload_contains" && !text.toLowerCase().includes(arg.toLowerCase())) {
+          failures.push(`${cmdType} payload does not contain "${arg}"`);
+        }
+        if (assertion.kind === "payload_not_contains" && text.toLowerCase().includes(arg.toLowerCase())) {
+          failures.push(`${cmdType} payload must not contain "${arg}"`);
+        }
+        if (assertion.kind === "payload_min_money") {
+          const n = (text.match(/£\s?\d[\d,]*(?:\.\d+)?/g) ?? []).length;
+          if (n < Number(arg)) failures.push(`${cmdType} payload names ${n} £ figure(s) — the bar is ${arg}`);
+        }
+      }
+    }
   }
   const passed = failures.length === 0;
 

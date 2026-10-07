@@ -360,7 +360,7 @@ async function boardPackFallback(
     {
       id: "exec-summary",
       heading: `Executive summary — ${label}`,
-      body: `The ${label} result is ${signed(resultThis)}, against ${signed(resultPrior)} in the prior window (${priorLabel}). Cash closed the window at ${gbpMinor(endCash)} (${endCash >= startCash ? "up" : "down"} from ${gbpMinor(startCash)} at the start). Receivables stand at ${gbpMinor(ar.totalMinor)} with ${gbpMinor(ar.overdueMinor)} past due; payables at ${gbpMinor(ap.totalMinor)} with ${gbpMinor(ap.overdueMinor)} past due. ${exc.rows.length} supplier invoices are held in the exceptions queue${fraudHolds ? `, including ${fraudHolds} fraud-risk hold${fraudHolds === 1 ? "" : "s"} awaiting out-of-band verification` : ""}. Figures are actuals from the governed views; no forecast is included.`,
+      body: `The ${label} result is ${signed(resultThis)}, against ${signed(resultPrior)} in the prior window (${priorLabel})${resultPrior !== 0 ? ` — ${resultThis - resultPrior >= 0 ? "a favourable" : "an adverse"} movement of ${gbpMinor(Math.abs(resultThis - resultPrior))} (${(((resultThis - resultPrior) / Math.abs(resultPrior)) * 100).toFixed(1)}%)` : ""}. Cash closed the window at ${gbpMinor(endCash)} (${endCash >= startCash ? "up" : "down"} from ${gbpMinor(startCash)} at the start). Receivables stand at ${gbpMinor(ar.totalMinor)} with ${gbpMinor(ar.overdueMinor)} past due; payables at ${gbpMinor(ap.totalMinor)} with ${gbpMinor(ap.overdueMinor)} past due. ${exc.rows.length} supplier invoices are held in the exceptions queue${fraudHolds ? `, including ${fraudHolds} fraud-risk hold${fraudHolds === 1 ? "" : "s"} awaiting out-of-band verification` : ""}. Figures are actuals from the governed views; no forecast is included.`,
       figures: [
         { label: "Result", value: gbpMinor(resultThis) },
         { label: "Cash at window end", value: gbpMinor(endCash) },
@@ -386,7 +386,7 @@ async function boardPackFallback(
     {
       id: "controls",
       heading: "Controls & exceptions",
-      body: `${exc.rows.length} supplier invoices are currently held by the automated controls${byCode.size ? `: ${[...byCode.entries()].map(([c, n]) => `${n} × ${c.replace(/_/g, " ")}`).join(", ")}` : ""}. ${fraudHolds ? `${fraudHolds} are fraud-risk holds (bank-detail screens) that only a human may release after out-of-band verification. ` : ""}Every hold is on the exceptions workbench with the agent's grounded options; nothing posts or pays until a person decides.`,
+      body: `${exc.rows.length} supplier invoices are currently held by the automated controls${byCode.size ? `: ${[...byCode.entries()].map(([c, n]) => `${n} × ${c.replace(/_/g, " ")}`).join(", ")}` : ""}. ${fraudHolds ? `${fraudHolds} are fraud-risk holds (bank-detail screens) that only a human may release after out-of-band verification. ` : "No fraud-risk holds (bank-detail screens) are currently open. "}Every hold is on the exceptions workbench with the agent's grounded options; nothing posts or pays until a person decides.`,
     },
   ];
   const sources = [
@@ -510,21 +510,40 @@ async function commentaryFallback(
     return { outcome: "escalated", summary: "No figures in the task payload — cannot draft grounded commentary." };
 
   const gbp = (m: number) => `£${(Math.abs(m) / 100).toLocaleString("en-GB", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-  const movers = figures
-    .map((f) => ({ ...f, delta: f.thisMinor - f.prevMinor }))
-    .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))
-    .slice(0, 3)
-    .filter((f) => f.delta !== 0);
-  const totalThis = figures.reduce((n, f) => n + f.thisMinor, 0);
-  const totalPrev = figures.reduce((n, f) => n + f.prevMinor, 0);
+  // flux-commentary-style v2: headline with both results and the % change,
+  // income-vs-expense split, drivers in contribution terms with two figures
+  // each, watch items above the materiality line. Ledger sign is
+  // debit-positive, so the period result = -(sum of P&L lines).
+  const resultThis = -figures.reduce((n, f) => n + f.thisMinor, 0);
+  const resultPrev = -figures.reduce((n, f) => n + f.prevMinor, 0);
+  const change = resultThis - resultPrev;
+  const pctChange = resultPrev !== 0 ? `${((change / Math.abs(resultPrev)) * 100).toFixed(1)}%` : "n/a";
+  const incomeMove = -figures.filter((f) => f.type === "income").reduce((n, f) => n + (f.thisMinor - f.prevMinor), 0);
+  const expenseMove = -figures.filter((f) => f.type !== "income").reduce((n, f) => n + (f.thisMinor - f.prevMinor), 0);
+  const materiality = Math.max(50000, Math.round(Math.abs(resultThis) * 0.05)); // £500 or 5% of the result
+  const ranked = figures
+    .map((f) => ({ ...f, delta: f.thisMinor - f.prevMinor, contrib: -(f.thisMinor - f.prevMinor) }))
+    .filter((f) => f.delta !== 0)
+    .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
+  const movers = ranked.slice(0, 3);
+  const watch = ranked.slice(3).filter((f) => Math.abs(f.delta) >= materiality);
   await appendStep(runId, steps, { kind: "note", label: "figures grounded", detail: { accounts: figures.length, movers: movers.map((m) => m.code) } });
 
+  const resultWord = (m: number) => (m >= 0 ? "profit" : "loss");
+  const driverPct = (m: { delta: number; prevMinor: number }) =>
+    m.prevMinor !== 0 ? `${Math.abs((m.delta / Math.abs(m.prevMinor)) * 100).toFixed(1)}%` : "new line";
+  const fav = (m: number) => (m >= 0 ? "favourable" : "adverse");
   const lines = [
-    `Net P&L movement for ${periodCode}: ${gbp(totalThis)} ${totalThis >= 0 ? "net cost" : "net income"} (prior month ${gbp(totalPrev)}).`,
-    ...movers.map((m) =>
-      `${m.name} (${m.code}) ${m.delta > 0 ? "up" : "down"} ${gbp(m.delta)} month on month — ${gbp(m.prevMinor)} to ${gbp(m.thisMinor)}.`),
-    `Watch items: ${movers[0] ? `${movers[0].name} trend` : "none"}; open exceptions and unmatched bank lines are listed on the R2R dashboard.`,
-    `Basis: live economic state; figures are month movements from the ledger.`,
+    `${periodCode} closed at a ${resultWord(resultThis)} of ${gbp(resultThis)}, against a ${resultWord(resultPrev)} of ${gbp(resultPrev)} in the prior month — ${change >= 0 ? "a favourable" : "an adverse"} movement of ${gbp(change)} (${pctChange}).`,
+    `Of that movement, income lines contributed ${gbp(incomeMove)} ${fav(incomeMove)} and expense lines ${gbp(expenseMove)} ${fav(expenseMove)}.`,
+    ...movers.map(
+      (m) =>
+        `${m.name} (${m.code}): ${gbp(m.thisMinor)} vs ${gbp(m.prevMinor)} prior (${driverPct(m)}), ${m.contrib >= 0 ? "a favourable" : "an adverse"} ${gbp(m.contrib)} impact on the result.`,
+    ),
+    watch.length
+      ? `Watch items: ${watch.map((w) => `${w.name} (${fav(w.contrib)} ${gbp(w.contrib)})`).join(", ")}.`
+      : `No further movements above the ${gbp(materiality)} materiality line.`,
+    `Basis: live economic state; figures are month movements from the ledger, payload-grounded only.`,
   ];
   const text = lines.join(" ");
   const { ok, data } = await proposeCommand(runId, 1, "report.commentary.save", { periodCode, text }, steps);

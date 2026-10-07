@@ -120,7 +120,13 @@ payment-looking asks are out of both agents' remit.
 
 ## 9. Backlog (noted 2026-10-02)
 
-- **Commentary quality (Alec):** first live drafts are too basic to be worth
+- **Commentary quality (Alec): BUILT 2026-10-07** — flux-commentary-style v2
+  (headline with both results + % change, income-vs-expense split, drivers
+  with figures and %, materiality line, banned filler), board-pack-method v2
+  narrative rules, payload-grading eval assertions (`payload_min_money` et
+  al.) that fail bland output, keyless fallbacks at the same bar. Original
+  note kept below; "tools to pull prior commentary" remains open.
+  First live drafts were too basic to be worth
   reading. Develop the Close Agent's skills: richer structure (headline,
   revenue vs cost split, margin movement, MoM and YTD views, driver
   attribution by drilling movements/events, materiality thresholds so trivia
