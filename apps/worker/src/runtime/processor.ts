@@ -499,8 +499,10 @@ async function sweepStaleClaims(log: (msg: string) => void): Promise<void> {
     await db.execute(sql`
       select id, type, payload, attempts from agent.work_item
       where status in ('claimed', 'running')
-        and claimed_at is not null
-        and claimed_at < now() - (${STALE_CLAIM_MS}::bigint * interval '1 millisecond')
+        -- a NULL claimed_at is a claim from before the column existed —
+        -- by definition older than any timeout, so it is stale too
+        and (claimed_at is null
+             or claimed_at < now() - (${STALE_CLAIM_MS}::bigint * interval '1 millisecond'))
       limit 20
     `)
   ).rows as { id: string; type: string; payload: Record<string, unknown>; attempts: number }[];
