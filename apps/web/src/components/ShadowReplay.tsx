@@ -64,6 +64,10 @@ export default function ShadowReplayPanel({
 }) {
   const [replays, setReplays] = useState<Replay[] | null>(null);
   const [version, setVersion] = useState<number | undefined>(draftVersions[0]);
+  // how many recent real cases to replay — fewer = faster (each one is a
+  // full agent run, with model calls on live)
+  const CASE_CHOICES = [1, 5, 10, 15, 20, 25];
+  const [cases, setCases] = useState(10);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   // "show all" survives a round-trip to a run page (per-tab convenience)
@@ -131,6 +135,17 @@ export default function ShadowReplayPanel({
                   <option key={v} value={v}>draft v{v}</option>
                 ))}
               </select>
+              <select
+                value={cases}
+                onChange={(e) => setCases(Number(e.target.value))}
+                className="rounded-lg border bg-transparent px-2 py-1.5 text-sm"
+                style={{ borderColor: "var(--border)" }}
+                title="How many recent real cases to replay — fewer is faster"
+              >
+                {CASE_CHOICES.map((n) => (
+                  <option key={n} value={n}>{n} case{n === 1 ? "" : "s"}</option>
+                ))}
+              </select>
               <button
                 disabled={busy || running || version === undefined}
                 onClick={async () => {
@@ -140,7 +155,7 @@ export default function ShadowReplayPanel({
                     const r = await fetch(`${apiUrl}/agents/${agentSlug}/releases/${version}/shadow`, {
                       method: "POST",
                       headers: { "content-type": "application/json" },
-                      body: JSON.stringify({ createdBy: "workbench", limit: 25 }),
+                      body: JSON.stringify({ createdBy: "workbench", limit: cases }),
                     });
                     const d = (await r.json()) as { error?: string };
                     setMsg(r.ok ? null : d.error ?? "could not start");
