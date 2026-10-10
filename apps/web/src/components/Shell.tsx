@@ -10,6 +10,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import CommandPalette from "@/components/CommandPalette";
 import AnalystPanel from "@/components/AnalystPanel";
+import TourEngine, { startTourEvent } from "@/components/Tour";
 
 type Item = { href: string; label: string; exact?: boolean };
 type Parent = Item & { short?: string; children?: Item[] };
@@ -204,6 +205,14 @@ export default function Shell({ children }: { children: React.ReactNode }) {
           </div>
           <div className="flex items-center gap-2">
             <button
+              onClick={() => startTourEvent("full-loop")}
+              className="hidden whitespace-nowrap rounded-lg border px-3 py-1 text-sm transition-colors hover:text-[var(--accent)] lg:block"
+              style={{ borderColor: "var(--border)", color: "var(--muted)" }}
+              title="A three-minute walk through the whole loop"
+            >
+              Guided tour
+            </button>
+            <button
               onClick={() => toggleAnalyst(!analystOpen)}
               className="hidden whitespace-nowrap rounded-lg border px-3 py-1 text-sm transition-colors md:block"
               style={
@@ -226,6 +235,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
           <AnalystPanel onClose={() => toggleAnalyst(false)} />
         </div>
       )}
+      <TourEngine />
     </div>
   );
 }

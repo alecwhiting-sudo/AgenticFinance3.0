@@ -20,7 +20,7 @@ _Last updated: 2026-10-07_
 | 4 — O2C | ✅ built | AR invoices through the pipe, cash application + agent, collections agent + dunning approval |
 | 4c — Analytics + Analyst | ✅ built | plan: `plans/ANALYTICS.md`. M1 `/analytics` (flux waterfall, P&L trend, AP/AR aging, counterparty, cash — all drill, all have table views). M2 Analyst Agent + right-hand chat panel (top-bar toggle): answers from the curated views only, cites sources, keyless fallback for set question shapes. Remaining 4c ideas: saved views/dashboard |
 | 5 — Performance Management | 📋 planned | user: not ready yet |
-| 6 — Demo polish | 🔶 partial | agent staff strip, release pipeline, permissions matrix, decision history, per-agent period cost (D14), admin reset/replay done; guided tour + cross-process dashboard outstanding |
+| 6 — Demo polish | 🔶 partial | agent staff strip, release pipeline, permissions matrix, decision history, per-agent period cost (D14), admin reset/replay done; guided tour built 2026-10-10 (declarative registry in lib/tours.ts); cross-process dashboard outstanding |
 | P — Production | ⬜ stub | deliberately undesigned |
 
 ## What runs today
@@ -221,7 +221,17 @@ _Last updated: 2026-10-07_
    3/3 incl. a new mixed income/cost case, board-reporter 2/2, all
    auto-promoted through the boot refresh. Reasoning tier still only on
    eval evidence — the default tier passes the bar.
-8. **Phase 6 remainder** — guided demo tour, cross-process dashboard.
+8. **Phase 6 remainder** — **guided demo tour BUILT 2026-10-10**: a
+   "Guided tour" button in the header walks "The full loop" in 11 steps
+   (dashboard → test panel → invoices → exceptions → approvals → O2C →
+   reports → board packs → analytics → agents → architecture), each with
+   plain-English narration and a try-it nudge. Roadmap-proof by design:
+   tours are DATA in `apps/web/src/lib/tours.ts` (the only file a new
+   milestone edits — add/edit steps, or a whole new Tour entry); the
+   engine (`components/Tour.tsx`) highlights the sidebar entry for each
+   step's route by href and optionally a `data-tour` anchor, both
+   degrading gracefully when a page moves; progress survives reloads
+   (localStorage). Remaining: cross-process dashboard.
    (Demo scenarios + mission control at `/admin/pipeline` built 2026-10-03:
    month-by-month processing, timed full-speed 10x run with remembered
    side-by-side, simulate-a-day — `plans/DEMO_SCRIPTS.md`.)

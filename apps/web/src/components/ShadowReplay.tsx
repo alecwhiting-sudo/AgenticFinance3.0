@@ -106,7 +106,7 @@ export default function ShadowReplayPanel({
   const changedCases = latest?.results.filter((r) => r.changed) ?? [];
 
   return (
-    <div>
+    <div data-tour="shadow-replay">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h3 className="text-base font-semibold">Shadow replay</h3>

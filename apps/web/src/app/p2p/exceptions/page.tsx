@@ -250,7 +250,7 @@ export default function ExceptionsPage() {
             </div>
 
             {/* the agent's options */}
-            <div className="rounded-xl border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+            <div data-tour="exception-options" className="rounded-xl border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
               <div className="mb-2 flex items-center justify-between">
                 <h4 className="text-sm font-semibold uppercase tracking-wide" style={{ color: "var(--muted)" }}>
                   Resolution options {d.options.length > 0 && `(${d.options.length}, agent-proposed)`}

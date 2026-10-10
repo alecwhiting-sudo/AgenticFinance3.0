@@ -147,9 +147,11 @@ export default function BoardPacksPage() {
               </option>
             ))}
           </select>
-          <Button onClick={() => void draft()} disabled={busy || !anchor} variant="primary">
-            Draft board pack — {anchor ? lensLabel() : "…"}
-          </Button>
+          <span data-tour="draft-board-pack">
+            <Button onClick={() => void draft()} disabled={busy || !anchor} variant="primary">
+              Draft board pack — {anchor ? lensLabel() : "…"}
+            </Button>
+          </span>
         </div>
         <p className="mt-2 text-xs" style={{ color: "var(--muted)" }}>
           Takes seconds without a model key (deterministic figures), a minute or two with one

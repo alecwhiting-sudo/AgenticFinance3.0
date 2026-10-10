@@ -131,3 +131,23 @@ One screen, linked from Admin, presentable full-screen:
    through, journals = events = 105, balance 0). Fixed along the way:
    journal numbering now takes an advisory lock (max()+1 raced when the
    loader and worker posted concurrently).
+
+## Guided tour (built 2026-10-10)
+
+"Guided tour" in the header runs **The full loop**: 11 narrated steps from
+the live dashboard through intake, exceptions (incl. fraud holds and draft
+supplier emails), approvals, cash application, statements, the board-pack
+deck, the Analyst, the agent roster (evals + shadow replay) and the
+architecture diagram. Each step carries a "try it" nudge so a viewer can
+drive rather than watch.
+
+**Maintenance rule (roadmap-proofing):** tours are pure data in
+`apps/web/src/lib/tours.ts` — when a milestone ships a user-facing surface,
+add or edit steps THERE and nowhere else; a new journey is a new `Tour`
+entry in the same file. The engine (`components/Tour.tsx`) needs no changes:
+it highlights the sidebar link for each step's route by href, optionally an
+in-page `data-tour="<anchor>"` element (with a short retry for
+client-rendered pages), and degrades gracefully — a renamed page or removed
+anchor never breaks a tour, the step just narrates without a highlight and
+offers "take me there". Progress persists in localStorage, so a tour
+survives reloads and detours.
