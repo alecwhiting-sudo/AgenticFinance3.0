@@ -225,11 +225,20 @@ _Last updated: 2026-10-07_
    (Demo scenarios + mission control at `/admin/pipeline` built 2026-10-03:
    month-by-month processing, timed full-speed 10x run with remembered
    side-by-side, simulate-a-day — `plans/DEMO_SCRIPTS.md`.)
-9. **Exceptions management M2** — M1 built 2026-10-03 (`/p2p/exceptions`
-   workbench: grounded costed options via `case.options`, 3-way diff,
-   one-click apply). Remaining: supplier email drafts on options, tolerance
-   parameter sets, option evals, O2C mirror (`plans/P2P.md` §10,
-   `plans/O2C.md` §9).
+9. **Exceptions management M2 — BUILT 2026-10-10** (`plans/P2P.md` §10,
+   `plans/O2C.md` §9): options carry display-only supplier email drafts
+   (re-bill, short-pay, duplicate, corrected-invoice — never sent
+   automatically, never on fraud-risk codes); tolerance policy is the
+   `exception-tolerances` parameter set (2% or £25) read by the
+   recommendation and shown on the workbench; per-kind option-family
+   evals via the payload-grading assertion kinds (invoice-exception 9/9,
+   cash-application 3/3 keyless); O2C mirror first slice: unmatched
+   receipts open `ar_receipt` cases (new display-only `case.open`) with
+   apply-residual / refund / hold-and-query options + draft letters,
+   surfaced on /o2c as "Receipt queries". Seed now publishes skill text
+   as a new version even over a UI-authored latest (no stranded
+   curriculum updates). Remaining (M3): AR dispute mirror, per-supplier
+   tolerances, model-path option evals as live cases.
 10. **A2R — Acquire to Retire** (fixed assets: capitalise from P2P,
    depreciation as engine-derived period ticks, disposals) — low priority
    (MASTER_PLAN Phase 7).

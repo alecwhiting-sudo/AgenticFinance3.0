@@ -79,8 +79,12 @@ templated letter from the payload facts.
 
 ## 9. Backlog — receipt/dispute exception management (Alec, 2026-10-03)
 
-Mirror of plans/P2P.md §10 for the AR side: the Cash Application Agent
-should propose grounded options for part-payments, overpayments and unknown
-payers (apply-with-residual, refund, hold-and-query letter), and Collections
-should escalate disputes with the contract + invoice + remittance evidence
-assembled. Options map to typed commands; humans decide.
+Mirror of plans/P2P.md §10 for the AR side. **First slice BUILT 2026-10-10:**
+the Cash Application Agent opens an `ar_receipt` evidence case (new
+display-only `case.open` command) for unmatched, ambiguous and over/part
+payments, with grounded options — apply-with-residual to the closest larger
+invoice (residual costed), refund-or-hold for overpayments, hold-and-query
+with a draft remittance-request letter (display-only, never sent) — shown
+on /o2c as "Receipt queries". Applying money stays human via
+ar.receipt.apply. Remaining: dispute escalation with contract + invoice +
+remittance evidence assembled by Collections.

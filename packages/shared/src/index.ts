@@ -180,10 +180,24 @@ export const commandDefs = {
               "reject",
               "retro_purchase",
               "human_verify",
+              // AR receipt-query options (plans/O2C.md §9 mirror)
+              "apply_residual",
+              "refund_overpay",
+              "hold_query",
             ]),
             label: z.string().min(3).max(140),
             rationale: z.string().min(10).max(1000),
             costedNote: z.string().max(200).optional(),
+            /** Display-only supplier/customer letter attached to the option
+             * (plans/P2P.md §10 M2) — a human copies it out; NOTHING is ever
+             * sent automatically, and fraud-risk cases carry no draft. */
+            emailDraft: z
+              .object({
+                to: z.string().min(3).max(120),
+                subject: z.string().min(3).max(140),
+                body: z.string().min(20).max(2000),
+              })
+              .optional(),
             adjustedQuantities: z
               .array(z.object({ lineNo: z.number().int().positive(), qty: z.number().int().min(0) }))
               .optional(),
@@ -191,6 +205,17 @@ export const commandDefs = {
         )
         .min(1)
         .max(4),
+    }),
+  },
+  /** Open an evidence case — display-only bookkeeping of a question that
+   * needs a human (the O2C receipt-query mirror opens these); no books
+   * move, so standing authority applies like case.note/case.options. */
+  "case.open": {
+    requiresApproval: false,
+    params: z.object({
+      kind: z.string().min(3).max(40),
+      title: z.string().min(3).max(140),
+      detail: z.record(z.string(), z.unknown()).default({}),
     }),
   },
   /** Resolve an invoice exception — ALWAYS a human approval (plans/P2P.md §6). */

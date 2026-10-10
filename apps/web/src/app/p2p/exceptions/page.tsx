@@ -27,6 +27,7 @@ type Option = {
   rationale: string;
   costedNote?: string;
   adjustedQuantities?: { lineNo: number; qty: number }[];
+  emailDraft?: { to: string; subject: string; body: string };
 };
 type Detail = {
   invoice: { id: string; supplierInvoiceNumber: string; invoiceDate: string; grossMinor: number; exceptionCode: string; documentPath: string | null; emailPath: string | null };
@@ -46,6 +47,7 @@ type Detail = {
   options: Option[];
   supplierHistory: { invoices: number; open_exceptions: number; paid: number };
   investigating: boolean;
+  tolerances: { priceVariancePct?: number; priceVarianceFloorMinor?: number } | null;
 };
 
 const CODE_LABELS: Record<string, string> = {
@@ -277,6 +279,18 @@ export default function ExceptionsPage() {
                       <div className="text-sm font-medium">{o.label}</div>
                       {o.costedNote && <div className="mt-0.5 text-xs font-medium" style={{ color: "var(--warn)" }}>{o.costedNote}</div>}
                       <p className="mt-1 flex-1 text-xs leading-5" style={{ color: "var(--muted)" }}>{o.rationale}</p>
+                      {o.emailDraft && (
+                        <details className="mt-2 rounded-lg border p-2 text-xs" style={{ borderColor: "var(--border)" }}>
+                          <summary className="cursor-pointer font-medium" style={{ color: "var(--accent)" }}>
+                            Draft supplier email — never sent automatically
+                          </summary>
+                          <div className="mt-2 space-y-1" style={{ color: "var(--muted)" }}>
+                            <div><span className="font-medium">To:</span> {o.emailDraft.to}</div>
+                            <div><span className="font-medium">Subject:</span> {o.emailDraft.subject}</div>
+                            <pre className="mt-1 whitespace-pre-wrap font-sans leading-5">{o.emailDraft.body}</pre>
+                          </div>
+                        </details>
+                      )}
                       {o.resolution === "human_verify" ? (
                         <span className="mt-2 text-xs font-medium" style={{ color: "var(--warn)" }}>
                           guidance only — requires out-of-band verification
@@ -294,6 +308,14 @@ export default function ExceptionsPage() {
                     </div>
                   ))}
                 </div>
+              )}
+              {d.tolerances && (
+                <p className="mt-2 text-xs" style={{ color: "var(--muted)" }}>
+                  Tolerance policy (parameter set, versioned): price variances within{" "}
+                  {d.tolerances.priceVariancePct ?? 2}% of the approved purchase or{" "}
+                  {money(d.tolerances.priceVarianceFloorMinor ?? 2500)}, whichever is larger, are recommended for
+                  acceptance — every resolution still needs a human approval.
+                </p>
               )}
             </div>
 

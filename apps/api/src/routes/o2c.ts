@@ -36,6 +36,36 @@ export function o2cRoutes(app: FastifyInstance): void {
     return { statuses: rows, aging, openReceipts };
   });
 
+  /** Receipt queries (plans/O2C.md §9 — the exceptions-workbench mirror):
+   * open ar_receipt cases the Cash Application Agent raised for unmatched,
+   * ambiguous or over/part payments, each with its grounded options and
+   * draft query letters. Display-only; applying money stays with humans. */
+  app.get("/o2c/receipt-queries", async () => {
+    const db = requireDb();
+    const cases = await db.query.evidenceCase.findMany({
+      where: (t, { and: a, eq: e }) => a(e(t.kind, "ar_receipt"), e(t.status, "open")),
+      orderBy: (t, { desc: d }) => d(t.createdAt),
+      limit: 25,
+    });
+    const out = [];
+    for (const c of cases) {
+      const events = await db.query.caseEvent.findMany({
+        where: (t) => eq(t.caseId, c.id),
+        orderBy: (t) => t.at,
+      });
+      const optionsEvent = [...events].reverse().find((e) => e.kind === "options");
+      const noteEvent = events.find((e) => e.kind === "note");
+      out.push({
+        id: c.id,
+        title: c.title,
+        createdAt: c.createdAt,
+        detail: noteEvent?.detail ?? null,
+        options: (optionsEvent?.detail as { options?: unknown[] } | null)?.options ?? [],
+      });
+    }
+    return { queries: out };
+  });
+
   app.get<{ Querystring: { status?: string; overdue?: string; limit?: string } }>(
     "/o2c/invoices",
     async (req) => {

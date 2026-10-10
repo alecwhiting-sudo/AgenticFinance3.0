@@ -446,14 +446,79 @@ async function cashApplicationFallback(
   const refHit = candidates.find((c) => reference.includes(c.number) || c.number.includes(reference));
   if (refHit && refHit.grossMinor === amountMinor)
     return propose(refHit, "reference cites the invoice number and the amount agrees.");
-  if (amountHits.length > 1)
+
+  // O2C mirror of the exceptions workbench (plans/O2C.md §9): an unmatched
+  // receipt opens a QUERY CASE with grounded options instead of a bare
+  // escalation. Options are display-only; applying money stays a human
+  // decision through ar.receipt.apply / payments.
+  const gbp = (m: number) => `£${(Math.abs(m) / 100).toLocaleString("en-GB", { minimumFractionDigits: 2 })}`;
+  const letterSignOff = `\n\nKind regards,\nAccounts Receivable, Brightline Services plc\n\n[Draft prepared by the Cash Application Agent for human review — nothing is sent automatically.]`;
+  const queryDraft = (subject: string, body: string) => ({
+    to: "customer accounts contact on file",
+    subject,
+    body: `${body}${letterSignOff}`,
+  });
+  type ArOpt = { resolution: string; label: string; rationale: string; costedNote?: string; emailDraft?: { to: string; subject: string; body: string } };
+  const openQueryCase = async (title: string, options: ArOpt[]) => {
+    const { ok, data } = await proposeCommand(
+      runId, 2, "case.open",
+      { kind: "ar_receipt", title, detail: { reference, amountMinor, candidates: candidates.map((c) => c.number) } },
+      steps,
+    );
+    const caseId = ok ? String((data as { result?: { caseId?: string } }).result?.caseId ?? "") : "";
+    // test-book runs (evals/shadows) get no real case — options still shape the summary
+    if (caseId) await proposeCommand(runId, 3, "case.options", { caseId, options }, steps);
+    return caseId;
+  };
+
+  if (amountHits.length > 1) {
+    const options: ArOpt[] = [
+      {
+        resolution: "hold_query",
+        label: "Hold and request a remittance advice",
+        rationale: `${amountHits.length} open invoices share this exact amount (${amountHits.map((c) => c.number).join(", ")}); only the payer can say which it settles. Hold the receipt and ask for the remittance detail.`,
+        emailDraft: queryDraft(
+          `Your payment of ${gbp(amountMinor)} (ref "${reference}") — which invoice does it settle?`,
+          `Dear customer,\n\nThank you for your payment of ${gbp(amountMinor)} (reference "${reference}"). We hold more than one open invoice at this amount (${amountHits.map((c) => c.number).join(", ")}) — could you confirm which invoice this payment settles, or send the remittance advice? We will allocate it the same day.`,
+        ),
+      },
+    ];
+    const caseId = await openQueryCase(`Ambiguous receipt ${reference} (${gbp(amountMinor)})`, options);
     return {
       outcome: "escalated",
-      summary: `${amountHits.length} open invoices share this amount (${amountHits.map((c) => c.number).join(", ")}) and the reference decides nothing — a human should pick, or request a remittance advice.`,
+      summary: `${amountHits.length} open invoices share this amount (${amountHits.map((c) => c.number).join(", ")}) and the reference decides nothing — ${caseId ? "query case opened with a hold-and-ask option and a draft remittance request" : "hold and request a remittance advice (draft prepared)"}; a human decides.`,
     };
+  }
+
+  const larger = candidates.filter((c) => c.grossMinor > amountMinor).sort((a, b) => a.grossMinor - b.grossMinor)[0];
+  const options: ArOpt[] = [];
+  if (larger) {
+    options.push({
+      resolution: "apply_residual",
+      label: `Apply as a part-payment to ${larger.number}`,
+      rationale: `The receipt (${gbp(amountMinor)}) is less than ${larger.number} (${gbp(larger.grossMinor)}, ${larger.customerName}) — the closest larger open invoice. Applying it leaves ${gbp(larger.grossMinor - amountMinor)} open to chase.`,
+      costedNote: `leaves ${gbp(larger.grossMinor - amountMinor)} open on ${larger.number}`,
+    });
+  } else if (candidates.length > 0) {
+    options.push({
+      resolution: "refund_overpay",
+      label: "Overpayment — refund the excess or hold on account",
+      rationale: `The receipt (${gbp(amountMinor)}) exceeds every open invoice for this payer. Either refund the excess or hold it on account against future billing — the customer should confirm which.`,
+    });
+  }
+  options.push({
+    resolution: "hold_query",
+    label: "Hold and query the payer",
+    rationale: `No open invoice matches ${gbp(amountMinor)} exactly${candidates.length === 0 ? " and no candidate invoices were found — possibly an unknown payer" : ""}. Hold the cash unapplied and ask the payer what it settles.`,
+    emailDraft: queryDraft(
+      `Your payment of ${gbp(amountMinor)} (ref "${reference}") — allocation query`,
+      `Dear customer,\n\nWe received your payment of ${gbp(amountMinor)} (reference "${reference}") but cannot match it to an open invoice at that amount. Could you tell us which invoice(s) it settles — a remittance advice is ideal — and we will allocate it the same day?`,
+    ),
+  });
+  const caseId = await openQueryCase(`Unmatched receipt ${reference} (${gbp(amountMinor)})`, options);
   return {
     outcome: "escalated",
-    summary: `No open invoice matches receipt amount ${amountMinor} — possible part-payment or unknown payer; a human should investigate.`,
+    summary: `No open invoice matches receipt amount ${gbp(amountMinor)} — ${larger ? `possible part-payment of ${larger.number}` : candidates.length ? "possible overpayment" : "possible unknown payer"}; ${caseId ? `query case opened with ${options.length} grounded option(s)` : `${options.length} grounded option(s) prepared`}, a human decides.`,
   };
 }
 
@@ -648,15 +713,21 @@ async function invoiceExceptionFallback(
     rationale: string;
     costedNote?: string;
     adjustedQuantities?: { lineNo: number; qty: number }[];
+    emailDraft?: { to: string; subject: string; body: string };
   };
   const gbp = (m: number) => `£${(Math.abs(m) / 100).toLocaleString("en-GB", { minimumFractionDigits: 2 })}`;
   let inv: { lines: { lineNo: number; qty: number; unitPriceMinor: number; description: string }[]; grossMinor: number; purchaseId: string | null } | null = null;
   let po: { lines: { lineNo: number; qty: number; unitPriceMinor: number }[]; totalMinor: number } | null = null;
   let receivedBy: Map<number, number> | null = null;
+  let supplier: { name: string; email: string | null } | null = null;
+  let invNumber = "the invoice on this case";
   if (db && invoiceId) {
     const row = await db.query.apInvoice.findFirst({ where: (t, { eq: e }) => e(t.id, invoiceId) });
     if (row) {
       inv = { lines: row.lines, grossMinor: row.grossMinor, purchaseId: row.purchaseId };
+      invNumber = row.supplierInvoiceNumber;
+      const s = await db.query.supplier.findFirst({ where: (t, { eq: e }) => e(t.id, row.supplierId) });
+      if (s) supplier = { name: s.name, email: s.email };
       if (row.purchaseId) {
         const p = await db.query.purchase.findFirst({ where: (t, { eq: e }) => e(t.id, row.purchaseId!) });
         if (p) po = { lines: p.lines, totalMinor: p.totalMinor };
@@ -674,20 +745,52 @@ async function invoiceExceptionFallback(
         }, 0)
       : null;
 
+  // Tolerance policy (plans/P2P.md §10 M2): a parameter set, not prose —
+  // the recommendation reads it, the workbench shows it, humans still decide.
+  let tol = { pct: 2, floorMinor: 2500 };
+  if (db) {
+    const ps = await db.query.fdpParameterSet.findFirst({
+      where: (t, { and: a, eq: e }) => a(e(t.name, "exception-tolerances"), e(t.status, "active")),
+    });
+    const p = ps?.parameters as { priceVariancePct?: number; priceVarianceFloorMinor?: number } | undefined;
+    if (p) tol = { pct: Number(p.priceVariancePct ?? 2), floorMinor: Number(p.priceVarianceFloorMinor ?? 2500) };
+  }
+  // manufactured eval payloads carry the figures directly (no db rows exist)
+  const varMinorEff =
+    varianceMinor ?? (typeof payload.varianceMinor === "number" ? payload.varianceMinor : null);
+  const basisMinor = po?.totalMinor ?? (typeof payload.poTotalMinor === "number" ? payload.poTotalMinor : null);
+  const toleranceLineMinor = Math.max(tol.floorMinor, basisMinor !== null ? Math.round((basisMinor * tol.pct) / 100) : 0);
+  const withinTolerance = varMinorEff !== null && Math.abs(varMinorEff) <= toleranceLineMinor;
+  const tolText = `${tol.pct}% of the approved purchase or ${gbp(tol.floorMinor)}, whichever is larger`;
+
+  // Display-only supplier letters (plans/P2P.md §10 M2): attached to the
+  // option that needs supplier contact, copied out by a human — NOTHING is
+  // ever sent automatically, and fraud-risk codes get no draft at all
+  // (never contact a counterparty via details from the suspect document).
+  const draftTo = supplier?.email ?? "supplier accounts contact on file";
+  const signOff = `\n\nKind regards,\nAccounts Payable, Brightline Services plc\n\n[Draft prepared by the Invoice Exception Agent for human review — nothing is sent automatically.]`;
+  const draft = (subject: string, body: string) => ({ to: draftTo, subject, body: `${body}${signOff}` });
+
   const options: Opt[] = [];
   if (code === "price_variance") {
     options.push(
       {
         resolution: "approve_adjusted",
-        label: `Accept the variance and post at invoiced amounts`,
-        rationale: `Invoiced price exceeds the approved purchase${varianceMinor !== null ? ` by ${gbp(varianceMinor)} net` : ""} (${detail}). No agreed increase on file; accepting this once and flagging the supplier for a rate review.`,
-        costedNote: varianceMinor !== null ? `costs ${gbp(varianceMinor)} more than approved` : undefined,
+        label: withinTolerance
+          ? `Accept — within tolerance policy (${tolText})`
+          : `Accept the variance and post at invoiced amounts`,
+        rationale: `Invoiced price exceeds the approved purchase${varMinorEff !== null ? ` by ${gbp(varMinorEff)} net` : ""} (${detail}).${withinTolerance ? ` Within the tolerance policy (${tolText}).` : " No agreed increase on file; accepting this once and flagging the supplier for a rate review."}`,
+        costedNote: varMinorEff !== null ? `costs ${gbp(varMinorEff)} more than approved` : undefined,
       },
       {
         resolution: "reject",
         label: "Reject and ask the supplier to re-bill at the agreed price",
-        rationale: `The purchase was approved at a lower price (${detail}); the supplier should re-issue at the agreed rate.`,
-        costedNote: varianceMinor !== null ? `saves ${gbp(varianceMinor)}, delays settlement` : undefined,
+        rationale: `The purchase was approved at a lower price (${detail}); the supplier should re-issue at the agreed rate.${withinTolerance ? "" : ` Variance is beyond the tolerance policy (${tolText}).`}`,
+        costedNote: varMinorEff !== null ? `saves ${gbp(varMinorEff)}, delays settlement` : undefined,
+        emailDraft: draft(
+          `Invoice ${invNumber} — pricing above the agreed rate`,
+          `Dear ${supplier?.name ?? "supplier"},\n\nYour invoice ${invNumber} is priced above the rate on our approved purchase order${varMinorEff !== null ? ` — a difference of ${gbp(varMinorEff)} net` : ""} (${detail}). Could you please re-issue the invoice at the agreed price, or send the signed variation that supports the new rate? We will hold the invoice unprocessed until then.`,
+        ),
       },
     );
   } else if (code === "qty_short_receipt") {
@@ -706,6 +809,10 @@ async function invoiceExceptionFallback(
         rationale: `Invoiced quantity exceeds goods received (${detail}). Part-approve for the received quantities; the shortfall re-bills on delivery.`,
         costedNote: partGross !== null && inv ? `pays ${gbp(partGross)} of ${gbp(inv.grossMinor)}` : undefined,
         adjustedQuantities: adjusted,
+        emailDraft: draft(
+          `Invoice ${invNumber} — short payment for quantities received`,
+          `Dear ${supplier?.name ?? "supplier"},\n\nYour invoice ${invNumber} bills more than our goods receipts show delivered (${detail}). We will settle the invoice for the quantities received${partGross !== null && inv ? ` (${gbp(partGross)} of ${gbp(inv.grossMinor)})` : ""}; please re-bill the balance when the outstanding items are delivered, or send your delivery evidence if you believe our receipt records are incomplete.`,
+        ),
       },
       {
         resolution: "record_receipt",
@@ -742,6 +849,10 @@ async function invoiceExceptionFallback(
         label: "Reject as a duplicate",
         rationale: `Duplicate billing detected (${detail}). The original invoice stands; notify the supplier.`,
         costedNote: inv ? `avoids paying ${gbp(inv.grossMinor)} twice` : undefined,
+        emailDraft: draft(
+          `Invoice ${invNumber} — duplicate of an invoice already on our ledger`,
+          `Dear ${supplier?.name ?? "supplier"},\n\nInvoice ${invNumber} appears to duplicate an invoice we already hold (${detail}). The original remains in our payment run; we are rejecting this copy and no further action is needed on your side. If this is in fact a separate charge, please reply with the supporting delivery or order reference and we will review.`,
+        ),
       },
       { resolution: "approve_adjusted", label: "Confirmed as a separate charge — post at invoiced amounts", rationale: `If review shows this is a genuinely separate charge (${detail}), post at invoiced amounts.` },
     );
@@ -763,6 +874,10 @@ async function invoiceExceptionFallback(
         resolution: "reject",
         label: "Reject for a corrected invoice",
         rationale: `The stated grand total does not equal the sum of the lines (${detail}). If the document itself is wrong, the supplier should re-bill correctly.`,
+        emailDraft: draft(
+          `Invoice ${invNumber} — stated total does not match the line detail`,
+          `Dear ${supplier?.name ?? "supplier"},\n\nOn invoice ${invNumber} the stated grand total does not equal the sum of the line items (${detail}). We cannot process a document whose totals disagree internally — please issue a corrected invoice, and we will process it on receipt.`,
+        ),
       },
       {
         resolution: "part_approve",
@@ -788,7 +903,17 @@ async function invoiceExceptionFallback(
 
   switch (code) {
     case "price_variance":
-      return propose("approve_adjusted", `Invoiced price exceeds the approved purchase beyond tolerance (${detail}). No agreed increase found on file; recommending acceptance at invoiced amounts this once — flag the supplier for a rate review.`);
+      if (withinTolerance)
+        return propose(
+          "approve_adjusted",
+          `Invoiced price exceeds the approved purchase by ${gbp(varMinorEff!)} — within the tolerance policy (${tolText}) — recommending acceptance at invoiced amounts (${detail}).`,
+        );
+      if (varMinorEff !== null)
+        return propose(
+          "reject",
+          `Variance of ${gbp(varMinorEff)} is beyond the tolerance policy (${tolText}): recommending the supplier re-bill at the agreed price — a draft letter is attached to the option (${detail}).`,
+        );
+      return propose("approve_adjusted", `Invoiced price exceeds the approved purchase and no figures are recoverable to test tolerance (${detail}). No agreed increase found on file; recommending acceptance at invoiced amounts this once — flag the supplier for a rate review.`);
     case "duplicate_suspect":
       return propose("reject", `Duplicate billing detected (${detail}). The original invoice stands; this copy should be rejected and the supplier notified.`);
     case "qty_short_receipt": {

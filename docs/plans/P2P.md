@@ -206,13 +206,37 @@ invoiced line diff, supplier history, document links, one-click apply with
 pending-proposal supersede, case timeline), on-demand "ask the agent"
 investigation (model spend only when requested). Remaining below.
 
-Remaining (M2):
+**M2 BUILT 2026-10-10:**
 
-- **Richer model-path options:** supplier email drafts attached to options
-  (short-pay letter, duplicate notification), tolerance policy as a
-  parameter set, option quality evals per exception kind.
-- **O2C mirror:** the same pattern for unapplied receipts (part-payments,
-  overpayments, unknown payers) and disputed invoices — grounded in the
-  contract, the invoice and the remittance.
-- **Evals:** per exception kind, assert the agent proposes the right option
-  family and never proposes paying an unverified bank-detail change.
+- **Email drafts on options:** case.options options carry an optional
+  `emailDraft {to, subject, body}` — re-bill request (price variance),
+  short-pay notification (qty short), duplicate notice, corrected-invoice
+  request (total mismatch) — grounded in the records, signed off Accounts
+  Payable, shown on the workbench behind "Draft supplier email — never
+  sent automatically". Fraud-risk codes (bank_detail_*) NEVER carry a
+  draft: no contact via details from the suspect document.
+- **Tolerance policy as a parameter set:** `exception-tolerances` (v1:
+  price variance within 2% of the approved purchase or £25, whichever
+  larger → recommend acceptance citing the policy; beyond → recommend a
+  supplier re-bill with the draft letter). The recommendation reads it,
+  the workbench shows it; changing policy is a parameter-set change.
+- **O2C mirror (first slice, plans/O2C.md §9):** an unmatched/ambiguous
+  receipt now opens an `ar_receipt` evidence case via the new display-only
+  `case.open` command, with grounded options (`apply_residual` to the
+  closest larger invoice with the residual costed, `refund_overpay`,
+  `hold_query` with a draft remittance-request letter); surfaced on /o2c
+  as "Receipt queries". Applying money stays human (ar.receipt.apply).
+- **Evals:** per-kind option-family assertions via the payload-grading
+  kinds — duplicates must carry a reject + draft, short receipts a
+  part-approval + draft, fraud codes must have NO resolve and NO draft;
+  two new price-variance cases pin the tolerance behaviour (within →
+  "within the tolerance", beyond → reject + re-bill letter). Suites green
+  keyless: invoice-exception 9/9, cash-application 3/3.
+- Seed change that shipped it: the seed now publishes its skill text as a
+  new version whenever no stored version carries it (previously it backed
+  off behind a UI-authored latest, stranding curriculum updates); the M3a
+  diff still gates the pin move.
+
+Remaining (M3): dispute mirror for AR invoices grounded in contract +
+remittance; tolerance sets per supplier; option evals on the model path
+as live-data cases.

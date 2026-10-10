@@ -99,6 +99,12 @@ export function exceptionRoutes(app: FastifyInstance): void {
         })
       : null;
 
+    // the tolerance policy the recommendation used (plans/P2P.md §10 M2) —
+    // the workbench shows the policy beside the options it shaped
+    const tolPs = await db.query.fdpParameterSet.findFirst({
+      where: (t, { and: a, eq: e }) => a(e(t.name, "exception-tolerances"), e(t.status, "active")),
+    });
+
     return {
       invoice: inv,
       supplier,
@@ -110,6 +116,7 @@ export function exceptionRoutes(app: FastifyInstance): void {
       supplierHistory: history,
       investigating: !!investigating,
       emailPath: inv.emailPath,
+      tolerances: tolPs?.parameters ?? null,
     };
   });
 

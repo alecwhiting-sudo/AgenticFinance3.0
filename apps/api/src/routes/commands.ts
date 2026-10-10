@@ -33,6 +33,22 @@ async function executeCommand(
       }
       return { noted: true };
     }
+    case "case.open": {
+      const p = params as { kind: string; title: string; detail: Record<string, unknown> };
+      const { evidenceCase, caseEvent } = await import("@af/db");
+      const [c] = await db
+        .insert(evidenceCase)
+        .values({ kind: p.kind, title: p.title })
+        .returning();
+      await db.insert(caseEvent).values({
+        caseId: c!.id,
+        actorType: "agent",
+        actorId: actor,
+        kind: "note",
+        detail: p.detail,
+      });
+      return { caseId: c!.id };
+    }
     case "case.options": {
       const p = params as { caseId: string; options: unknown[] };
       const c = await db.query.evidenceCase.findFirst({ where: (t, { eq: e }) => e(t.id, p.caseId) });
@@ -180,7 +196,7 @@ export function commandRoutes(app: FastifyInstance): void {
     // Display-only case commands (notes, resolution options) move no money and
     // change no books — every release may write to its own cases without a
     // per-release grant, so adding one never requires re-releasing live agents.
-    const displayOnly = body.type === "case.note" || body.type === "case.options";
+    const displayOnly = body.type === "case.note" || body.type === "case.options" || body.type === "case.open";
     if (!release || (!displayOnly && !release.commandPermissions.includes(body.type))) {
       await emitActivity({
         actorType: "system",

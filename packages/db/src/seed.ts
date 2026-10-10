@@ -173,10 +173,16 @@ for (const s of agentData.skills) {
     where: (t, { eq }) => eq(t.skillId, skillRow.id),
     orderBy: (t, { desc }) => desc(t.version),
   });
-  // once a human has authored the latest version, the seed backs off —
-  // it only ever upgrades its own lineage
+  // The seed publishes its text as a new version whenever NO stored version
+  // carries it — including on top of a UI-authored latest, or a repo-shipped
+  // curriculum update could silently strand. UI versions stay in history,
+  // and the stale-pin refresh still runs the M3a control-regression diff
+  // against the pinned text before anything moves.
+  const existingSame = await db.query.skillVersion.findFirst({
+    where: (t, { and, eq }) => and(eq(t.skillId, skillRow.id), eq(t.instructions, s.instructions)),
+  });
   let current = latest;
-  if (!latest || (latest.createdBy === "seed" && latest.instructions !== s.instructions)) {
+  if (!latest || !existingSame) {
     current = (
       await db
         .insert(skillVersion)
@@ -289,6 +295,27 @@ if (!existingPs) {
     },
   });
   console.log("seeded month-end parameter set v1");
+}
+
+// Exception tolerance policy (plans/P2P.md §10 M2): a versioned parameter
+// set, not skill prose — the recommendation logic reads it, the workbench
+// shows it, and changing policy is a parameter-set change, never a reword.
+const existingTol = await db.query.fdpParameterSet.findFirst({
+  where: (t, { and, eq }) => and(eq(t.name, "exception-tolerances"), eq(t.status, "active")),
+});
+if (!existingTol) {
+  await db.insert(fdpParameterSet).values({
+    name: "exception-tolerances",
+    status: "active",
+    parameters: {
+      // price variance within the larger of these is recommended for
+      // acceptance; beyond it the recommendation is a supplier re-bill
+      priceVariancePct: 2,
+      priceVarianceFloorMinor: 2500, // £25
+      note: "Applies to recommendations only — every resolution still needs a human approval.",
+    },
+  });
+  console.log("seeded exception-tolerances parameter set v1");
 }
 
 console.log(

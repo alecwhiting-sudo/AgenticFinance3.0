@@ -37,9 +37,23 @@ export default async function O2CPage({
   const filter = view && view !== "all" ? view : undefined;
   const query =
     filter === "overdue" ? "?overdue=true&limit=100" : filter ? `?status=${filter}&limit=100` : "?limit=100";
-  const [pipeline, invoices] = await Promise.all([
+  const [pipeline, invoices, receiptQueries] = await Promise.all([
     getJson<Pipeline>("/o2c/pipeline"),
     getJson<Invoice[]>(`/o2c/invoices${query}`),
+    getJson<{
+      queries: {
+        id: string;
+        title: string;
+        createdAt: string;
+        options: {
+          resolution: string;
+          label: string;
+          rationale: string;
+          costedNote?: string;
+          emailDraft?: { to: string; subject: string; body: string };
+        }[];
+      }[];
+    }>("/o2c/receipt-queries"),
   ]);
   const apiDown = pipeline === null;
   const st = (s: string) => pipeline?.statuses.find((x) => x.status === s);
@@ -147,6 +161,51 @@ export default async function O2CPage({
           </tbody>
         </table>
       </Card>
+
+      {/* Receipt queries (plans/O2C.md §9 — the exceptions-workbench mirror):
+          unmatched / ambiguous / over- or part-payments the Cash Application
+          Agent held, each with grounded options and a draft query letter.
+          Display-only: applying money stays a human act. */}
+      {(receiptQueries?.queries.length ?? 0) > 0 && (
+        <Card>
+          <SectionTitle>Receipt queries ({receiptQueries!.queries.length})</SectionTitle>
+          <p className="mb-3 text-sm" style={{ color: "var(--muted)" }}>
+            Receipts the Cash Application Agent could not apply cleanly — held with grounded options.
+            Draft letters are never sent automatically.
+          </p>
+          <div className="space-y-3">
+            {receiptQueries!.queries.map((q) => (
+              <div key={q.id} className="rounded-lg border p-3" style={{ borderColor: "var(--border)" }}>
+                <div className="flex items-baseline justify-between">
+                  <span className="text-sm font-medium">{q.title}</span>
+                  <span className="text-xs" style={{ color: "var(--muted)" }}>{formatDate(q.createdAt)}</span>
+                </div>
+                <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                  {q.options.map((o, i) => (
+                    <div key={i} className="rounded-lg border p-2 text-xs" style={{ borderColor: "var(--border)" }}>
+                      <div className="font-medium">{o.label}</div>
+                      {o.costedNote && <div className="mt-0.5 font-medium" style={{ color: "var(--warn)" }}>{o.costedNote}</div>}
+                      <p className="mt-1 leading-5" style={{ color: "var(--muted)" }}>{o.rationale}</p>
+                      {o.emailDraft && (
+                        <details className="mt-1.5 rounded border p-1.5" style={{ borderColor: "var(--border)" }}>
+                          <summary className="cursor-pointer font-medium" style={{ color: "var(--accent)" }}>
+                            Draft query letter
+                          </summary>
+                          <div className="mt-1 space-y-0.5" style={{ color: "var(--muted)" }}>
+                            <div><span className="font-medium">To:</span> {o.emailDraft.to}</div>
+                            <div><span className="font-medium">Subject:</span> {o.emailDraft.subject}</div>
+                            <pre className="mt-1 whitespace-pre-wrap font-sans leading-5">{o.emailDraft.body}</pre>
+                          </div>
+                        </details>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
     </main>
   );
 }

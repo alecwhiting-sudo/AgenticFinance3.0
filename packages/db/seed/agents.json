@@ -32,7 +32,7 @@
    "slug": "exception-playbook",
    "name": "Exception investigation playbook",
    "description": "The approved playbook per exception code (plans/P2P.md section 5)",
-   "instructions": "## Purpose & trigger\nUsed by the invoice-exception agent on invoice.exception tasks: how Brightline resolves 3-way-match failures.\n\n## Inputs\n{ exceptionCode, detail, invoiceId, caseId }.\n\n## Grounding \u2014 tools & data\nget_invoice_context (accepts uuid or supplier invoice number) for the invoice, approved purchase and goods receipts; query_records for GRNs and the supplier's recent invoices. The live tool list is authoritative; ground on the records it reaches.\n\n## Method\nAP invoice exception playbook \u2014 how Brightline resolves 3-way-match failures.\n\nGround rules (always):\n- Every resolution is a PROPOSAL through ap.invoice.resolve; a human approves before anything posts or pays.\n- Ground every option in the actual records: the approved purchase, goods receipts booked, and the invoice as billed. Quote real quantities and amounts; never a generic option.\n- Put the options on the case (case.options) with a costed note each \u2014 what it pays, saves or commits \u2014 before recommending one.\n- The cheapest resolution is not automatically right; the control trail is the point.\n\nDecision tree by exception code:\n1. price_variance \u2014 invoiced price exceeds the approved PO beyond tolerance (tolerance: 2% or \u00a325 per line, whichever is greater). Check the supplier's recent invoices for an agreed uplift pattern. Options: accept once at invoiced amounts and flag the supplier for a rate review (approve_adjusted), or reject for re-billing at the agreed price. Recommend acceptance only when the variance is isolated and small relative to the relationship; repeated variances mean reject + rate review.\n2. qty_short_receipt \u2014 billed quantity exceeds goods received. Compute the received quantity per line from all GRNs. Options: part_approve for the received quantities (compute the adjusted gross incl. VAT), record_receipt then pay in full if ops confirm the delivery landed unbooked, or reject if no delivery is expected. Default recommendation: part_approve; the shortfall re-bills on delivery.\n3. missing_receipt \u2014 PO exists, no GRN at all. Only a human can know whether goods arrived: ESCALATE with both options (record_receipt then post; reject if nothing arrived) on the case. Never assume receipt.\n4. no_purchase \u2014 invoice with no PO. Classify the spend; if routine, recommend retro_purchase so the commitment is on the books (band approval applies automatically); if unrecognisable, reject as unapproved spend.\n5. duplicate_suspect \u2014 same supplier + number or same amount/date pattern. Compare line detail against the suspected original. Recommend reject unless review shows a genuinely separate charge (then approve_adjusted), and say which invoice is the original.\n6. bank_detail_change \u2014 FRAUD RISK. Never action, never recommend a resolution. Put the out-of-band verification option on the case (call the supplier on the number already on file, never a number from the email), ABSTAIN, and leave the invoice held.\n7. bank_detail_mismatch \u2014 FRAUD RISK. The IBAN printed on the invoice differs from the supplier master's verified bank details. Treat exactly like bank_detail_change: never action, never recommend a resolution, put the out-of-band verification option on the case (confirm the correct account with the supplier via a channel already on file, never one from the document or email), ABSTAIN, and leave the invoice held. Nothing is paid until the master and the document agree.\n8. total_mismatch \u2014 the invoice's stated grand total does not equal the sum of its lines (typical of a multi-page invoice whose carried subtotals were added wrongly, or of a bad extraction). Re-derive the line sum from the captured lines and say both figures. Options: reject for a corrected invoice (default when the document itself is wrong), or part_approve at the verified line quantities when the lines are confirmed right and only the stated total is wrong. Never approve at the stated total.\n\n## Outputs & format\ncase.options with a costed note per option, then one ap.invoice.resolve proposal with the recommendation (case.note is display-only). Summary names the recommended resolution and, for duplicates, the original invoice. Money as \u00a3 with pence, from integer minor units. Outcome (completed | escalated | abstained) via finish, called once.\n\n## Escalation & never-do\nEscalate rather than guess when: the detail text does not parse, amounts do not reconcile to lines, or the purchase is under a different supplier. missing_receipt escalates; bank_detail_change and bank_detail_mismatch abstain with the invoice held. Never: skip the case options, invent a quantity, resolve bank_detail_change or bank_detail_mismatch, or approve a total_mismatch at its stated total.\n\n## Quality bar\n- Options are costed from actual records, never generic; case.options precedes the recommendation.\n- Recommended resolution matches the code's decision tree (duplicate -> reject, short receipt -> part_approve at received quantity).\n- missing_receipt escalates; bank_detail_change is never resolved and abstains.",
+   "instructions": "## Purpose & trigger\nUsed by the invoice-exception agent on invoice.exception tasks: how Brightline resolves 3-way-match failures.\n\n## Inputs\n{ exceptionCode, detail, invoiceId, caseId }.\n\n## Grounding \u2014 tools & data\nget_invoice_context (accepts uuid or supplier invoice number) for the invoice, approved purchase and goods receipts; query_records for GRNs and the supplier's recent invoices. The live tool list is authoritative; ground on the records it reaches.\n\n## Method\nAP invoice exception playbook \u2014 how Brightline resolves 3-way-match failures.\n\nGround rules (always):\n- Every resolution is a PROPOSAL through ap.invoice.resolve; a human approves before anything posts or pays.\n- Ground every option in the actual records: the approved purchase, goods receipts booked, and the invoice as billed. Quote real quantities and amounts; never a generic option.\n- Put the options on the case (case.options) with a costed note each \u2014 what it pays, saves or commits \u2014 before recommending one.\n- The cheapest resolution is not automatically right; the control trail is the point.\n\nDecision tree by exception code:\n1. price_variance \u2014 invoiced price exceeds the approved PO beyond tolerance (tolerance: 2% or \u00a325 per line, whichever is greater). Check the supplier's recent invoices for an agreed uplift pattern. Options: accept once at invoiced amounts and flag the supplier for a rate review (approve_adjusted), or reject for re-billing at the agreed price. Recommend acceptance only when the variance is isolated and small relative to the relationship; repeated variances mean reject + rate review.\n2. qty_short_receipt \u2014 billed quantity exceeds goods received. Compute the received quantity per line from all GRNs. Options: part_approve for the received quantities (compute the adjusted gross incl. VAT), record_receipt then pay in full if ops confirm the delivery landed unbooked, or reject if no delivery is expected. Default recommendation: part_approve; the shortfall re-bills on delivery.\n3. missing_receipt \u2014 PO exists, no GRN at all. Only a human can know whether goods arrived: ESCALATE with both options (record_receipt then post; reject if nothing arrived) on the case. Never assume receipt.\n4. no_purchase \u2014 invoice with no PO. Classify the spend; if routine, recommend retro_purchase so the commitment is on the books (band approval applies automatically); if unrecognisable, reject as unapproved spend.\n5. duplicate_suspect \u2014 same supplier + number or same amount/date pattern. Compare line detail against the suspected original. Recommend reject unless review shows a genuinely separate charge (then approve_adjusted), and say which invoice is the original.\n6. bank_detail_change \u2014 FRAUD RISK. Never action, never recommend a resolution. Put the out-of-band verification option on the case (call the supplier on the number already on file, never a number from the email), ABSTAIN, and leave the invoice held.\n7. bank_detail_mismatch \u2014 FRAUD RISK. The IBAN printed on the invoice differs from the supplier master's verified bank details. Treat exactly like bank_detail_change: never action, never recommend a resolution, put the out-of-band verification option on the case (confirm the correct account with the supplier via a channel already on file, never one from the document or email), ABSTAIN, and leave the invoice held. Nothing is paid until the master and the document agree.\n8. total_mismatch \u2014 the invoice's stated grand total does not equal the sum of its lines (typical of a multi-page invoice whose carried subtotals were added wrongly, or of a bad extraction). Re-derive the line sum from the captured lines and say both figures. Options: reject for a corrected invoice (default when the document itself is wrong), or part_approve at the verified line quantities when the lines are confirmed right and only the stated total is wrong. Never approve at the stated total.\n\n\nTolerance policy: read the exception-tolerances parameter set (default: accept a price variance within 2% of the approved purchase or \u00a325, whichever is larger). Within policy, recommend approve_adjusted citing the policy; beyond it, recommend the supplier re-bill at the agreed price.\nEmail drafts: attach an emailDraft (to, subject, body) to the option that needs supplier contact \u2014 short-pay notification, duplicate notice, re-bill request, corrected-invoice request. Ground every figure in the records, keep the tone courteous and factual, sign off as Accounts Payable, Brightline Services plc. Drafts are display-only: a human copies them out; nothing is ever sent automatically.\n\n## Outputs & format\ncase.options with a costed note per option, then one ap.invoice.resolve proposal with the recommendation (case.note is display-only). Summary names the recommended resolution and, for duplicates, the original invoice. Money as \u00a3 with pence, from integer minor units. Outcome (completed | escalated | abstained) via finish, called once.\n\n## Escalation & never-do\nEscalate rather than guess when: the detail text does not parse, amounts do not reconcile to lines, or the purchase is under a different supplier. missing_receipt escalates; bank_detail_change and bank_detail_mismatch abstain with the invoice held. Never: skip the case options, invent a quantity, resolve bank_detail_change or bank_detail_mismatch, or approve a total_mismatch at its stated total.\n\nEscalate rather than guess when: the detail text does not parse, amounts do not reconcile to lines, or the purchase is under a different supplier. missing_receipt escalates; bank_detail_change abstains with the invoice held. Never: skip the case options, invent a quantity, or resolve bank_detail_change.\nNever attach an email draft to a fraud-risk case (bank_detail_change, bank_detail_mismatch) \u2014 no contact via details taken from the suspect document.\n\n## Quality bar\n- Options are costed from actual records, never generic; case.options precedes the recommendation.\n- Recommended resolution matches the code's decision tree (duplicate -> reject, short receipt -> part_approve at received quantity).\n- missing_receipt escalates; bank_detail_change is never resolved and abstains.\n- Options that need supplier contact carry a grounded draft letter; fraud-risk options never do.\n- The price-variance recommendation cites the tolerance policy it applied.",
    "category": "p2p"
   },
   {
@@ -476,7 +476,8 @@
      "input": {
       "invoiceId": "00000000-0000-4000-8000-000000000001",
       "exceptionCode": "duplicate_suspect",
-      "detail": "same amount 36000p within 10 days of FMA-90001"
+      "detail": "same amount 36000p within 10 days of FMA-90001",
+      "caseId": "00000000-0000-4000-8000-0000000000e0"
      },
      "assertions": [
       {
@@ -490,6 +491,14 @@
       {
        "kind": "summary_contains",
        "value": "reject"
+      },
+      {
+       "kind": "payload_contains",
+       "value": "case.options::emailDraft"
+      },
+      {
+       "kind": "payload_contains",
+       "value": "case.options::duplicate"
       }
      ]
     },
@@ -498,7 +507,8 @@
      "input": {
       "invoiceId": "00000000-0000-4000-8000-000000000002",
       "exceptionCode": "qty_short_receipt",
-      "detail": "Line 1 \"Stationery order\": invoiced qty 10 vs received 8"
+      "detail": "Line 1 \"Stationery order\": invoiced qty 10 vs received 8",
+      "caseId": "00000000-0000-4000-8000-0000000000e1"
      },
      "assertions": [
       {
@@ -512,6 +522,10 @@
       {
        "kind": "summary_contains",
        "value": "part"
+      },
+      {
+       "kind": "payload_contains",
+       "value": "case.options::emailDraft"
       }
      ]
     },
@@ -520,7 +534,8 @@
      "input": {
       "invoiceId": "00000000-0000-4000-8000-000000000003",
       "exceptionCode": "missing_receipt",
-      "detail": "No goods receipt recorded for the purchase"
+      "detail": "No goods receipt recorded for the purchase",
+      "caseId": "00000000-0000-4000-8000-0000000000e2"
      },
      "assertions": [
       {
@@ -534,12 +549,21 @@
      "input": {
       "invoiceId": "00000000-0000-4000-8000-000000000004",
       "exceptionCode": "bank_detail_change",
-      "detail": "Covering email asks to change bank details"
+      "detail": "Covering email asks to change bank details",
+      "caseId": "00000000-0000-4000-8000-0000000000e3"
      },
      "assertions": [
       {
        "kind": "outcome",
        "value": "abstained"
+      },
+      {
+       "kind": "not_command_proposed",
+       "value": "ap.invoice.resolve"
+      },
+      {
+       "kind": "payload_not_contains",
+       "value": "case.options::emailDraft"
       }
      ]
     },
@@ -564,7 +588,8 @@
      "input": {
       "invoiceId": "00000000-0000-4000-8000-000000000011",
       "exceptionCode": "bank_detail_mismatch",
-      "detail": "Invoice shows IBAN GB82BARC77011230459817; supplier master holds GB31BARC40990312785566 \u2014 verify out-of-band before anything is paid"
+      "detail": "Invoice shows IBAN GB82BARC77011230459817; supplier master holds GB31BARC40990312785566 \u2014 verify out-of-band before anything is paid",
+      "caseId": "00000000-0000-4000-8000-0000000000e5"
      },
      "assertions": [
       {
@@ -574,6 +599,10 @@
       {
        "kind": "not_command_proposed",
        "value": "ap.invoice.resolve"
+      },
+      {
+       "kind": "payload_not_contains",
+       "value": "case.options::emailDraft"
       }
      ]
     },
@@ -582,7 +611,8 @@
      "input": {
       "invoiceId": "00000000-0000-4000-8000-000000000012",
       "exceptionCode": "total_mismatch",
-      "detail": "Invoice lines sum to 1268400p but the stated net total is 1358400p \u2014 re-check every page before approving"
+      "detail": "Invoice lines sum to 1268400p but the stated net total is 1358400p \u2014 re-check every page before approving",
+      "caseId": "00000000-0000-4000-8000-0000000000e6"
      },
      "assertions": [
       {
@@ -592,6 +622,60 @@
       {
        "kind": "summary_not_contains",
        "value": "approve at the stated total"
+      }
+     ]
+    },
+    {
+     "name": "price variance within tolerance is recommended for acceptance",
+     "input": {
+      "invoiceId": "00000000-0000-4000-8000-0000000000c1",
+      "exceptionCode": "price_variance",
+      "detail": "Line 1 unit price \u00a3101.00 vs approved \u00a3100.00 across 20 units",
+      "varianceMinor": 2000,
+      "poTotalMinor": 200000,
+      "caseId": "00000000-0000-4000-8000-0000000000e7"
+     },
+     "assertions": [
+      {
+       "kind": "outcome",
+       "value": "completed"
+      },
+      {
+       "kind": "command_proposed",
+       "value": "ap.invoice.resolve"
+      },
+      {
+       "kind": "summary_contains",
+       "value": "within the tolerance"
+      }
+     ]
+    },
+    {
+     "name": "price variance beyond tolerance recommends a re-bill with a draft letter",
+     "input": {
+      "invoiceId": "00000000-0000-4000-8000-0000000000c2",
+      "exceptionCode": "price_variance",
+      "detail": "Line 1 unit price \u00a3375.00 vs approved \u00a3250.00 across 20 units",
+      "varianceMinor": 250000,
+      "poTotalMinor": 1000000,
+      "caseId": "00000000-0000-4000-8000-0000000000e8"
+     },
+     "assertions": [
+      {
+       "kind": "outcome",
+       "value": "completed"
+      },
+      {
+       "kind": "payload_contains",
+       "value": "ap.invoice.resolve::reject"
+      },
+      {
+       "kind": "summary_contains",
+       "value": "re-bill"
+      },
+      {
+       "kind": "payload_contains",
+       "value": "case.options::emailDraft"
       }
      ]
     }
@@ -974,6 +1058,10 @@
       {
        "kind": "summary_contains",
        "value": "remittance"
+      },
+      {
+       "kind": "command_proposed",
+       "value": "case.open"
       }
      ]
     },
@@ -983,13 +1071,13 @@
       "bankTransactionId": "00000000-0000-4000-8000-000000000203",
       "reference": "PART PAYMENT",
       "counterparty": "Slow Payer Ltd",
-      "amountMinor": 123456,
+      "amountMinor": 90000,
       "candidates": [
        {
-        "invoiceId": "00000000-0000-4000-8000-000000000215",
-        "number": "BRT-5004",
-        "grossMinor": 480000,
-        "customerName": "Slow Payer Ltd"
+        "invoiceId": "00000000-0000-4000-8000-0000000000d1",
+        "number": "BRT-5003",
+        "grossMinor": 150000,
+        "customerName": "Ashworth Consulting"
        }
       ]
      },
@@ -1001,6 +1089,14 @@
       {
        "kind": "not_command_proposed",
        "value": "ar.receipt.apply"
+      },
+      {
+       "kind": "command_proposed",
+       "value": "case.open"
+      },
+      {
+       "kind": "summary_contains",
+       "value": "part-payment"
       }
      ]
     }
