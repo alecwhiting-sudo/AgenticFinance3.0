@@ -1,0 +1,1 @@
+ALTER TABLE "agent"."work_item" ADD COLUMN "claimed_at" timestamp with time zone;

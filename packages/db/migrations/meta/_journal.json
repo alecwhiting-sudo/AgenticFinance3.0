@@ -127,6 +127,13 @@
       "when": 1791622162701,
       "tag": "0017_curved_shooting_star",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1791640015279,
+      "tag": "0018_yellow_black_crow",
+      "breakpoints": true
     }
   ]
 }

@@ -19,7 +19,7 @@ async function claimNext(): Promise<WorkItemRow | null> {
   if (!db) return null;
   const rows = await db.execute(sql`
     update agent.work_item
-    set status = 'claimed', claimed_by = ${WORKER_ID}, attempts = attempts + 1
+    set status = 'claimed', claimed_by = ${WORKER_ID}, claimed_at = now(), attempts = attempts + 1
     where id = (
       select id from agent.work_item
       where status = 'pending' and scheduled_at <= now()
@@ -484,12 +484,88 @@ async function recordShadowCase(
   }
 }
 
+/** Stale-claim sweep: a worker killed mid-item (a deploy restart) leaves it
+ * claimed/running forever — and anything waiting on it (a shadow replay at
+ * 24/25, an eval suite) never closes. Every sweep, items claimed longer ago
+ * than STALE_CLAIM_MS go back to pending for a fresh worker; past the
+ * attempt cap they are marked failed instead, and a failed shadow.case is
+ * still recorded so its replay completes with an honest "failed" entry. */
+const STALE_CLAIM_MS = Number(process.env.WORKER_STALE_CLAIM_MS ?? 10 * 60 * 1000);
+const MAX_ATTEMPTS = 3;
+
+async function sweepStaleClaims(log: (msg: string) => void): Promise<void> {
+  if (!db) return;
+  const stale = (
+    await db.execute(sql`
+      select id, type, payload, attempts from agent.work_item
+      where status in ('claimed', 'running')
+        and claimed_at is not null
+        and claimed_at < now() - (${STALE_CLAIM_MS}::bigint * interval '1 millisecond')
+      limit 20
+    `)
+  ).rows as { id: string; type: string; payload: Record<string, unknown>; attempts: number }[];
+  for (const item of stale) {
+    if (item.attempts < MAX_ATTEMPTS) {
+      await db
+        .update(workItem)
+        .set({ status: "pending", claimedBy: null, claimedAt: null })
+        .where(eq(workItem.id, item.id));
+      log(`stale claim requeued: ${item.type} (${item.id}), attempt ${item.attempts}`);
+      await emitActivity({
+        actorType: "system",
+        actorId: WORKER_ID,
+        verb: "requeued_stale_item",
+        objectType: "work_item",
+        objectId: item.id,
+        summary: `A ${item.type} task was stranded by a worker restart — requeued (attempt ${item.attempts + 1})`,
+      });
+    } else {
+      await db
+        .update(workItem)
+        .set({ status: "failed", completedAt: new Date() })
+        .where(eq(workItem.id, item.id));
+      log(`stale claim FAILED after ${item.attempts} attempts: ${item.type} (${item.id})`);
+      // a dead shadow case still closes its replay, honestly marked failed
+      if (item.type === "shadow.case" && item.payload.shadowId && item.payload.originalRunId) {
+        const sr = await db.query.shadowReplay.findFirst({
+          where: (t) => eq(t.id, String(item.payload.shadowId)),
+        });
+        if (sr && sr.status === "running") {
+          const run = await db.query.agentRun.findFirst({
+            where: (t) => eq(t.workItemId, item.id),
+            orderBy: (t, { desc }) => desc(t.startedAt),
+          });
+          await recordShadowCase(
+            String(item.payload.shadowId),
+            String(item.payload.originalRunId),
+            run?.id ?? String(item.payload.originalRunId),
+            "failed",
+          );
+        }
+      }
+      await emitActivity({
+        actorType: "system",
+        actorId: WORKER_ID,
+        verb: "failed_stale_item",
+        objectType: "work_item",
+        objectId: item.id,
+        summary: `A ${item.type} task died ${item.attempts} times (worker restarts) — marked failed`,
+      });
+    }
+  }
+}
+
 export function startProcessor(log: (msg: string) => void): void {
   let busy = false;
+  let lastSweep = 0;
   setInterval(async () => {
     if (busy || !db) return;
     busy = true;
     try {
+      if (Date.now() - lastSweep > 30_000) {
+        lastSweep = Date.now();
+        await sweepStaleClaims(log).catch((e) => log(`stale-claim sweep failed: ${String(e)}`));
+      }
       let item = await claimNext();
       while (item) {
         log(`claimed ${item.type} (${item.id})`);

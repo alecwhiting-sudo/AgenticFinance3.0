@@ -287,6 +287,9 @@ export const workItem = ag.table("work_item", {
   priority: integer("priority").notNull().default(5),
   attempts: integer("attempts").notNull().default(0),
   claimedBy: text("claimed_by"),
+  /** when the current claim was taken — the stale-claim sweep requeues
+   * items a dead worker (deploy restart) left claimed/running forever */
+  claimedAt: timestamp("claimed_at", { withTimezone: true }),
   scheduledAt: timestamp("scheduled_at", { withTimezone: true }).notNull().defaultNow(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   completedAt: timestamp("completed_at", { withTimezone: true }),
