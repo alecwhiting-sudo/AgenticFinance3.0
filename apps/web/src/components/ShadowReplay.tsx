@@ -5,7 +5,6 @@
  * measured impact report — what would change, case by case — beside the
  * promote decision. Measurement beats prediction: this is the evidence the
  * human (and later the M3b reviewer) reads before promoting. */
-import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { PUBLIC_API_URL as apiUrl } from "@/lib/api";
 
@@ -67,7 +66,23 @@ export default function ShadowReplayPanel({
   const [version, setVersion] = useState<number | undefined>(draftVersions[0]);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
-  const [showAll, setShowAll] = useState(false);
+  // "show all" survives a round-trip to a run page (per-tab convenience)
+  const [showAll, setShowAllState] = useState(false);
+  useEffect(() => {
+    try {
+      setShowAllState(sessionStorage.getItem(`shadow-all-${agentSlug}`) === "1");
+    } catch {
+      /* storage unavailable */
+    }
+  }, [agentSlug]);
+  const setShowAll = (v: boolean) => {
+    setShowAllState(v);
+    try {
+      sessionStorage.setItem(`shadow-all-${agentSlug}`, v ? "1" : "0");
+    } catch {
+      /* storage unavailable */
+    }
+  };
 
   const load = useCallback(async () => {
     try {
@@ -95,9 +110,12 @@ export default function ShadowReplayPanel({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h3 className="text-base font-semibold">Shadow replay</h3>
-          <p className="text-xs" style={{ color: "var(--muted)" }}>
-            Re-runs this agent&apos;s real recent cases under a draft release in the test book, then
-            measures what would change — evidence for the promote decision, not prediction.
+          <p className="max-w-3xl text-xs" style={{ color: "var(--muted)" }}>
+            Takes the exact tasks this agent already handled — the same invoices and receipts, same
+            inputs — and runs them again under the proposed draft release, side by side with what the
+            live release actually did. Everything executes into the <em>test book</em>: a parallel set
+            of books the real accounts, approvals inbox and reports never read, so nothing real moves.
+            The result is measured evidence for the promote decision, not a prediction.
           </p>
         </div>
         <span className="inline-flex items-center gap-2">
@@ -211,20 +229,69 @@ export default function ShadowReplayPanel({
               {changedCases.length > 0 ? (
                 <div>
                   <div className="mb-1 text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--muted)" }}>
-                    What would change, case by case
+                    What would change, case by case — expand a row for the before / after
                   </div>
                   <ul className="space-y-1.5 text-xs">
                     {(showAll ? changedCases : changedCases.slice(0, 8)).map((c) => (
-                      <li key={c.shadowRunId} className="rounded-lg border p-2" style={{ borderColor: "var(--border)" }}>
-                        <span className="font-medium">{c.ref}</span>
-                        {c.exceptionCode && <span style={{ color: "var(--muted)" }}> · {c.exceptionCode.replaceAll("_", " ")}</span>}
-                        <span style={{ color: "var(--warn)" }}> — {c.changes.join("; ")}</span>{" "}
-                        <Link href={`/runs/${c.originalRunId}`} className="hover:underline" style={{ color: "var(--accent)" }}>
-                          original
-                        </Link>{" "}
-                        <Link href={`/runs/${c.shadowRunId}`} className="hover:underline" style={{ color: "var(--accent)" }}>
-                          shadow
-                        </Link>
+                      <li key={c.shadowRunId} className="rounded-lg border" style={{ borderColor: "var(--border)" }}>
+                        <details>
+                          <summary className="cursor-pointer p-2">
+                            <span className="font-medium">{c.ref}</span>
+                            {c.exceptionCode && <span style={{ color: "var(--muted)" }}> · {c.exceptionCode.replaceAll("_", " ")}</span>}
+                            <span style={{ color: "var(--warn)" }}> — {c.changes.join("; ")}</span>
+                          </summary>
+                          <div className="grid gap-3 border-t p-2 sm:grid-cols-2" style={{ borderColor: "var(--border)" }}>
+                            {(
+                              [
+                                { title: `Active v${latest.baselineVersion} did`, side: c.baseline, run: c.originalRunId },
+                                { title: `Draft v${latest.draftVersion} would`, side: c.draft, run: c.shadowRunId },
+                              ] as const
+                            ).map(({ title, side, run }) => {
+                              const otherCmds = (title.startsWith("Active") ? c.draft : c.baseline).commands.map(
+                                (x) => `${x.type}${x.resolution ? `:${x.resolution}` : ""}`,
+                              );
+                              return (
+                                <div key={title} className="rounded-lg border p-2" style={{ borderColor: "var(--border)" }}>
+                                  <div className="mb-1 flex items-baseline justify-between">
+                                    <span className="font-semibold">{title}</span>
+                                    <a
+                                      href={`/runs/${run}`}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="hover:underline"
+                                      style={{ color: "var(--accent)" }}
+                                    >
+                                      full run ↗
+                                    </a>
+                                  </div>
+                                  <div>
+                                    outcome:{" "}
+                                    <span
+                                      className="font-medium"
+                                      style={c.baseline.outcome !== c.draft.outcome ? { color: "var(--warn)" } : undefined}
+                                    >
+                                      {side.outcome}
+                                    </span>
+                                  </div>
+                                  <ul className="mt-1 space-y-0.5">
+                                    {side.commands.map((cmd, i) => {
+                                      const key = `${cmd.type}${cmd.resolution ? `:${cmd.resolution}` : ""}`;
+                                      const differs = !otherCmds.includes(key);
+                                      return (
+                                        <li key={i} style={differs ? { color: "var(--warn)", fontWeight: 500 } : { color: "var(--muted)" }}>
+                                          {differs ? "± " : "· "}
+                                          {cmd.type.replaceAll(".", " ")}
+                                          {cmd.resolution ? ` → ${cmd.resolution.replaceAll("_", " ")}` : ""}
+                                        </li>
+                                      );
+                                    })}
+                                    {side.commands.length === 0 && <li style={{ color: "var(--muted)" }}>proposed nothing</li>}
+                                  </ul>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </details>
                       </li>
                     ))}
                   </ul>

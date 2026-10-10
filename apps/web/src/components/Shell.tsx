@@ -29,7 +29,16 @@ const NAV: Parent[] = [
       { href: "/p2p/flow", label: "Live flow" },
     ],
   },
-  { href: "/o2c", label: "Order to Cash", short: "O2C" },
+  {
+    href: "/o2c",
+    label: "Order to Cash",
+    short: "O2C",
+    exact: true,
+    children: [
+      { href: "/o2c", label: "Receivables", exact: true },
+      { href: "/o2c/invoices", label: "Invoices" },
+    ],
+  },
   {
     href: "/r2r",
     label: "Record to Report",
@@ -45,6 +54,7 @@ const NAV: Parent[] = [
     href: "/agents",
     label: "Agents",
     children: [
+      { href: "/agents", label: "Roster", exact: true },
       { href: "/agents/skills", label: "Skills library" },
       { href: "/work", label: "Work queue" },
       { href: "/approvals", label: "Approvals" },

@@ -5,7 +5,7 @@
  * graded against their eval case's assertions.
  */
 import { and, eq, sql } from "drizzle-orm";
-import { agentRelease, agentRun, command, evalRun, evalSummary, shadowReplay, workItem } from "@af/db";
+import { agentRelease, agentRun, apInvoice, command, evalRun, evalSummary, shadowReplay, supplier, workItem } from "@af/db";
 import { db } from "../lib/db.js";
 import { emitActivity } from "../lib/activity.js";
 import { runAgentLoop, type ResolvedRelease } from "./agentLoop.js";
@@ -385,9 +385,26 @@ async function recordShadowCase(
     ? await db.query.workItem.findFirst({ where: (t) => eq(t.id, orig.workItemId!) })
     : null;
   const p = (ow?.payload ?? {}) as Record<string, unknown>;
-  const ref = String(
-    p.supplierInvoiceNumber ?? p.invoiceNumber ?? p.number ?? p.periodCode ?? p.question ?? ow?.type ?? "case",
+  // a human-recognisable reference for the case list: the invoice number
+  // (resolved from the id when the payload only carries an id), the bank
+  // reference, the period — never a bare task type if we can do better
+  let ref = String(
+    p.supplierInvoiceNumber ?? p.invoiceNumber ?? p.number ?? p.reference ?? p.periodCode ?? p.question ?? "",
   ).slice(0, 60);
+  if (!ref && typeof p.invoiceId === "string") {
+    const inv = await db.query.apInvoice.findFirst({ where: (t) => eq(t.id, p.invoiceId as string) });
+    if (inv) {
+      const sup = await db.query.supplier.findFirst({ where: (t) => eq(t.id, inv.supplierId) });
+      ref = `${inv.supplierInvoiceNumber}${sup ? ` · ${sup.name}` : ""}`.slice(0, 60);
+    }
+  }
+  // a run older than the last dataset reset points at an invoice that no
+  // longer exists — the case detail still names the line, so use that
+  if (!ref && typeof p.detail === "string" && p.detail.length > 0) {
+    const quoted = /"([^"]{3,60})"/.exec(p.detail);
+    ref = (quoted?.[1] ?? p.detail.slice(0, 50)).trim();
+  }
+  if (!ref) ref = String(ow?.type ?? "case");
   const tokensOf = (r: typeof orig) => ({
     modelCalls: r?.modelCalls ?? 0,
     inputTokens: r?.inputTokens ?? 0,
