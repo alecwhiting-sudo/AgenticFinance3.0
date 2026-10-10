@@ -5,7 +5,7 @@
  * graded against their eval case's assertions.
  */
 import { and, eq, sql } from "drizzle-orm";
-import { agentRelease, agentRun, command, evalRun, evalSummary, workItem } from "@af/db";
+import { agentRelease, agentRun, command, evalRun, evalSummary, shadowReplay, workItem } from "@af/db";
 import { db } from "../lib/db.js";
 import { emitActivity } from "../lib/activity.js";
 import { runAgentLoop, type ResolvedRelease } from "./agentLoop.js";
@@ -231,7 +231,9 @@ async function processItem(item: WorkItemRow): Promise<void> {
     return;
   }
   const targetReleaseId =
-    item.type === "eval.case" && typeof item.payload.releaseId === "string" ? item.payload.releaseId : undefined;
+    (item.type === "eval.case" || item.type === "shadow.case") && typeof item.payload.releaseId === "string"
+      ? item.payload.releaseId
+      : undefined;
   const resolved = await resolveActiveRelease(item.agentId, targetReleaseId);
   if (!resolved) {
     await db
@@ -270,8 +272,13 @@ async function processItem(item: WorkItemRow): Promise<void> {
   });
 
   const isEval = item.type === "eval.case";
-  const payload = isEval ? ((item.payload.input as Record<string, unknown>) ?? {}) : item.payload;
-  const taskType = isEval ? "eval.case" : item.type;
+  // shadow.case (governance M2): the ORIGINAL payload re-runs under its
+  // ORIGINAL task type, so the draft faces exactly the work the active
+  // release faced — only the release (and the book) differ.
+  const isShadow = item.type === "shadow.case";
+  const payload =
+    isEval || isShadow ? ((item.payload.input as Record<string, unknown>) ?? {}) : item.payload;
+  const taskType = isEval ? "eval.case" : isShadow ? String(item.payload.taskType ?? "") : item.type;
 
   let outcome: string;
   let summary: string;
@@ -313,6 +320,150 @@ async function processItem(item: WorkItemRow): Promise<void> {
       outcome,
       summary,
     );
+  }
+  if (isShadow && item.payload.shadowId && item.payload.originalRunId) {
+    await recordShadowCase(String(item.payload.shadowId), String(item.payload.originalRunId), run!.id, outcome);
+  }
+}
+
+/** Diff one shadow run against its original and fold it into the replay's
+ * impact report; the LAST case in closes the replay with the aggregate. */
+async function recordShadowCase(
+  shadowId: string,
+  originalRunId: string,
+  shadowRunId: string,
+  outcome: string,
+): Promise<void> {
+  if (!db) return;
+  const sr = await db.query.shadowReplay.findFirst({ where: (t) => eq(t.id, shadowId) });
+  if (!sr || sr.status !== "running") return;
+  const orig = await db.query.agentRun.findFirst({ where: (t) => eq(t.id, originalRunId) });
+  const shadow = await db.query.agentRun.findFirst({ where: (t) => eq(t.id, shadowRunId) });
+  const cmdsOf = async (runId: string) =>
+    (await db!.query.command.findMany({ where: (t) => eq(t.runId, runId) })).map((c) => ({
+      type: c.type,
+      resolution: ((c.params as { resolution?: string }).resolution ?? null) as string | null,
+    }));
+  // The baseline's PROPOSED command rows are pruned by demo resets, but its
+  // transcript survives (and records each accepted proposal with params) —
+  // prefer that; fall back to whatever command rows remain.
+  const cmdsFromTranscript = (r: typeof orig) =>
+    ((r?.transcript ?? []) as {
+      kind?: string;
+      label?: string;
+      detail?: { status?: number; response?: { params?: { resolution?: string } } };
+    }[])
+      .filter((s) => s.kind === "command" && typeof s.label === "string" && (s.detail?.status ?? 500) < 300)
+      .map((s) => ({
+        type: String(s.label).replace(/^propose /, ""),
+        resolution: (s.detail?.response?.params?.resolution ?? null) as string | null,
+      }));
+  const bFromDb = await cmdsOf(originalRunId);
+  const bFromTranscript = cmdsFromTranscript(orig);
+  const bCmds = bFromTranscript.length >= bFromDb.length ? bFromTranscript : bFromDb;
+  const dCmds = await cmdsOf(shadowRunId);
+  const keyOf = (cs: { type: string; resolution: string | null }[]) =>
+    cs.map((c) => `${c.type}${c.resolution ? `:${c.resolution}` : ""}`).sort().join(", ");
+  const changes: string[] = [];
+  if ((orig?.outcome ?? "unknown") !== outcome) changes.push(`outcome: ${orig?.outcome ?? "unknown"} → ${outcome}`);
+  // Demo resets prune PROPOSED commands, so an old baseline run can read as
+  // "proposed nothing" when it did: a completed baseline with zero stored
+  // commands against a proposing draft is evidence loss, not a behaviour
+  // change — report it as incomparable rather than changed.
+  const incomparable =
+    bCmds.length === 0 && dCmds.length > 0 && (orig?.outcome === "completed" || orig?.outcome === "escalated");
+  if (incomparable) {
+    changes.length = 0;
+  } else {
+    const bRes = bCmds.find((c) => c.type === "ap.invoice.resolve")?.resolution ?? null;
+    const dRes = dCmds.find((c) => c.type === "ap.invoice.resolve")?.resolution ?? null;
+    if (bRes !== dRes) changes.push(`resolution: ${bRes ?? "none"} → ${dRes ?? "none"}`);
+    else if (keyOf(bCmds) !== keyOf(dCmds)) changes.push(`commands: [${keyOf(bCmds) || "none"}] → [${keyOf(dCmds) || "none"}]`);
+  }
+
+  const ow = orig?.workItemId
+    ? await db.query.workItem.findFirst({ where: (t) => eq(t.id, orig.workItemId!) })
+    : null;
+  const p = (ow?.payload ?? {}) as Record<string, unknown>;
+  const ref = String(
+    p.supplierInvoiceNumber ?? p.invoiceNumber ?? p.number ?? p.periodCode ?? p.question ?? ow?.type ?? "case",
+  ).slice(0, 60);
+  const tokensOf = (r: typeof orig) => ({
+    modelCalls: r?.modelCalls ?? 0,
+    inputTokens: r?.inputTokens ?? 0,
+    outputTokens: r?.outputTokens ?? 0,
+    cacheWriteTokens: r?.cacheWriteTokens ?? 0,
+    cacheReadTokens: r?.cacheReadTokens ?? 0,
+  });
+  const result = {
+    originalRunId,
+    shadowRunId,
+    taskType: ow?.type ?? "unknown",
+    ref,
+    exceptionCode: (p.exceptionCode as string | undefined) ?? null,
+    baseline: { outcome: orig?.outcome ?? "unknown", commands: bCmds, ...tokensOf(orig) },
+    draft: { outcome, commands: dCmds, ...tokensOf(shadow) },
+    changed: changes.length > 0,
+    incomparable,
+    changes,
+  };
+  const results = [...sr.results, result];
+  const done = results.length >= sr.cases;
+  let summary: Record<string, unknown> | undefined;
+  if (done) {
+    const count = (side: "baseline" | "draft") => {
+      const out: Record<string, number> = {};
+      for (const r of results as (typeof result)[]) {
+        const o = r[side].outcome ?? "unknown";
+        out[o] = (out[o] ?? 0) + 1;
+      }
+      return out;
+    };
+    const tok = (side: "baseline" | "draft") => {
+      const t = { modelCalls: 0, inputTokens: 0, outputTokens: 0, cacheWriteTokens: 0, cacheReadTokens: 0 };
+      for (const r of results as (typeof result)[]) {
+        t.modelCalls += r[side].modelCalls;
+        t.inputTokens += r[side].inputTokens;
+        t.outputTokens += r[side].outputTokens;
+        t.cacheWriteTokens += r[side].cacheWriteTokens;
+        t.cacheReadTokens += r[side].cacheReadTokens;
+      }
+      return t;
+    };
+    const rs = results as (typeof result)[];
+    summary = {
+      cases: rs.length,
+      changed: rs.filter((r) => r.changed).length,
+      incomparable: rs.filter((r) => r.incomparable).length,
+      baselineOutcomes: count("baseline"),
+      draftOutcomes: count("draft"),
+      resolutionChanges: rs
+        .filter((r) => r.changes.some((c) => c.startsWith("resolution:")))
+        .map((r) => ({ ref: r.ref, change: r.changes.find((c) => c.startsWith("resolution:")) }))
+        .slice(0, 20),
+      changedByExceptionCode: rs
+        .filter((r) => r.changed && r.exceptionCode)
+        .reduce<Record<string, number>>((acc, r) => {
+          acc[r.exceptionCode!] = (acc[r.exceptionCode!] ?? 0) + 1;
+          return acc;
+        }, {}),
+      baselineTokens: tok("baseline"),
+      draftTokens: tok("draft"),
+    };
+  }
+  await db
+    .update(shadowReplay)
+    .set({ results, ...(done ? { summary, status: "complete", finishedAt: new Date() } : {}) })
+    .where(eq(shadowReplay.id, shadowId));
+  if (done) {
+    await emitActivity({
+      actorType: "system",
+      actorId: "shadow-replay",
+      verb: "finished_shadow_replay",
+      objectType: "agent",
+      objectId: sr.agentId,
+      summary: `Shadow replay complete: ${results.length} cases, ${(summary!.changed as number)} changed — impact report ready on the agent page`,
+    });
   }
 }
 

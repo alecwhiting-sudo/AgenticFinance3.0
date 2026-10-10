@@ -9,6 +9,7 @@ import {
   RunEvalsButton,
   SkillEditor,
 } from "@/components/agentActions";
+import ShadowReplayPanel from "@/components/ShadowReplay";
 
 type Detail = {
   agent: { id: string; slug: string; name: string; purpose: string; owner: string; status: string };
@@ -235,6 +236,17 @@ export default async function AgentDetail({ params }: { params: Promise<{ slug: 
               );
             })}
           </ul>
+        </Card>
+      </section>
+
+      {/* Shadow replay (governance M2): measured impact of a draft before
+          promotion — the report sits beside the pipeline it informs. */}
+      <section>
+        <Card>
+          <ShadowReplayPanel
+            agentSlug={d.agent.slug}
+            draftVersions={d.releases.filter((r) => r.status === "draft").map((r) => r.version)}
+          />
         </Card>
       </section>
 

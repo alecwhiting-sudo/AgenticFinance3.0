@@ -64,11 +64,28 @@ coverage demands. Live cases assert invariants (`outcome_in`,
 absence of data never fails a suite. Seeded: invoice-exception and
 collections each carry one. The full-population version is M2.
 
-**M2 — Shadow replay with an impact report (the real test environment).**
-A Test-panel scenario: copy the books into a sandbox (or rely on replay
-determinism to rebuild them), re-run a chosen slice of history (e.g. one
-month's invoice intake and exceptions) under the DRAFT release, then diff
-against the current release's actual outcomes and publish an impact report:
+**M2 — Shadow replay with an impact report — BUILT 2026-10-10.** Lives on
+the agent page beside the release pipeline (not the Test panel — the report
+belongs next to the promote decision it informs). "Run shadow replay" on a
+DRAFT release re-queues the agent's real recent work items (latest run per
+item, up to 25, evals excluded) as `shadow.case` items pinned to the draft;
+the gateway books every command into the test book (D16), display-only case
+commands skip the real case timeline, `report.commentary.save` skips the
+shared commentary table, and a replayed board pack writes a test-book COPY
+— nothing human-visible moves. The worker diffs each shadow run against its
+original (outcome, proposed command set, chosen resolution) and closes the
+replay with the impact report: cases replayed, cases that would change
+(case-by-case with links to both runs), changes by exception code,
+escalation rate and model calls/cost (rate card) baseline → draft.
+Baseline commands are read from the original run's TRANSCRIPT (demo resets
+prune proposed command rows); a baseline with no recoverable commands is
+reported "incomparable", never "changed". Verified keyless: 25
+invoice-exception cases replayed in ~5s; an identical-behaviour draft
+correctly measured 15 adds-options-now deltas vs pre-options history and
+zero resolution changes.
+Original design sketch (kept for context): re-run a chosen slice of history
+under the DRAFT release, then diff against the current release's actual
+outcomes and publish an impact report:
 - exceptions raised, by code (more? fewer? which ones changed);
 - resolution recommendations that changed, listed case by case;
 - postings coded differently; escalation/abstention rate; cost per

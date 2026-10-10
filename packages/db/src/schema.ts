@@ -358,6 +358,28 @@ export const evalRun = ag.table("eval_run", {
   finishedAt: timestamp("finished_at", { withTimezone: true }),
 });
 
+/** Shadow replay (plans/RELEASE_GOVERNANCE.md M2): a DRAFT release re-runs
+ * an agent's real recent work items in the test book (D16); each shadow run
+ * is diffed against the original, and the aggregate impact report answers
+ * "what would this release have done differently" with measurement. */
+export const shadowReplay = ag.table("shadow_replay", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  agentId: uuid("agent_id").notNull().references(() => agent.id),
+  draftReleaseId: uuid("draft_release_id").notNull().references(() => agentRelease.id),
+  baselineReleaseId: uuid("baseline_release_id").notNull().references(() => agentRelease.id),
+  status: text("status").notNull().default("running"), // running | complete
+  cases: integer("cases").notNull().default(0),
+  /** per case: {originalRunId, shadowRunId, taskType, ref, baseline:{outcome,
+   * commands, tokens...}, draft:{...}, changed, changes: string[]} */
+  results: jsonb("results").$type<Record<string, unknown>[]>().notNull().default([]),
+  /** aggregate impact: outcome counts per side, changed cases, resolution
+   * changes, token totals per side (priced at read time via the rate card) */
+  summary: jsonb("summary").$type<Record<string, unknown>>(),
+  createdBy: text("created_by").notNull(),
+  startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
+  finishedAt: timestamp("finished_at", { withTimezone: true }),
+});
+
 export const activityEvent = ag.table("activity_event", {
   id: uuid("id").primaryKey().defaultRandom(),
   at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),

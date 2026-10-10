@@ -76,6 +76,11 @@ async function executeCommand(
     case "report.commentary.save": {
       const p = params as { periodCode: string; text: string };
       const { reportCommentary } = await import("@af/db");
+      const bookCtx = await import("../lib/bookContext.js");
+      // report_commentary has no book column: an eval/shadow draft is graded
+      // from the command row, so the shared table stays human-visible only
+      if (bookCtx.currentBook() === bookCtx.TEST_BOOK)
+        return { saved: true, skipped: "test book — commentary list untouched", periodCode: p.periodCode };
       await db.insert(reportCommentary).values({
         periodCode: p.periodCode,
         text: p.text,
@@ -100,6 +105,15 @@ async function executeCommand(
           .insert(boardPack)
           .values({ id: p.packId, book: TEST_BOOK, lensGrain: "month", periodFrom: "0000-00", periodTo: "0000-00", label: "eval", title: p.title, createdBy: "eval-harness" })
           .returning();
+      }
+      if (row && row.book !== TEST_BOOK && currentBook() === TEST_BOOK) {
+        // shadow replay of a real pack: write a test-book COPY, never the
+        // live row a human may be reading
+        [row] = await db
+          .insert(boardPack)
+          .values({ book: TEST_BOOK, lensGrain: row.lensGrain, periodFrom: row.periodFrom, periodTo: row.periodTo, label: `${row.label} (shadow)`, title: p.title, createdBy: "shadow-replay" })
+          .returning();
+        p.packId = row!.id;
       }
       if (!row) throw Object.assign(new Error("board pack not found — draft it from /reports/board first"), { statusCode: 404 });
       await db
@@ -186,7 +200,8 @@ export function commandRoutes(app: FastifyInstance): void {
     const workItemRow = run.workItemId
       ? await db.query.workItem.findFirst({ where: (t) => eq(t.id, run.workItemId!) })
       : null;
-    const book = workItemRow?.type === "eval.case" ? TEST_BOOK : MAIN_BOOK;
+    const book =
+      workItemRow?.type === "eval.case" || workItemRow?.type === "shadow.case" ? TEST_BOOK : MAIN_BOOK;
 
     const [created] = await db
       .insert(command)
@@ -207,7 +222,13 @@ export function commandRoutes(app: FastifyInstance): void {
 
     if (!def.requiresApproval) {
       try {
-        const result = await runInBook(book, () => executeCommand(body.type, params));
+        // Test-book display-only case commands stay OFF the real case
+        // timeline: an eval or shadow run's options/notes are graded from
+        // the command row itself, and a replay must never spam live cases.
+        const result =
+          book === TEST_BOOK && displayOnly
+            ? { skipped: "test book — real case timeline untouched" }
+            : await runInBook(book, () => executeCommand(body.type, params));
         await db
           .update(command)
           .set({ status: "executed", result })

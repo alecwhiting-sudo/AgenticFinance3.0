@@ -120,6 +120,13 @@
       "when": 1791220670879,
       "tag": "0016_cynical_spitfire",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1791622162701,
+      "tag": "0017_curved_shooting_star",
+      "breakpoints": true
     }
   ]
 }

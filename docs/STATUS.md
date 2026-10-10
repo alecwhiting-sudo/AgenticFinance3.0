@@ -126,9 +126,15 @@ _Last updated: 2026-10-07_
    generator) still get a manual-promote draft. Opt out:
    `REFRESH_PINS_ON_BOOT=false`. Seed now also UPDATES changed eval cases
    in place (matched by agent+name), so a raised quality bar ships.
-   Remaining: M2 shadow replay with measured
-   impact report → M3b AI release reviewer grounded in it → M4 real test
-   environment + canary (production phase).
+   **M2 shadow replay BUILT 2026-10-10**: on the agent page, a draft
+   release re-runs the agent's real recent cases in the test book and the
+   impact report (would-change case list with run links, changes by
+   exception code, escalation rate and cost baseline → draft) sits beside
+   the Promote button. Baselines read from run transcripts (reset-proof);
+   test-book display-only commands no longer touch real case timelines,
+   the shared commentary table, or live board packs.
+   Remaining: M3b AI release reviewer grounded in the impact report → M4
+   real test environment + canary (production phase).
 2. **Dataset v2 + period lens + chat dashboards** (`plans/DATASET_V2.md`,
    planned 2026-10-04): sequenced packages — A map of existing flaws
    (`plans/TEST_DATA_MAP.md`, done) → **B period lens BUILT 2026-10-04**

@@ -21,6 +21,8 @@ import { requireDb } from "../lib/db.js";
 import { emitActivity } from "../lib/activity.js";
 import { startEvalSuite } from "../services/evalSuite.js";
 import { refreshStaleReleases } from "../services/releaseRefresh.js";
+import { startShadowReplay } from "../services/shadowReplay.js";
+import { estimateCostCents } from "../services/rateCard.js";
 import { controlRegressionDiff } from "../lib/skillDiff.js";
 
 export function agentRoutes(app: FastifyInstance): void {
@@ -498,6 +500,95 @@ export function agentRoutes(app: FastifyInstance): void {
     }
     return out;
   }
+
+  /** Shadow replay (plans/RELEASE_GOVERNANCE.md M2): run a DRAFT release
+   * against the agent's real recent work in the test book and measure the
+   * difference. The report informs the human promote decision. */
+  app.post<{ Params: { slug: string; version: string } }>(
+    "/agents/:slug/releases/:version/shadow",
+    async (req, reply) => {
+      const db = requireDb();
+      const body = z
+        .object({ createdBy: z.string().min(1), limit: z.number().int().min(1).max(100).default(25) })
+        .parse(req.body ?? {});
+      const a = await db.query.agent.findFirst({ where: (t) => eq(t.slug, req.params.slug) });
+      if (!a) return reply.code(404).send({ error: "agent not found" });
+      const draft = await db.query.agentRelease.findFirst({
+        where: (t) => and(eq(t.agentId, a.id), eq(t.version, Number(req.params.version))),
+      });
+      if (!draft || draft.status !== "draft")
+        return reply.code(409).send({ error: "shadow replay runs against a DRAFT release" });
+      const baseline = await db.query.agentRelease.findFirst({
+        where: (t) => and(eq(t.agentId, a.id), eq(t.status, "active")),
+      });
+      if (!baseline) return reply.code(409).send({ error: "agent has no active baseline release" });
+      const started = await startShadowReplay(db, a, draft, baseline, {
+        limit: body.limit,
+        createdBy: body.createdBy,
+      });
+      if ("error" in started) return reply.code(409).send(started);
+      await emitActivity({
+        actorType: "human",
+        actorId: body.createdBy,
+        verb: "started_shadow_replay",
+        objectType: "agent",
+        objectId: a.id,
+        summary: `Shadow replay: draft v${draft.version} re-running ${started.cases} real cases against active v${baseline.version} (test book)`,
+      });
+      return { shadow: started };
+    },
+  );
+
+  /** Recent shadow replays for an agent, priced at read time (D14/D15). */
+  app.get<{ Params: { slug: string } }>("/agents/:slug/shadow", async (req, reply) => {
+    const db = requireDb();
+    const a = await db.query.agent.findFirst({ where: (t) => eq(t.slug, req.params.slug) });
+    if (!a) return reply.code(404).send({ error: "agent not found" });
+    const rows = await db.query.shadowReplay.findMany({
+      where: (t) => eq(t.agentId, a.id),
+      orderBy: (t) => desc(t.startedAt),
+      limit: 5,
+    });
+    const versions = new Map<string, number>();
+    for (const r of await db.query.agentRelease.findMany({ where: (t) => eq(t.agentId, a.id) }))
+      versions.set(r.id, r.version);
+    const active = await db.query.agentRelease.findFirst({
+      where: (t) => and(eq(t.agentId, a.id), eq(t.status, "active")),
+    });
+    const price = (side: Record<string, number> | undefined) =>
+      side
+        ? estimateCostCents(
+            active?.modelProfile ?? "default",
+            side.inputTokens ?? 0,
+            side.outputTokens ?? 0,
+            side.cacheWriteTokens ?? 0,
+            side.cacheReadTokens ?? 0,
+          )
+        : null;
+    return {
+      replays: rows.map((r) => {
+        const s = (r.summary ?? null) as {
+          baselineTokens?: Record<string, number>;
+          draftTokens?: Record<string, number>;
+        } | null;
+        return {
+          id: r.id,
+          status: r.status,
+          cases: r.cases,
+          done: r.results.length,
+          draftVersion: versions.get(r.draftReleaseId) ?? null,
+          baselineVersion: versions.get(r.baselineReleaseId) ?? null,
+          startedAt: r.startedAt,
+          finishedAt: r.finishedAt,
+          summary: r.summary ?? null,
+          results: r.results,
+          costCents: s
+            ? { baseline: price(s.baselineTokens), draft: price(s.draftTokens) }
+            : null,
+        };
+      }),
+    };
+  });
 
   app.get("/agents/releases/refresh-stale", async () => {
     const db = requireDb();
