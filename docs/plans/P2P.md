@@ -39,7 +39,7 @@ pays — zero further human touches, every step visible on the one record.
 
 ## 1. Scope
 
-Intent-to-payment for Brightline Ltd, demo-grade but control-correct:
+Intent-to-payment for Brightline Services plc, demo-grade but control-correct:
 purchase creation (free-text or structured) → policy-banded approval →
 supplier view issued → goods receipt → invoice capture (PDF extraction by
 agent) → deterministic 3-way match against the **approved Purchase** →

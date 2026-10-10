@@ -304,7 +304,7 @@ approval on money movement, evidence timelines, evals before promote.
 | D5 | Single combined user role for demo | Agreed (Alec, 2026-10-01) |
 | D6 | Prod version stubbed, unplanned | Agreed (Alec, 2026-10-01) |
 | D7 | Drizzle + Zod + Fastify + Next.js | Agreed (Alec, 2026-10-01) |
-| D8 | Fictional company "Brightline Ltd" (UK, GBP) | Agreed by default (rename welcome) |
+| D8 | Fictional company "Brightline Services plc" (UK, GBP) | Agreed by default (rename welcome) |
 | D9 | Live activity stream (SSE + `activity_event` table) powers all visual feedback | Agreed (Alec, 2026-10-01) |
 | D10 | Demo documents generated once, committed to the repo, served from the container's filesystem — no paid object storage in demo | Agreed (Alec, 2026-10-01) |
 | D11 | Agent granularity: several agents per process, split by authority/capability profile, never by step — see `decisions/001-agent-granularity.md` | Agreed (Alec, 2026-10-02) |

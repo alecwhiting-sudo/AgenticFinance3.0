@@ -75,7 +75,7 @@ export function multiPageTextLayer(chain: ApChain, supplierName: string): string
         `===== PAGE ${p + 1} OF ${mp.pages} =====`,
         `${supplierName} — TAX INVOICE ${inv.number}`,
         `Invoice date ${inv.invoiceDate} · Payment due ${inv.dueDate}${chain.po ? ` · Your PO ${chain.po.number}` : ""}`,
-        `Bill to: Brightline Ltd, 14 Foundry Lane, Leeds LS1 4DQ`,
+        `Bill to: Brightline Services plc, 14 Foundry Lane, Leeds LS1 4DQ`,
         ``,
         ...pageLines.map(
           (l) => `  ${l.description}  x${l.qty} @ ${gbp(l.unitPriceMinor)}  =  ${gbp(l.qty * l.unitPriceMinor)}`,

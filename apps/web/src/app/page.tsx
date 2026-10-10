@@ -121,7 +121,7 @@ export default function Dashboard() {
   return (
     <main className="space-y-6">
       <section>
-        <h2 className="text-2xl font-semibold tracking-tight">{o?.company.name ?? "Brightline Ltd"}</h2>
+        <h2 className="text-2xl font-semibold tracking-tight">{o?.company.name ?? "Brightline Services plc"}</h2>
         <p className="mt-1 text-sm" style={{ color: "var(--muted)" }}>
           {o ? `${o.company.code} · ${o.company.currency} · period ${o.currentPeriod?.code ?? "—"} (${o.currentPeriod?.status ?? "none"})` : "…"}
           {" · master data lives in "}

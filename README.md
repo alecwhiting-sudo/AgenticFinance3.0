@@ -11,7 +11,7 @@ production version follows once the business is ready.
 ## Status
 
 **Phase 0 complete** — monorepo skeleton, Postgres schema + migrations,
-Brightline Ltd seed data, three deployable services, Railway configs.
+Brightline Services plc seed data, three deployable services, Railway configs.
 Next: Phase 1 (agent framework + workbench core + live activity stream +
 Demo Data Studio).
 
@@ -36,7 +36,7 @@ pnpm db:migrate && pnpm db:seed    # pnpm seed:reset → pristine demo state
 pnpm dev:api & pnpm dev:worker & API_URL=http://localhost:3001 pnpm dev:web
 ```
 
-Open http://localhost:3000 — the dashboard shows Brightline Ltd, master-data
+Open http://localhost:3000 — the dashboard shows Brightline Services plc, master-data
 counts, the current period, and service health.
 
 ## Deploying to Railway

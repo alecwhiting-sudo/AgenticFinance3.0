@@ -1,7 +1,7 @@
 /**
  * Demo Data Studio — generation stage (ARCHITECTURE.md §6b, plans/DEMO_DATA.md).
  * Deterministic, seeded, zero-LLM: weaves 6 months of correlated P2P/O2C/R2R
- * history for Brightline Ltd with planted exceptions per plans/P2P.md §5.
+ * history for Brightline Services plc with planted exceptions per plans/P2P.md §5.
  * Output: seed/generated/dataset.json (committed). Rendering is a separate,
  * also free, stage (render.ts).
  */

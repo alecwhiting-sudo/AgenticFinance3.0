@@ -34,7 +34,7 @@ export default async function SupplierView({ params }: { params: Promise<{ id: s
       )}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-xl font-semibold" style={{ color: "var(--accent)" }}>Brightline Ltd</h1>
+          <h1 className="text-xl font-semibold" style={{ color: "var(--accent)" }}>Brightline Services plc</h1>
           <p className="text-xs" style={{ color: "var(--muted)" }}>14 Foundry Lane, Leeds LS1 4DQ</p>
         </div>
         <div className="text-right">

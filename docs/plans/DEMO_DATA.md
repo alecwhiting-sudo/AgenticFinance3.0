@@ -6,7 +6,7 @@
 
 ## Purpose
 
-Manufacture Brightline Ltd's business at demo scale: correlated transactions
+Manufacture Brightline Services plc's business at demo scale: correlated transactions
 for P2P, O2C and R2R with believable evidence, at a volume that makes the
 agents look busy and capable without meaningful LLM or storage cost.
 

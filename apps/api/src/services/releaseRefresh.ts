@@ -15,8 +15,8 @@
  * and left for the human preview; automation never waves a control
  * regression through.
  */
-import { desc, eq, and } from "drizzle-orm";
-import { agentRelease, type Db } from "@af/db";
+import { desc, eq, and, sql } from "drizzle-orm";
+import { agentRelease, evalRun, type Db } from "@af/db";
 import { controlRegressionDiff } from "../lib/skillDiff.js";
 import { startEvalSuite } from "./evalSuite.js";
 
@@ -113,13 +113,26 @@ export async function refreshStaleReleases(
           orderBy: (t) => desc(t.startedAt),
         });
         if (er?.status === "running") {
-          results.push({
-            agentSlug: a.slug,
-            status: "draft evals still running — if this persists, check the worker is up",
-            draftVersion: latestRelease.version,
-            evalRunId: er.id,
-          });
-          continue;
+          // a demo reset deletes unworked queue items, which can orphan a
+          // suite as "running" with nothing left to grade — detect that and
+          // fall through to a fresh run instead of waiting forever
+          const [live] = (
+            await db.execute(sql`
+              select count(*)::int as n from agent.work_item
+              where type = 'eval.case' and payload->>'evalRunId' = ${er.id}
+                and status in ('pending', 'claimed', 'running')
+            `)
+          ).rows as { n: number }[];
+          if ((live?.n ?? 0) > 0) {
+            results.push({
+              agentSlug: a.slug,
+              status: "draft evals still running — if this persists, check the worker is up",
+              draftVersion: latestRelease.version,
+              evalRunId: er.id,
+            });
+            continue;
+          }
+          await db.update(evalRun).set({ status: "failed", finishedAt: new Date() }).where(eq(evalRun.id, er.id));
         }
         // failed suite, or a suite graded before auto-promotion existed:
         // re-run the evals on the SAME draft — a green suite promotes it

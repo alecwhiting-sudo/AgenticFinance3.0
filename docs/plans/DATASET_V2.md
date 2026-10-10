@@ -450,6 +450,22 @@ domains (already safe by design).
 **Not changed:** schema, logic, controls — content only. Size: M
 (mostly regeneration time + the sweep). Do in a quiet moment, not mid-demo.
 
+**As built 2026-10-10:** the user chose **Brightline Services plc** — keeping
+the brand word rather than the unlikely-name shortlist. That collapsed the
+blast radius: code `BRT`, invoice prefixes, bank references and the
+`brightline.example` domain all stand, so the dataset's NUMBERS are
+untouched (the RNG never saw the name) and `plans/TEST_DATA_MAP.md` stays
+valid verbatim. Executed as: "Brightline Ltd" → "Brightline Services plc"
+sweep across seeds, studio templates, app copy, agent instructions and 22
+skills; full regenerate + re-render of every committed document; seedCore
+now updates the company DISPLAY NAME in place when the seed differs (the
+code is the identity), so the rename lands on deploy without a reset.
+Release immutability means live agents' release instructions keep the old
+name until a cold reset; the skills (where the name actually shapes
+behaviour) refresh through the boot stale-pin cycle. Companies House check
+for the new name was egress-blocked from the build container — verify
+"Brightline Services" manually.
+
 ## Sequence summary
 
 | # | Package | Size | Depends on | Status |
@@ -462,4 +478,4 @@ domains (already safe by design).
 | F | Home dashboard revamp (live motion) | M | — | ✅ built, merged via PR #1 |
 | G | Board Pack Agent (ported from Claude finance skills, Apache-2.0) | M–L | — | ✅ built (jumped queue) |
 | H | Board pack v2: slide-deck presentation (visuals, branding) | M | G | ✅ built, PR pending review |
-| I | Company rename (Brightline is a real UK co) | M | — | planned only |
+| I | Company rename → Brightline Services plc | M | — | ✅ built 2026-10-10 |

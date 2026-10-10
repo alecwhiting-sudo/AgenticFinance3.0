@@ -184,10 +184,19 @@ _Last updated: 2026-10-07_
    pack's lens, appendix + provenance slides, one landscape page per slide
    on print. Narrative stays as drafted; charts are live (stated on the
    provenance slide). Detail: `plans/DATASET_V2.md` PR-H.
-4. **Company rename (PR-I, PLAN ONLY, 2026-10-05)** — Brightline Ltd is a
-   real UK company; rename to a deliberately unlikely one (shortlist +
-   full impact analysis incl. regenerating every rendered document and a
-   full skill stale-pin cycle: `plans/DATASET_V2.md` PR-I). Not started.
+4. **Company rename (PR-I) — BUILT 2026-10-10**: the demo company is now
+   **Brightline Services plc** (user's choice; "Brightline Ltd" is a real
+   UK company). Brand word, code `BRT`, invoice prefixes and the
+   `brightline.example` domain all kept, so the rename was a name sweep +
+   full regenerate/re-render of every committed document (dataset counts
+   and the 54-plant map unchanged — the RNG never saw the name). seedCore
+   now updates the company display name in place on deploy; skills/agent
+   copy renamed → stale-pin refresh cycle runs itself on boot. Caveat:
+   egress here blocked the Companies House register check for the NEW
+   name — verify "Brightline Services" at
+   find-and-update.company-information.service.gov.uk. Live agent release
+   instructions keep the old name until a cold reset (release immutability);
+   a dataset reload picks up the renamed documents.
 5. **Phase 4c follow-ons** — saved views on a dashboard; data permissions
    (stubbed: every record-catalogue entity declares an `access` scope,
    enforcement designed in `plans/ANALYTICS.md` §3c). Core 4c built

@@ -1,7 +1,7 @@
 # @af/studio — Demo Data Studio
 
 The Transaction Generator Agent's pipelines (ARCHITECTURE.md §6b,
-docs/plans/DEMO_DATA.md): manufactures Brightline Ltd's 6 months of
+docs/plans/DEMO_DATA.md): manufactures Brightline Services plc's 6 months of
 correlated P2P/O2C/R2R history and evidence documents, deterministically and
 for free — no LLM calls, reproducible from a seed.
 

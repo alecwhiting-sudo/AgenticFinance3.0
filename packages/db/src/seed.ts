@@ -1,5 +1,5 @@
 /**
- * Seed the database with Brightline Ltd starter data from seed/brightline.json.
+ * Seed the database with Brightline Services plc starter data from seed/brightline.json.
  *
  * `--reset` truncates the seeded tables first so every demo starts pristine.
  * Idempotent without --reset: existing rows (matched by code) are left alone.
@@ -62,6 +62,12 @@ const companyRow =
     where: (c, { eq }) => eq(c.code, data.company.code),
   }));
 if (!companyRow) throw new Error("company row missing after insert");
+// display content follows the seed (like skill text): a rename lands on
+// deploy without waiting for a reset — the code stays the identity
+if (companyRow.name !== data.company.name) {
+  await db.update(company).set({ name: data.company.name }).where(eq(company.id, companyRow.id));
+  console.log(`company renamed: ${companyRow.name} → ${data.company.name}`);
+}
 const companyId = companyRow.id;
 
 const [startYear, startMonth] = data.periods.firstMonth

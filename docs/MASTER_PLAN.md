@@ -226,7 +226,7 @@ PM then reuse mature plumbing.
 
 ## 6. Demo data strategy
 
-- One fictional company (working name: **Brightline Ltd**, a ~15-person UK
+- One fictional company (working name: **Brightline Services plc**, a ~15-person UK
   services/products business), one entity, GBP, monthly periods.
 - The **Transaction Generator Agent** (Demo Data Studio, ARCHITECTURE.md §6b)
   manufactures 6 months of correlated history for P2P, O2C and R2R — masters,
@@ -261,7 +261,7 @@ script, out of scope.
 ## 9. Resolved questions
 
 1. Stack: TypeScript monorepo confirmed (Alec, 2026-10-01).
-2. Fictional company: Brightline Ltd / UK / GBP by default; Alec can rename at
+2. Fictional company: Brightline Services plc / UK / GBP by default; Alec can rename at
    any point before Phase 1 seeds are generated.
 3. No client-demo deadline given; phases stay as ordered.
 4. Visual feedback is a core requirement (ARCHITECTURE.md §6a) — tasteful,

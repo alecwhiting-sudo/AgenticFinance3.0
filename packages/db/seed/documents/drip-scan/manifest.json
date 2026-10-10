@@ -2,8 +2,8 @@
  {
   "supplierCode": "SUP-005",
   "number": "DS005-90524",
-  "invoiceDate": "2026-10-02",
-  "dueDate": "2026-11-01",
+  "invoiceDate": "2026-10-10",
+  "dueDate": "2026-11-09",
   "lines": [
    {
     "description": "Office refurbishment materials",
@@ -20,8 +20,8 @@
  {
   "supplierCode": "SUP-014",
   "number": "DS014-23191",
-  "invoiceDate": "2026-10-02",
-  "dueDate": "2026-11-01",
+  "invoiceDate": "2026-10-10",
+  "dueDate": "2026-11-09",
   "lines": [
    {
     "description": "Project consumables",
@@ -38,8 +38,8 @@
  {
   "supplierCode": "SUP-018",
   "number": "DS018-88583",
-  "invoiceDate": "2026-10-02",
-  "dueDate": "2026-11-01",
+  "invoiceDate": "2026-10-10",
+  "dueDate": "2026-11-09",
   "lines": [
    {
     "description": "Project consumables",
@@ -56,8 +56,8 @@
  {
   "supplierCode": "SUP-003",
   "number": "DS003-64348",
-  "invoiceDate": "2026-10-02",
-  "dueDate": "2026-11-01",
+  "invoiceDate": "2026-10-10",
+  "dueDate": "2026-11-09",
   "lines": [
    {
     "description": "Monthly service retainer",
@@ -74,8 +74,8 @@
  {
   "supplierCode": "SUP-029",
   "number": "DS029-87330",
-  "invoiceDate": "2026-10-02",
-  "dueDate": "2026-11-01",
+  "invoiceDate": "2026-10-10",
+  "dueDate": "2026-11-09",
   "lines": [
    {
     "description": "Office refurbishment materials",
@@ -92,8 +92,8 @@
  {
   "supplierCode": "SUP-025",
   "number": "DS025-54576",
-  "invoiceDate": "2026-10-02",
-  "dueDate": "2026-11-01",
+  "invoiceDate": "2026-10-10",
+  "dueDate": "2026-11-09",
   "lines": [
    {
     "description": "Monthly service retainer",

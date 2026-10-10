@@ -137,7 +137,7 @@ function Slide({
       >
         <span className="inline-flex items-center gap-2">
           <span className="inline-block h-2 w-2 rounded-sm" style={{ background: "var(--accent)" }} />
-          Brightline Ltd
+          Brightline Services plc
         </span>
         <span className="truncate pl-4">{packTitle}</span>
       </div>
@@ -619,7 +619,7 @@ export default function BoardPackPage({ params }: { params: Promise<{ id: string
             <div className="flex items-center justify-between text-[12px] font-semibold uppercase tracking-[0.22em] text-teal-100">
               <span className="inline-flex items-center gap-2">
                 <span className="inline-block h-2.5 w-2.5 rounded-sm bg-white" />
-                Brightline Ltd
+                Brightline Services plc
               </span>
               <span>Board pack</span>
             </div>

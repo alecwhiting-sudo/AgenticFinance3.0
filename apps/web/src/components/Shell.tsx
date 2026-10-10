@@ -155,7 +155,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
           ))}
         </nav>
         <div className="px-2 text-[10px]" style={{ color: "var(--muted)" }}>
-          Brightline Ltd · demo
+          Brightline Services plc · demo
         </div>
       </aside>
 

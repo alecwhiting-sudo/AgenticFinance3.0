@@ -481,7 +481,7 @@ async function collectionsFallback(
     `Our records show invoice ${number} for ${gbp}, due on ${dueDate}, remains unpaid (${daysOverdue} days overdue).`,
     `If payment has already been made, please share the remittance details so we can apply it promptly. Otherwise we would appreciate settlement within 7 days.`,
     `If anything is blocking payment — a query on the invoice, or a copy needed — reply to this message and we will resolve it quickly.`,
-    `Kind regards,\nAccounts Receivable, Brightline Ltd`,
+    `Kind regards,\nAccounts Receivable, Brightline Services plc`,
   ].join("\n\n");
 
   const { ok, data } = await proposeCommand(runId, 1, "ar.dunning.send", { invoiceId, text }, steps);
@@ -1066,7 +1066,7 @@ async function deterministicHandler(
     const counts = (overview as { counts?: Record<string, number> }).counts;
     return {
       outcome: "completed",
-      summary: `Hello ${audience} — Brightline Ltd is live: ${counts?.suppliers ?? 0} suppliers, ${counts?.customers ?? 0} customers and ${counts?.accounts ?? 0} accounts on the books. On ${topic}: the data is ready for review. Next step: open the workbench dashboard for the detail.`,
+      summary: `Hello ${audience} — Brightline Services plc is live: ${counts?.suppliers ?? 0} suppliers, ${counts?.customers ?? 0} customers and ${counts?.accounts ?? 0} accounts on the books. On ${topic}: the data is ready for review. Next step: open the workbench dashboard for the detail.`,
     };
   }
   return {
@@ -1128,7 +1128,7 @@ export async function runAgentLoop(
   const tools: Anthropic.Tool[] = [
     {
       name: "get_company_overview",
-      description: "Read live Brightline Ltd master data: company details and counts of accounts, suppliers, customers and items.",
+      description: "Read live Brightline Services plc master data: company details and counts of accounts, suppliers, customers and items.",
       input_schema: { type: "object", properties: {}, additionalProperties: false },
       strict: true,
     },
