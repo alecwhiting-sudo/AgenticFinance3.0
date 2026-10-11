@@ -6,7 +6,7 @@ decision. Detail lives in `MASTER_PLAN.md` (phases), `ARCHITECTURE.md`
 (decisions D1–D16), `docs/plans/*` (per-process), and the living diagram
 `docs/architecture.html` (in-app at `/admin/architecture`).
 
-_Last updated: 2026-10-10_
+_Last updated: 2026-10-11_
 
 ## Phase tracker
 
@@ -133,17 +133,15 @@ _Last updated: 2026-10-10_
    the Promote button. Baselines read from run transcripts (reset-proof);
    test-book display-only commands no longer touch real case timelines,
    the shared commentary table, or live board packs.
-   **⚠ LIVE GOVERNANCE EXPERIMENT (2026-10-10, deliberate — do NOT "fix")**:
-   the seed's "Exception investigation playbook" text is INTENTIONALLY
-   degraded (one generic option, no costed notes / tolerance checks /
-   email drafts; fraud never-dos for bank_detail_change/mismatch kept
-   fully intact). Purpose: demo the governance gate — the boot-refresh
-   draft should FAIL its eval suite, the human Promotes it anyway as the
-   deliberate override, transactions run under the degraded agent, then
-   the good playbook (last good text = skill version v6) ships back as a
-   new seed version and shadow replay measures the difference. Restoring
-   the seed to v6's text + a marker line is the planned follow-up commit;
-   until then the degraded text is the intended state.
+   **Governance degrade experiment (2026-10-10/11, CLOSED)**: the
+   "Exception investigation playbook" was deliberately degraded in the
+   seed (fraud never-dos kept intact) to demo the gate — failed eval
+   suite, manual human Promote as the override, transactions run under
+   the degraded agent — then restored 2026-10-11 as a new version: the
+   good text plus a de-duplicated escalation paragraph and the
+   account-name injection guard. The restore drafts on boot, its suite
+   should go green and auto-promote (seed-authored); shadow replay over
+   the degraded-era cases shows the measured difference.
    Remaining: M3b AI release reviewer grounded in the impact report → M4
    real test environment + canary (production phase).
 2. **Dataset v2 + period lens + chat dashboards** (`plans/DATASET_V2.md`,
