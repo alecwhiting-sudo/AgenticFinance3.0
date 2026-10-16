@@ -99,11 +99,20 @@ export function exceptionRoutes(app: FastifyInstance): void {
         })
       : null;
 
-    // the tolerance policy the recommendation used (plans/P2P.md §10 M2) —
-    // the workbench shows the policy beside the options it shaped
+    // the tolerance policy the recommendation used (plans/P2P.md §10 M2,
+    // per-supplier M3) — the workbench shows the policy beside the options
+    // it shaped, naming the supplier-specific tolerance when one applies
     const tolPs = await db.query.fdpParameterSet.findFirst({
       where: (t, { and: a, eq: e }) => a(e(t.name, "exception-tolerances"), e(t.status, "active")),
     });
+    const tolParams = tolPs?.parameters as
+      | {
+          priceVariancePct?: number;
+          priceVarianceFloorMinor?: number;
+          suppliers?: Record<string, { name?: string; priceVariancePct?: number; priceVarianceFloorMinor?: number }>;
+        }
+      | undefined;
+    const supplierOverride = (supplier?.code && tolParams?.suppliers?.[supplier.code]) || null;
 
     return {
       invoice: inv,
@@ -117,6 +126,14 @@ export function exceptionRoutes(app: FastifyInstance): void {
       investigating: !!investigating,
       emailPath: inv.emailPath,
       tolerances: tolPs?.parameters ?? null,
+      /** the per-supplier tolerance applied to THIS case's supplier, if any */
+      supplierTolerance: supplierOverride
+        ? {
+            supplierName: supplierOverride.name ?? supplier?.name ?? supplier?.code ?? "this supplier",
+            priceVariancePct: supplierOverride.priceVariancePct ?? tolParams?.priceVariancePct ?? 2,
+            priceVarianceFloorMinor: supplierOverride.priceVarianceFloorMinor ?? tolParams?.priceVarianceFloorMinor ?? 2500,
+          }
+        : null,
     };
   });
 

@@ -86,5 +86,15 @@ payments, with grounded options — apply-with-residual to the closest larger
 invoice (residual costed), refund-or-hold for overpayments, hold-and-query
 with a draft remittance-request letter (display-only, never sent) — shown
 on /o2c as "Receipt queries". Applying money stays human via
-ar.receipt.apply. Remaining: dispute escalation with contract + invoice +
-remittance evidence assembled by Collections.
+ar.receipt.apply. **Dispute mirror BUILT 2026-10-16:** "Dispute" on any
+posted AR invoice (O2C pages) takes the customer's stated reason and
+queues an `ar.dispute` task; the Collections Agent opens an `ar_dispute`
+case with the invoice facts and grounded ways forward — hold chasing
+(hold_dunning), re-issue corrected (reissue_invoice, with a display-only
+draft reply), credit the disputed amount (issue_credit) — and ALWAYS
+escalates: crediting or re-billing is a human decision. The one automatic
+effect is deterministic and in code: `/o2c/chase` refuses a disputed
+invoice (dunning held while the case is open), and the workbench shows
+"disputed — dunning held" in place of the Chase button. Disputes surface
+on /o2c beside Receipt queries. Remaining: ground disputes in contract
+documents once a contracts register exists.

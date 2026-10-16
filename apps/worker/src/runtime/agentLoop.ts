@@ -558,6 +558,84 @@ async function collectionsFallback(
   };
 }
 
+/** Keyless AR dispute handling (plans/O2C.md §9, the P2P §10 mirror): a
+ * customer disputes an invoice → open an ar_dispute case with the evidence
+ * and put grounded ways forward on it. ALWAYS escalates — crediting or
+ * re-billing a customer is a human decision; the one automatic effect is
+ * that dunning is held by the API while the case is open. */
+async function arDisputeFallback(
+  resolved: ResolvedRelease,
+  runId: string,
+  payload: Record<string, unknown>,
+  steps: TranscriptStep[],
+): Promise<LoopResult> {
+  const invoiceId = String(payload.invoiceId ?? "");
+  const number = String(payload.number ?? "");
+  const customerName = String(payload.customerName ?? "the customer");
+  const grossMinor = Number(payload.grossMinor ?? 0);
+  const reason = String(payload.reason ?? "").trim();
+  if (!invoiceId || !number || !reason)
+    return { outcome: "escalated", summary: "Missing invoice facts or dispute reason in the task payload — cannot open a grounded dispute case." };
+  const gbp = `£${(grossMinor / 100).toLocaleString("en-GB", { minimumFractionDigits: 2 })}`;
+  await appendStep(runId, steps, { kind: "note", label: "assembling dispute evidence", detail: { number, reason } });
+
+  const { ok, data } = await proposeCommand(runId, 1, "case.open", {
+    kind: "ar_dispute",
+    title: `Dispute — ${number} · ${customerName}`,
+    detail: {
+      invoiceId,
+      invoiceNumber: number,
+      customerName,
+      grossMinor,
+      reason,
+      raisedBy: typeof payload.raisedBy === "string" ? payload.raisedBy : "workbench",
+    },
+  }, steps);
+  if (!ok)
+    return { outcome: "failed", summary: `Gateway rejected the dispute case: ${String((data as { error?: string }).error ?? "unknown")}` };
+  // test-book runs skip the real case write — a synthetic caseId in the
+  // payload keeps the options gradable (same pattern as invoice exceptions)
+  const caseId =
+    String(((data.result ?? {}) as { caseId?: string }).caseId ?? "") ||
+    (typeof payload.caseId === "string" ? payload.caseId : "");
+
+  const signOff = `\n\nKind regards,\nAccounts Receivable, Brightline Services plc\n\n[Draft prepared by the Collections Agent for human review — nothing is sent automatically.]`;
+  if (caseId) {
+    await proposeCommand(runId, 2, "case.options", {
+      caseId,
+      options: [
+        {
+          resolution: "hold_dunning",
+          label: "Hold chasing while the dispute is investigated",
+          rationale: `${customerName} disputes ${number} (${gbp}): "${reason}". Chasing a disputed balance damages the relationship and the audit trail; the hold lifts when the case is resolved.`,
+          costedNote: `defers collection of ${gbp}`,
+        },
+        {
+          resolution: "reissue_invoice",
+          label: "Re-issue a corrected invoice",
+          rationale: `If the dispute is upheld on the detail ("${reason}"), issue a corrected invoice and cancel ${number} — the customer pays the right amount, the books show the correction.`,
+          costedNote: `re-bills up to ${gbp} at the corrected figures`,
+          emailDraft: {
+            to: "customer accounts contact on file",
+            subject: `Your query on invoice ${number} — corrected invoice to follow`,
+            body: `Dear ${customerName},\n\nThank you for raising your query on invoice ${number} (${gbp}): "${reason}".\n\nWe are reviewing the detail and, if an error is confirmed, will issue a corrected invoice and cancel the original. No chasing will be sent while this is under review.${signOff}`,
+          },
+        },
+        {
+          resolution: "issue_credit",
+          label: "Credit the disputed amount",
+          rationale: `If the billing error is confirmed in full, raise a credit note against ${number} rather than re-billing — fastest resolution when nothing further is owed.`,
+          costedNote: `credits up to ${gbp}`,
+        },
+      ],
+    }, steps);
+  }
+  return {
+    outcome: "escalated",
+    summary: `Dispute on ${number} (${customerName}, ${gbp}) logged: "${reason}". Three ways forward are on the case with a draft reply; dunning is held automatically while the case is open. Crediting or re-billing is a human decision.`,
+  };
+}
+
 /** Keyless commentary (plans/R2R.md §5): a grounded template over the
  * figures in the payload — biggest movers by absolute change, named with
  * their real amounts. Never invents a number. */
@@ -719,7 +797,7 @@ async function invoiceExceptionFallback(
   let inv: { lines: { lineNo: number; qty: number; unitPriceMinor: number; description: string }[]; grossMinor: number; purchaseId: string | null } | null = null;
   let po: { lines: { lineNo: number; qty: number; unitPriceMinor: number }[]; totalMinor: number } | null = null;
   let receivedBy: Map<number, number> | null = null;
-  let supplier: { name: string; email: string | null } | null = null;
+  let supplier: { name: string; email: string | null; code: string | null } | null = null;
   let invNumber = "the invoice on this case";
   if (db && invoiceId) {
     const row = await db.query.apInvoice.findFirst({ where: (t, { eq: e }) => e(t.id, invoiceId) });
@@ -727,7 +805,7 @@ async function invoiceExceptionFallback(
       inv = { lines: row.lines, grossMinor: row.grossMinor, purchaseId: row.purchaseId };
       invNumber = row.supplierInvoiceNumber;
       const s = await db.query.supplier.findFirst({ where: (t, { eq: e }) => e(t.id, row.supplierId) });
-      if (s) supplier = { name: s.name, email: s.email };
+      if (s) supplier = { name: s.name, email: s.email, code: s.code };
       if (row.purchaseId) {
         const p = await db.query.purchase.findFirst({ where: (t, { eq: e }) => e(t.id, row.purchaseId!) });
         if (p) po = { lines: p.lines, totalMinor: p.totalMinor };
@@ -745,15 +823,31 @@ async function invoiceExceptionFallback(
         }, 0)
       : null;
 
-  // Tolerance policy (plans/P2P.md §10 M2): a parameter set, not prose —
-  // the recommendation reads it, the workbench shows it, humans still decide.
+  // Tolerance policy (plans/P2P.md §10 M2, per-supplier M3): a parameter
+  // set, not prose — the recommendation reads it, the workbench shows it,
+  // humans still decide. A supplier with a negotiated tolerance is keyed by
+  // supplier code under parameters.suppliers; changing either is a
+  // parameter-set change, never a code change.
   let tol = { pct: 2, floorMinor: 2500 };
+  let tolSupplier: string | null = null; // name of the supplier policy applied
+  const supplierCode = supplier?.code ?? (typeof payload.supplierCode === "string" ? payload.supplierCode : null);
   if (db) {
     const ps = await db.query.fdpParameterSet.findFirst({
       where: (t, { and: a, eq: e }) => a(e(t.name, "exception-tolerances"), e(t.status, "active")),
     });
-    const p = ps?.parameters as { priceVariancePct?: number; priceVarianceFloorMinor?: number } | undefined;
+    const p = ps?.parameters as
+      | {
+          priceVariancePct?: number;
+          priceVarianceFloorMinor?: number;
+          suppliers?: Record<string, { name?: string; priceVariancePct?: number; priceVarianceFloorMinor?: number }>;
+        }
+      | undefined;
     if (p) tol = { pct: Number(p.priceVariancePct ?? 2), floorMinor: Number(p.priceVarianceFloorMinor ?? 2500) };
+    const ov = supplierCode ? p?.suppliers?.[supplierCode] : undefined;
+    if (ov) {
+      tol = { pct: Number(ov.priceVariancePct ?? tol.pct), floorMinor: Number(ov.priceVarianceFloorMinor ?? tol.floorMinor) };
+      tolSupplier = ov.name ?? supplier?.name ?? supplierCode;
+    }
   }
   // manufactured eval payloads carry the figures directly (no db rows exist)
   const varMinorEff =
@@ -761,7 +855,9 @@ async function invoiceExceptionFallback(
   const basisMinor = po?.totalMinor ?? (typeof payload.poTotalMinor === "number" ? payload.poTotalMinor : null);
   const toleranceLineMinor = Math.max(tol.floorMinor, basisMinor !== null ? Math.round((basisMinor * tol.pct) / 100) : 0);
   const withinTolerance = varMinorEff !== null && Math.abs(varMinorEff) <= toleranceLineMinor;
-  const tolText = `${tol.pct}% of the approved purchase or ${gbp(tol.floorMinor)}, whichever is larger`;
+  const tolText =
+    `${tol.pct}% of the approved purchase or ${gbp(tol.floorMinor)}, whichever is larger` +
+    (tolSupplier ? ` — supplier-specific tolerance agreed with ${tolSupplier}` : "");
 
   // Display-only supplier letters (plans/P2P.md §10 M2): attached to the
   // option that needs supplier contact, copied out by a human — NOTHING is
@@ -776,8 +872,9 @@ async function invoiceExceptionFallback(
     options.push(
       {
         resolution: "approve_adjusted",
+        // policy detail lives in the rationale — the label has a 140-char cap
         label: withinTolerance
-          ? `Accept — within tolerance policy (${tolText})`
+          ? `Accept — within the ${tolSupplier ? "supplier-specific " : ""}tolerance policy`
           : `Accept the variance and post at invoiced amounts`,
         rationale: `Invoiced price exceeds the approved purchase${varMinorEff !== null ? ` by ${gbp(varMinorEff)} net` : ""} (${detail}).${withinTolerance ? ` Within the tolerance policy (${tolText}).` : " No agreed increase on file; accepting this once and flagging the supplier for a rate review."}`,
         costedNote: varMinorEff !== null ? `costs ${gbp(varMinorEff)} more than approved` : undefined,
@@ -1157,6 +1254,9 @@ async function deterministicHandler(
   }
   if (taskType === "ar.cash.apply" || (taskType === "eval.case" && Array.isArray(payload.candidates))) {
     return cashApplicationFallback(resolved, runId, payload, steps);
+  }
+  if (taskType === "ar.dispute" || (taskType === "eval.case" && typeof payload.reason === "string" && typeof payload.invoiceId === "string")) {
+    return arDisputeFallback(resolved, runId, payload, steps);
   }
   if (taskType === "ar.collections" || (taskType === "eval.case" && typeof payload.daysOverdue === "number")) {
     return collectionsFallback(resolved, runId, payload, steps);
