@@ -5,7 +5,7 @@
  * graded against their eval case's assertions.
  */
 import { and, eq, sql } from "drizzle-orm";
-import { agentRelease, agentRun, apInvoice, command, evalRun, evalSummary, shadowReplay, supplier, workItem } from "@af/db";
+import { agentRelease, agentRun, apInvoice, command, evalRun, evalSummary, releaseReview, shadowReplay, supplier, workItem } from "@af/db";
 import { db } from "../lib/db.js";
 import { emitActivity } from "../lib/activity.js";
 import { runAgentLoop, type ResolvedRelease } from "./agentLoop.js";
@@ -324,6 +324,24 @@ async function processItem(item: WorkItemRow): Promise<void> {
   if (isShadow && item.payload.shadowId && item.payload.originalRunId) {
     await recordShadowCase(String(item.payload.shadowId), String(item.payload.originalRunId), run!.id, outcome);
   }
+  // M3b bookkeeping: tie the run to its review row; a run that ended without
+  // saving an opinion must not leave the review spinning forever.
+  if (item.type === "release.review" && typeof item.payload.reviewId === "string") {
+    const row = await db.query.releaseReview.findFirst({
+      where: (t) => eq(t.id, String(item.payload.reviewId)),
+    });
+    if (row) {
+      await db
+        .update(releaseReview)
+        .set({
+          runId: run!.id,
+          ...(row.status === "running" && outcome !== "completed"
+            ? { status: "failed", finishedAt: new Date() }
+            : {}),
+        })
+        .where(eq(releaseReview.id, row.id));
+    }
+  }
 }
 
 /** Diff one shadow run against its original and fold it into the replay's
@@ -481,6 +499,17 @@ async function recordShadowCase(
       objectId: sr.agentId,
       summary: `Shadow replay complete: ${results.length} cases, ${(summary!.changed as number)} changed — impact report ready on the agent page`,
     });
+    // M3b: every measured impact report gets an AI reading automatically.
+    // Best-effort — the manual "Request AI review" button covers a miss.
+    try {
+      await fetch(`${process.env.API_URL ?? "http://localhost:3001"}/governance/auto-review`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ shadowId }),
+      });
+    } catch {
+      /* API unreachable — review can be requested from the agent page */
+    }
   }
 }
 

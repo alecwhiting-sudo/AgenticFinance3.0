@@ -22,6 +22,7 @@ import { emitActivity } from "../lib/activity.js";
 import { startEvalSuite } from "../services/evalSuite.js";
 import { refreshStaleReleases } from "../services/releaseRefresh.js";
 import { startShadowReplay } from "../services/shadowReplay.js";
+import { startReleaseReview } from "../services/releaseReview.js";
 import { estimateCostCents } from "../services/rateCard.js";
 import { controlRegressionDiff } from "../lib/skillDiff.js";
 
@@ -588,6 +589,90 @@ export function agentRoutes(app: FastifyInstance): void {
         };
       }),
     };
+  });
+
+  /** M3b: queue the Release Reviewer agent on a draft. The facts pack (eval
+   * result, M3a control diff, latest shadow-replay impact) is assembled here
+   * deterministically; the reviewer interprets it and writes an ADVISORY
+   * opinion shown beside the Promote button. It never promotes or blocks. */
+  app.post<{ Params: { slug: string; version: string } }>(
+    "/agents/:slug/releases/:version/review",
+    async (req, reply) => {
+      const db = requireDb();
+      const body = z.object({ createdBy: z.string().min(1) }).parse(req.body ?? {});
+      const a = await db.query.agent.findFirst({ where: (t) => eq(t.slug, req.params.slug) });
+      if (!a) return reply.code(404).send({ error: "agent not found" });
+      const draft = await db.query.agentRelease.findFirst({
+        where: (t) => and(eq(t.agentId, a.id), eq(t.version, Number(req.params.version))),
+      });
+      if (!draft || (draft.status !== "draft" && draft.status !== "evaluated"))
+        return reply.code(409).send({ error: "AI review runs against a DRAFT release" });
+      const baseline =
+        (await db.query.agentRelease.findFirst({
+          where: (t) => and(eq(t.agentId, a.id), eq(t.status, "active")),
+        })) ?? null;
+      const review = await startReleaseReview(db, a, draft, baseline, body.createdBy);
+      if ("error" in review) return reply.code(409).send(review);
+      await emitActivity({
+        actorType: body.createdBy === "shadow-replay" ? "system" : "human",
+        actorId: body.createdBy,
+        verb: "requested_release_review",
+        objectType: "agent",
+        objectId: a.id,
+        summary: `AI release review queued for ${a.name} draft v${draft.version}${review.grounded ? " (grounded in a shadow replay)" : " (no shadow replay yet — will be labelled predicted, not measured)"}`,
+      });
+      return { review: { id: review.id, status: review.status, grounded: review.grounded } };
+    },
+  );
+
+  /** Recent AI release reviews for an agent (advisory record, newest first). */
+  app.get<{ Params: { slug: string } }>("/agents/:slug/reviews", async (req, reply) => {
+    const db = requireDb();
+    const a = await db.query.agent.findFirst({ where: (t) => eq(t.slug, req.params.slug) });
+    if (!a) return reply.code(404).send({ error: "agent not found" });
+    const rows = await db.query.releaseReview.findMany({
+      where: (t) => eq(t.agentId, a.id),
+      orderBy: (t) => desc(t.createdAt),
+      limit: 6,
+    });
+    const versions = new Map<string, number>();
+    for (const r of await db.query.agentRelease.findMany({ where: (t) => eq(t.agentId, a.id) }))
+      versions.set(r.id, r.version);
+    return {
+      reviews: rows.map((r) => ({
+        id: r.id,
+        status: r.status,
+        verdict: r.verdict,
+        grounded: r.grounded,
+        body: r.body ?? null,
+        facts: r.facts ?? null,
+        draftVersion: versions.get(r.releaseId) ?? null,
+        createdBy: r.createdBy,
+        createdAt: r.createdAt,
+        finishedAt: r.finishedAt,
+      })),
+    };
+  });
+
+  /** Internal: the worker calls this when a shadow replay closes, so every
+   * measured impact report gets an AI reading without a human having to ask.
+   * Deterministic trigger — code decides, no model call to decide. */
+  app.post("/governance/auto-review", async (req, reply) => {
+    const db = requireDb();
+    const body = z.object({ shadowId: z.string().uuid() }).parse(req.body ?? {});
+    const sr = await db.query.shadowReplay.findFirst({ where: (t) => eq(t.id, body.shadowId) });
+    if (!sr || sr.status !== "complete")
+      return reply.code(409).send({ error: "shadow replay not found or not complete" });
+    const a = await db.query.agent.findFirst({ where: (t) => eq(t.id, sr.agentId) });
+    const draft = await db.query.agentRelease.findFirst({ where: (t) => eq(t.id, sr.draftReleaseId) });
+    if (!a || !draft) return reply.code(404).send({ error: "agent or draft release not found" });
+    if (draft.status !== "draft" && draft.status !== "evaluated")
+      return reply.code(409).send({ error: "draft already promoted or retired — no review needed" });
+    const baseline =
+      (await db.query.agentRelease.findFirst({ where: (t) => eq(t.id, sr.baselineReleaseId) })) ?? null;
+    const review = await startReleaseReview(db, a, draft, baseline, "shadow-replay");
+    if ("error" in review) return reply.code(409).send(review);
+    return { review: { id: review.id, status: review.status, grounded: review.grounded } };
   });
 
   app.get("/agents/releases/refresh-stale", async () => {

@@ -6,7 +6,7 @@ decision. Detail lives in `MASTER_PLAN.md` (phases), `ARCHITECTURE.md`
 (decisions D1–D16), `docs/plans/*` (per-process), and the living diagram
 `docs/architecture.html` (in-app at `/admin/architecture`).
 
-_Last updated: 2026-10-11_
+_Last updated: 2026-10-16_
 
 ## Phase tracker
 
@@ -142,8 +142,18 @@ _Last updated: 2026-10-11_
    account-name injection guard. The restore drafts on boot, its suite
    should go green and auto-promote (seed-authored); shadow replay over
    the degraded-era cases shows the measured difference.
-   Remaining: M3b AI release reviewer grounded in the impact report → M4
-   real test environment + canary (production phase).
+   **M3b AI release review BUILT 2026-10-16**: the Release Reviewer agent
+   (platform, reasoning tier per the plan) reads a deterministic facts
+   pack the API assembles — draft eval suite, M3a control diff, latest
+   shadow-replay impact — and saves an advisory verdict
+   (promote / hold / insufficient evidence) via `release.review.save`
+   into `agent.release_review` (migration 0019), shown beside Promote
+   with a grounded-vs-"predicted, not measured" badge. Hold is forced by
+   code and skill alike on a failed suite, a dropped never-do line, or
+   any fraud-code change in the replay. Auto-requested when a shadow
+   replay completes; never promotes or blocks. 5 eval cases pin the
+   verdict logic. Remaining: M4 real test environment + canary
+   (production phase).
 2. **Dataset v2 + period lens + chat dashboards** (`plans/DATASET_V2.md`,
    planned 2026-10-04): sequenced packages — A map of existing flaws
    (`plans/TEST_DATA_MAP.md`, done) → **B period lens BUILT 2026-10-04**

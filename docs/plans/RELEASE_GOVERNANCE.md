@@ -107,7 +107,27 @@ promotion:
   loosens silently). Verified: a doctored version dropping the
   bank_detail_change prohibition was flagged line-by-line and blocked the
   confirm.
-- **Model review (reasoning tier, per the routing table):** reads old text,
+- **Model review — BUILT 2026-10-16 (M3b)** as the **Release Reviewer
+  agent** (platform family, reasoning tier per this plan): everything
+  deterministic stays in code — the API assembles a facts pack at enqueue
+  time (latest eval suite against the draft, M3a control-regression diff per
+  changed skill, the latest complete shadow-replay impact summary) and the
+  reviewer interprets it, proposing one `release.review.save` command
+  (advisory record in `agent.release_review`, migration 0019; test-book
+  reviewer evals skip the register write). Verdicts: recommend_promote /
+  recommend_hold / insufficient_evidence, with `grounded=true` only when a
+  shadow replay backs the opinion — otherwise it is labelled "predicted,
+  not measured", exactly as planned. Deterministic hold rules are encoded
+  in the keyless fallback AND the skill: failed suite, any dropped
+  never-do line, any fraud-code change in the measured replay. A review is
+  requested automatically when a shadow replay completes (worker →
+  `POST /governance/auto-review`, best-effort) and on demand from the
+  agent page ("Request AI review"); the panel renders the opinion beside
+  Promote with the verdict chip and grounded/predicted badge. It never
+  promotes or blocks; 5 eval cases pin the verdict logic (hold on failed
+  suite, hold on dropped control line, hold on fraud-code change, grounded
+  promote, predicted-not-measured label).
+  Original design sketch (kept): reads old text,
   new text, the diff, and — critically — the M2 impact numbers when they
   exist, and writes a structured opinion: expected behaviour change,
   robustness vs before, control impact, recommendation. Grounding rule: an

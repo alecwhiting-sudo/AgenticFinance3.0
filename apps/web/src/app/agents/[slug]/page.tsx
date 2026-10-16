@@ -10,6 +10,7 @@ import {
   SkillEditor,
 } from "@/components/agentActions";
 import ShadowReplayPanel from "@/components/ShadowReplay";
+import ReleaseReviewPanel from "@/components/ReleaseReview";
 
 type Detail = {
   agent: { id: string; slug: string; name: string; purpose: string; owner: string; status: string };
@@ -244,6 +245,17 @@ export default async function AgentDetail({ params }: { params: Promise<{ slug: 
       <section>
         <Card>
           <ShadowReplayPanel
+            agentSlug={d.agent.slug}
+            draftVersions={d.releases.filter((r) => r.status === "draft").map((r) => r.version)}
+          />
+        </Card>
+      </section>
+
+      {/* AI release review (governance M3b): the reviewer agent's advisory
+          opinion, grounded in the measurements above, beside Promote. */}
+      <section>
+        <Card>
+          <ReleaseReviewPanel
             agentSlug={d.agent.slug}
             draftVersions={d.releases.filter((r) => r.status === "draft").map((r) => r.version)}
           />
