@@ -104,6 +104,44 @@ async function executeCommand(
       });
       return { saved: true, periodCode: p.periodCode };
     }
+    case "release.review.save": {
+      const p = params as {
+        reviewId: string;
+        verdict: string;
+        grounded: boolean;
+        headline: string;
+        behaviourChange: string;
+        controlImpact: string;
+        robustness: string;
+        recommendation: string;
+        caveats: string[];
+      };
+      const { releaseReview } = await import("@af/db");
+      const bookCtx = await import("../lib/bookContext.js");
+      // reviewer evals grade the command row; the review register stays real
+      if (bookCtx.currentBook() === bookCtx.TEST_BOOK)
+        return { saved: true, skipped: "test book — review register untouched" };
+      const row = await db.query.releaseReview.findFirst({ where: (t, { eq: e }) => e(t.id, p.reviewId) });
+      if (!row) throw Object.assign(new Error("review not found"), { statusCode: 404 });
+      await db
+        .update(releaseReview)
+        .set({
+          status: "complete",
+          verdict: p.verdict,
+          grounded: p.grounded,
+          body: {
+            headline: p.headline,
+            behaviourChange: p.behaviourChange,
+            controlImpact: p.controlImpact,
+            robustness: p.robustness,
+            recommendation: p.recommendation,
+            caveats: p.caveats,
+          },
+          finishedAt: new Date(),
+        })
+        .where(eq(releaseReview.id, p.reviewId));
+      return { saved: true, verdict: p.verdict };
+    }
     case "report.board_pack.save": {
       const p = params as {
         packId: string;

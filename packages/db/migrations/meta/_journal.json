@@ -134,6 +134,13 @@
       "when": 1791640015279,
       "tag": "0018_yellow_black_crow",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1792164832417,
+      "tag": "0019_panoramic_the_phantom",
+      "breakpoints": true
     }
   ]
 }

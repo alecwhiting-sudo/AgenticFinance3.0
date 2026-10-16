@@ -126,7 +126,7 @@
     <div class="boxes c4">
       <div class="box" data-info="runtime"><b>Agent runtime</b><span>work queue (Postgres FOR UPDATE SKIP LOCKED) → agent loop (Anthropic SDK, model routed by task shape) → step-by-step transcripts; deterministic keyless fallbacks for every task</span></div>
       <div class="box" data-info="gateway"><b>Command gateway</b><span>typed commands, schema + permission + idempotency checks; standing authority auto-executes, everything that moves money or leaves the building waits for a human</span></div>
-      <div class="box" data-info="releases"><b>Releases &amp; evals</b><span>versioned skills, immutable releases (draft → evaluated → active), eval suites gate promotion; behaviour change = new release. Telemetry (D14): per-period tokens/items/cost; eval_summary rollups survive history flushes</span></div>
+      <div class="box" data-info="releases"><b>Releases &amp; evals</b><span>versioned skills, immutable releases (draft → evaluated → active), eval suites gate promotion; behaviour change = new release. Governance: shadow replay measures a draft on real cases (test book, M2) and the Release Reviewer agent writes an advisory opinion from the evidence (M3b). Telemetry (D14): per-period tokens/items/cost; eval_summary rollups survive history flushes</span></div>
       <div class="box" data-info="cost"><b>Cost engineering <span class="tag">D15</span></b><span>prompt caching (shared prefixes read at ~0.1×) · learned extraction templates (suppliers graduate off the model entirely) · rate-card pricing at read time · history flushes</span></div>
     </div>
   </div>
@@ -252,7 +252,7 @@ const INFO = {
   releases: {
     t: "Releases & evals",
     what: "Agents are managed like staff. Their instructions and skills are versioned; a behaviour change is a new release that must pass its eval suite before promotion; nothing mutates a live release. Performance is tracked period on period.",
-    how: "draft → evaluated → active; eval_summary rollups survive history flushes (D14) so track records outlive the demo data.",
+    how: "draft → evaluated → active; a draft is measured by shadow replay and read by the Release Reviewer agent (advisory verdict beside Promote — humans still decide); eval_summary rollups survive history flushes (D14) so track records outlive the demo data.",
   },
   cost: {
     t: "Cost engineering (D15)",

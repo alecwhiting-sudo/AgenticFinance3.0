@@ -1133,6 +1133,125 @@ function addDays(iso: string, days: number): string {
 }
 
 /** Deterministic fallback so the framework runs end-to-end without a model. */
+/** Keyless release review (plans/RELEASE_GOVERNANCE.md M3b): the facts pack
+ * arrives pre-assembled by the API (eval suite result, M3a control diff,
+ * shadow-replay impact summary); this derives the advisory verdict from the
+ * measurements alone — a failed suite, a dropped never-do line or any change
+ * on a fraud-risk code means hold; a clean measured run means promote; a
+ * clean but unmeasured draft is labelled "predicted, not measured". */
+async function releaseReviewFallback(
+  resolved: ResolvedRelease,
+  runId: string,
+  payload: Record<string, unknown>,
+  steps: TranscriptStep[],
+): Promise<LoopResult> {
+  const reviewId = String(payload.reviewId ?? "");
+  const facts = (payload.facts ?? {}) as {
+    agentName?: string;
+    draftVersion?: number;
+    baselineVersion?: number | null;
+    evalSuite?: { status: string; passed: number; failed: number; failures: string[] } | null;
+    controlDiff?: { skill: string; comparable: boolean; removedNeverDo: string[]; removedMethod: string[] }[];
+    shadow?: {
+      summary: {
+        cases?: number;
+        changed?: number;
+        incomparable?: number;
+        baselineOutcomes?: Record<string, number>;
+        draftOutcomes?: Record<string, number>;
+        changedByExceptionCode?: Record<string, number>;
+      };
+      topChanges: { ref: string; exceptionCode: string | null; changes: string[] }[];
+    } | null;
+  };
+  if (!reviewId) return { outcome: "escalated", summary: "Release review task carries no reviewId — nothing to attach the opinion to." };
+  const name = facts.agentName ?? "the agent";
+  const vTag = `draft v${facts.draftVersion ?? "?"}${facts.baselineVersion ? ` vs active v${facts.baselineVersion}` : ""}`;
+  const ev = facts.evalSuite ?? null;
+  const diffs = facts.controlDiff ?? [];
+  const shadow = facts.shadow ?? null;
+  const grounded = shadow !== null;
+
+  const droppedNeverDo = diffs.flatMap((d) => d.removedNeverDo.map((l) => `${d.skill}: "${l}"`));
+  const droppedMethod = diffs.flatMap((d) => d.removedMethod.map((l) => `${d.skill}: "${l}"`));
+  const fraudChanged = shadow
+    ? Object.keys(shadow.summary.changedByExceptionCode ?? {}).filter((c) => c.includes("bank_detail"))
+    : [];
+  const escPct = (o?: Record<string, number>) => {
+    const total = Object.values(o ?? {}).reduce((a, b) => a + b, 0);
+    return total ? Math.round((((o ?? {}).escalated ?? 0) / total) * 100) : 0;
+  };
+
+  let verdict: "recommend_promote" | "recommend_hold" | "insufficient_evidence";
+  const caveats: string[] = [];
+  if (ev && ev.status === "failed") {
+    verdict = "recommend_hold";
+    caveats.push(`eval suite failed ${ev.failed} of ${ev.passed + ev.failed} cases`);
+  } else if (droppedNeverDo.length > 0) {
+    verdict = "recommend_hold";
+    caveats.push("a prohibition or escalation rule present in the active release is missing from the draft");
+  } else if (fraudChanged.length > 0) {
+    verdict = "recommend_hold";
+    caveats.push(`the measured replay shows changed handling on fraud-risk codes: ${fraudChanged.join(", ")}`);
+  } else if (shadow) {
+    verdict = "recommend_promote";
+  } else if (ev && ev.status === "passed") {
+    verdict = "recommend_promote";
+    caveats.push("predicted, not measured — no shadow replay has run against this draft");
+  } else {
+    verdict = "insufficient_evidence";
+    caveats.push("no finished eval suite and no shadow replay — run either before promoting");
+  }
+
+  const s = shadow?.summary;
+  const behaviourChange = shadow
+    ? `Measured on ${s?.cases ?? 0} replayed real cases: ${s?.changed ?? 0} would be handled differently` +
+      `${(s?.incomparable ?? 0) > 0 ? ` (${s?.incomparable} not comparable)` : ""}. ` +
+      `Cases sent to a human: ${escPct(s?.baselineOutcomes)}% now, ${escPct(s?.draftOutcomes)}% under the draft. ` +
+      (shadow.topChanges.length > 0
+        ? `Largest changes: ${shadow.topChanges.slice(0, 3).map((c) => `${c.ref} (${c.changes[0] ?? "changed"})`).join("; ")}.`
+        : `No per-case changes were recorded.`)
+    : `No shadow replay has measured this draft, so any behaviour-change expectation is a prediction from the skill text alone` +
+      (droppedMethod.length > 0 ? ` — the draft drops or rewords ${droppedMethod.length} method line(s).` : ".");
+  const controlImpact =
+    droppedNeverDo.length > 0
+      ? `CONTROL REGRESSION: the draft no longer carries ${droppedNeverDo.length} operative control line(s): ${droppedNeverDo.slice(0, 3).join("; ")}.`
+      : fraudChanged.length > 0
+        ? `The replay measured changed handling on fraud-risk exception codes (${fraudChanged.join(", ")}) — fraud posture must never change silently.`
+        : `No control lines dropped (never-do and escalation rules carry over)${shadow ? ", and the replay measured no change on fraud-risk codes" : ""}.`;
+  const robustness = ev
+    ? `Eval suite: ${ev.status} (${ev.passed} passed, ${ev.failed} failed${ev.failures.length > 0 ? `; e.g. ${ev.failures[0]}` : ""}).`
+    : `No finished eval suite against this draft.`;
+  const recommendation =
+    verdict === "recommend_promote"
+      ? `Promote. ${grounded ? "The measured impact is consistent with the intended change and no control weakened." : "The gate evidence is green, but this is predicted, not measured — a shadow replay would confirm it."} The decision stays with you.`
+      : verdict === "recommend_hold"
+        ? `Hold. Resolve the flagged items (${caveats[0] ?? "see caveats"}) before promoting; promoting anyway is a human override the audit trail will show.`
+        : `Gather evidence first: run the eval suite and a shadow replay, then re-request this review.`;
+  const headline = `${name} ${vTag}: ${
+    verdict === "recommend_promote" ? "recommend promote" : verdict === "recommend_hold" ? "recommend HOLD" : "insufficient evidence"
+  }${grounded ? " (grounded in measured replay)" : " (predicted, not measured)"}`;
+
+  await appendStep(runId, steps, {
+    kind: "note",
+    label: "review derived from facts pack",
+    detail: { verdict, grounded, droppedNeverDo: droppedNeverDo.length, fraudChanged },
+  });
+  const { ok, data } = await proposeCommand(runId, 1, "release.review.save", {
+    reviewId,
+    verdict,
+    grounded,
+    headline,
+    behaviourChange,
+    controlImpact,
+    robustness,
+    recommendation,
+    caveats,
+  }, steps);
+  if (!ok) return { outcome: "failed", summary: `Gateway rejected the review: ${String((data as { error?: string }).error ?? "unknown")}` };
+  return { outcome: "completed", summary: headline };
+}
+
 async function deterministicHandler(
   resolved: ResolvedRelease,
   runId: string,
@@ -1172,6 +1291,9 @@ async function deterministicHandler(
   }
   if (taskType === "board.pack" || (taskType === "eval.case" && typeof payload.packId === "string")) {
     return boardPackFallback(resolved, runId, payload, steps);
+  }
+  if (taskType === "release.review" || (taskType === "eval.case" && typeof payload.reviewId === "string")) {
+    return releaseReviewFallback(resolved, runId, payload, steps);
   }
   if (taskType === "hello.greet" || taskType === "eval.case") {
     const topic = String(payload.topic ?? "the business");

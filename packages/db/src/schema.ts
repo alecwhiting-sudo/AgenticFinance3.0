@@ -383,6 +383,31 @@ export const shadowReplay = ag.table("shadow_replay", {
   finishedAt: timestamp("finished_at", { withTimezone: true }),
 });
 
+/** AI release review (plans/RELEASE_GOVERNANCE.md M3b): the Release Reviewer
+ * agent reads a draft's measured evidence — eval suite, control-regression
+ * diff, shadow-replay impact report — and writes an ADVISORY opinion for the
+ * human at the promote decision. A review grounded in a shadow replay is
+ * "measured"; without one it is labelled "predicted, not measured". It never
+ * promotes or blocks by itself. */
+export const releaseReview = ag.table("release_review", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  agentId: uuid("agent_id").notNull().references(() => agent.id), // the agent under review
+  releaseId: uuid("release_id").notNull().references(() => agentRelease.id), // the draft reviewed
+  shadowReplayId: uuid("shadow_replay_id").references(() => shadowReplay.id),
+  status: text("status").notNull().default("running"), // running | complete | failed
+  verdict: text("verdict"), // recommend_promote | recommend_hold | insufficient_evidence
+  /** true when the opinion reconciles to a shadow-replay measurement */
+  grounded: boolean("grounded").notNull().default(false),
+  /** {headline, behaviourChange, controlImpact, robustness, recommendation, caveats[]} */
+  body: jsonb("body").$type<Record<string, unknown>>(),
+  /** the facts pack the reviewer was grounded on (kept for audit) */
+  facts: jsonb("facts").$type<Record<string, unknown>>(),
+  runId: uuid("run_id"),
+  createdBy: text("created_by").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  finishedAt: timestamp("finished_at", { withTimezone: true }),
+});
+
 export const activityEvent = ag.table("activity_event", {
   id: uuid("id").primaryKey().defaultRandom(),
   at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
