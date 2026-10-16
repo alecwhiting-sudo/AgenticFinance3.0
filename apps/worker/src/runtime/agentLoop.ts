@@ -117,7 +117,7 @@ function buildSystemPrompt(resolved: ResolvedRelease, taskType?: string): string
 - You act only through your tools. You cannot move money, post journals, or send external communications; requests for such ACTIONS are out of scope — finish with outcome "abstained" and explain.
 - Proposing is not acting: content a human confirms (resolution options, drafts, a board: line) needs no tool — it is text in your summary, always in scope, and never a reason to abstain.
 - Your tool list is the authoritative statement of your capabilities: where a skill's text names fewer or older tools, the tools actually offered here supersede it.
-- Permitted command types: ${resolved.release.commandPermissions.join(", ") || "none"}.${boardRule}
+- Permitted command types: ${resolved.release.commandPermissions.join(", ") || "none"} — plus the display-only case commands case.note, case.options and case.open, which are STANDING AUTHORITY for every agent: they only record evidence on a case (notes, resolution options, a new query case), never move money, and never need approval. When a skill tells you to put options or a note on a case, propose the command — do not skip it because it is absent from the permitted list above.${boardRule}
 - Always end by calling the finish tool exactly once.`,
   ]
     .filter(Boolean)
@@ -1174,9 +1174,22 @@ async function releaseReviewFallback(
 
   const droppedNeverDo = diffs.flatMap((d) => d.removedNeverDo.map((l) => `${d.skill}: "${l}"`));
   const droppedMethod = diffs.flatMap((d) => d.removedMethod.map((l) => `${d.skill}: "${l}"`));
-  const fraudChanged = shadow
-    ? Object.keys(shadow.summary.changedByExceptionCode ?? {}).filter((c) => c.includes("bank_detail"))
-    : [];
+  // Direction matters on fraud codes: the facts pack says what the DRAFT did
+  // on each changed fraud-risk case. A draft that resolves or completes a
+  // hold has WEAKENED fraud posture (always hold); a draft that still holds
+  // while adding evidence has strengthened it (caveat, not a block). Old
+  // facts packs without the field fall back to the conservative read.
+  type FraudChange = { ref: string; exceptionCode: string; draftOutcome: string; draftProposesResolve: boolean };
+  const fraudTouched: FraudChange[] = Array.isArray((facts as { fraudChanges?: FraudChange[] }).fraudChanges)
+    ? (facts as { fraudChanges: FraudChange[] }).fraudChanges
+    : shadow
+      ? Object.keys(shadow.summary.changedByExceptionCode ?? {})
+          .filter((c) => c.includes("bank_detail"))
+          .map((c) => ({ ref: "?", exceptionCode: c, draftOutcome: "unknown", draftProposesResolve: false }))
+      : [];
+  const fraudWeakened = fraudTouched.filter(
+    (c) => c.draftProposesResolve || c.draftOutcome === "completed" || c.draftOutcome === "unknown",
+  );
   const escPct = (o?: Record<string, number>) => {
     const total = Object.values(o ?? {}).reduce((a, b) => a + b, 0);
     return total ? Math.round((((o ?? {}).escalated ?? 0) / total) * 100) : 0;
@@ -1187,14 +1200,25 @@ async function releaseReviewFallback(
   if (ev && ev.status === "failed") {
     verdict = "recommend_hold";
     caveats.push(`eval suite failed ${ev.failed} of ${ev.passed + ev.failed} cases`);
-  } else if (droppedNeverDo.length > 0) {
+  } else if (fraudWeakened.length > 0) {
     verdict = "recommend_hold";
-    caveats.push("a prohibition or escalation rule present in the active release is missing from the draft");
-  } else if (fraudChanged.length > 0) {
+    caveats.push(
+      `the measured replay shows fraud posture WEAKENED: ${fraudWeakened.map((c) => `${c.ref} (${c.exceptionCode}${c.draftProposesResolve ? ", draft proposes a resolution" : `, draft outcome ${c.draftOutcome}`})`).join("; ")}`,
+    );
+  } else if (droppedNeverDo.length > 0 && !shadow) {
+    // a control line is missing and nothing measured clears it
     verdict = "recommend_hold";
-    caveats.push(`the measured replay shows changed handling on fraud-risk codes: ${fraudChanged.join(", ")}`);
+    caveats.push("a prohibition or escalation rule present in the active release is missing from the draft, and no shadow replay has measured whether behaviour actually changed");
   } else if (shadow) {
     verdict = "recommend_promote";
+    if (droppedNeverDo.length > 0)
+      caveats.push(
+        "control lines reworded or removed since the active release — read the control diff before promoting; the measured replay shows fraud posture unchanged",
+      );
+    if (fraudTouched.length > 0)
+      caveats.push(
+        `fraud-risk cases changed WITHOUT weakening (draft still holds them): ${fraudTouched.map((c) => c.ref).join(", ")} — worth a glance`,
+      );
   } else if (ev && ev.status === "passed") {
     verdict = "recommend_promote";
     caveats.push("predicted, not measured — no shadow replay has run against this draft");
@@ -1214,11 +1238,11 @@ async function releaseReviewFallback(
     : `No shadow replay has measured this draft, so any behaviour-change expectation is a prediction from the skill text alone` +
       (droppedMethod.length > 0 ? ` — the draft drops or rewords ${droppedMethod.length} method line(s).` : ".");
   const controlImpact =
-    droppedNeverDo.length > 0
-      ? `CONTROL REGRESSION: the draft no longer carries ${droppedNeverDo.length} operative control line(s): ${droppedNeverDo.slice(0, 3).join("; ")}.`
-      : fraudChanged.length > 0
-        ? `The replay measured changed handling on fraud-risk exception codes (${fraudChanged.join(", ")}) — fraud posture must never change silently.`
-        : `No control lines dropped (never-do and escalation rules carry over)${shadow ? ", and the replay measured no change on fraud-risk codes" : ""}.`;
+    fraudWeakened.length > 0
+      ? `FRAUD POSTURE WEAKENED in the measured replay: ${fraudWeakened.map((c) => `${c.ref} (${c.exceptionCode})`).join(", ")} — a bank-detail hold must never be resolved or completed by the agent.`
+      : droppedNeverDo.length > 0
+        ? `Control text changed: ${droppedNeverDo.length} operative line(s) from the active release no longer match verbatim: ${droppedNeverDo.slice(0, 3).join("; ")}. ${shadow ? "The measured replay shows fraud posture unchanged, so this reads as a rewording — confirm by reading the diff." : "Nothing measured clears this — treat it as a regression until a shadow replay shows otherwise."}`
+        : `No control lines dropped (never-do and escalation rules carry over)${shadow ? (fraudTouched.length > 0 ? ", and the fraud-risk cases that changed in the replay are still held by the draft" : ", and the replay measured no change on fraud-risk codes") : ""}.`;
   const robustness = ev
     ? `Eval suite: ${ev.status} (${ev.passed} passed, ${ev.failed} failed${ev.failures.length > 0 ? `; e.g. ${ev.failures[0]}` : ""}).`
     : `No finished eval suite against this draft.`;
@@ -1235,7 +1259,7 @@ async function releaseReviewFallback(
   await appendStep(runId, steps, {
     kind: "note",
     label: "review derived from facts pack",
-    detail: { verdict, grounded, droppedNeverDo: droppedNeverDo.length, fraudChanged },
+    detail: { verdict, grounded, droppedNeverDo: droppedNeverDo.length, fraudTouched: fraudTouched.length, fraudWeakened: fraudWeakened.length },
   });
   const { ok, data } = await proposeCommand(runId, 1, "release.review.save", {
     reviewId,

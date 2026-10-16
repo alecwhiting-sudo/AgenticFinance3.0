@@ -127,6 +127,16 @@ promotion:
   promotes or blocks; 5 eval cases pin the verdict logic (hold on failed
   suite, hold on dropped control line, hold on fraud-code change, grounded
   promote, predicted-not-measured label).
+  **Refined 2026-10-16 after its first live review** (which correctly held
+  a draft and surfaced a real worker bug — the prompt's permitted-commands
+  line omitted display-only case commands, so model-path agents skipped
+  case.options): fraud-replay changes are judged by DIRECTION from
+  facts.fraudChanges (hold only when the draft resolves or completes a
+  bank-detail hold; a changed-but-still-held case is a caveat), and a
+  removed never-do line with a clean measured replay reads as a rewording
+  (promote + "read the control diff" caveat) instead of an eternal hold —
+  without measurement it still holds, and M3a still flags the diff to the
+  human either way.
   Original design sketch (kept): reads old text,
   new text, the diff, and — critically — the M2 impact numbers when they
   exist, and writes a structured opinion: expected behaviour change,

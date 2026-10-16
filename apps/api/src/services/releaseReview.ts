@@ -39,6 +39,10 @@ export type ReviewFacts = {
     summary: Record<string, unknown>;
     topChanges: { ref: string; exceptionCode: string | null; changes: string[] }[];
   } | null;
+  /** every changed fraud-risk case in the replay, with what the DRAFT did —
+   * so the verdict can tell a weakening (draft resolves or completes a hold)
+   * from a strengthening (draft adds evidence while still holding) */
+  fraudChanges: { ref: string; exceptionCode: string; draftOutcome: string; draftProposesResolve: boolean }[];
 };
 
 /** Build the deterministic facts pack for a draft under review. */
@@ -96,15 +100,31 @@ export async function assembleReviewFacts(
     where: (t, { and, eq: e }) => and(e(t.draftReleaseId, draft.id), e(t.status, "complete")),
     orderBy: desc(shadowReplay.startedAt),
   });
+  type ReplayRow = {
+    ref?: string;
+    exceptionCode?: string | null;
+    changed?: boolean;
+    changes?: string[];
+    draft?: { outcome?: string; commands?: { type: string; resolution: string | null }[] };
+  };
+  const rows = (sr?.results ?? []) as ReplayRow[];
   const shadow = sr?.summary
     ? {
         summary: sr.summary,
-        topChanges: (sr.results as { ref?: string; exceptionCode?: string | null; changed?: boolean; changes?: string[] }[])
+        topChanges: rows
           .filter((r) => r.changed)
           .slice(0, 10)
           .map((r) => ({ ref: r.ref ?? "?", exceptionCode: r.exceptionCode ?? null, changes: r.changes ?? [] })),
       }
     : null;
+  const fraudChanges = rows
+    .filter((r) => r.changed && (r.exceptionCode ?? "").includes("bank_detail"))
+    .map((r) => ({
+      ref: r.ref ?? "?",
+      exceptionCode: r.exceptionCode!,
+      draftOutcome: r.draft?.outcome ?? "unknown",
+      draftProposesResolve: (r.draft?.commands ?? []).some((c) => c.type === "ap.invoice.resolve"),
+    }));
 
   return {
     facts: {
@@ -115,6 +135,7 @@ export async function assembleReviewFacts(
       evalSuite,
       controlDiff,
       shadow,
+      fraudChanges,
     },
     shadowId: sr?.id ?? null,
   };
