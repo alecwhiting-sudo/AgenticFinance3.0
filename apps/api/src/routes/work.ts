@@ -94,6 +94,34 @@ export function workRoutes(app: FastifyInstance): void {
     return started.evalRun;
   });
 
+  /** Start an eval suite against a SPECIFIC release — the testing path for a
+   * draft: measure it before promoting, exactly as the refresh gate would.
+   * Retired releases are history, not candidates, so they are refused. */
+  app.post<{ Params: { slug: string; version: string } }>(
+    "/agents/:slug/releases/:version/evals/run",
+    async (req, reply) => {
+      const db = requireDb();
+      const a = await db.query.agent.findFirst({ where: (t) => eq(t.slug, req.params.slug) });
+      if (!a) return reply.code(404).send({ error: "agent not found" });
+      const release = await db.query.agentRelease.findFirst({
+        where: (t, { and }) => and(eq(t.agentId, a.id), eq(t.version, Number(req.params.version))),
+      });
+      if (!release) return reply.code(404).send({ error: "release not found" });
+      if (release.status === "retired") return reply.code(409).send({ error: "release is retired — draft a new one to test" });
+      const started = await startEvalSuite(db, a, release);
+      if ("error" in started) return reply.code(409).send(started);
+      await emitActivity({
+        actorType: "human",
+        actorId: "workbench",
+        verb: "started_evals",
+        objectType: "agent",
+        objectId: a.slug,
+        summary: `Eval suite started for ${a.name} ${release.status === "active" ? "active" : "draft"} v${release.version} (${started.queued} queued${started.skipped.length ? `, ${started.skipped.length} live case(s) skipped` : ""})`,
+      });
+      return started.evalRun;
+    },
+  );
+
   app.get<{ Params: { id: string } }>("/eval-runs/:id", async (req, reply) => {
     const db = requireDb();
     const er = await db.query.evalRun.findFirst({ where: (t) => eq(t.id, req.params.id) });

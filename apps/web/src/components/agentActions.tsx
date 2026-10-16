@@ -144,7 +144,10 @@ export function PromoteButton({ agentSlug, version }: { agentSlug: string; versi
   );
 }
 
-export function RunEvalsButton({ agentSlug }: { agentSlug: string }) {
+/** Run the eval suite — against the active release by default, or against a
+ * specific draft when `version` is given (the testing path: measure a draft
+ * before promoting, exactly as the refresh gate would). */
+export function RunEvalsButton({ agentSlug, version, small }: { agentSlug: string; version?: number; small?: boolean }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -154,26 +157,28 @@ export function RunEvalsButton({ agentSlug }: { agentSlug: string }) {
         disabled={busy}
         onClick={async () => {
           setBusy(true);
-          const { ok } = await post(`/agents/${agentSlug}/evals/run`, {});
-          setMsg(ok ? "Suite queued — results appear below as the worker grades them." : "Could not start evals.");
+          const path =
+            version !== undefined ? `/agents/${agentSlug}/releases/${version}/evals/run` : `/agents/${agentSlug}/evals/run`;
+          const { ok } = await post(path, {});
+          setMsg(ok ? (small ? "queued" : "Suite queued — results appear below as the worker grades them.") : small ? "failed" : "Could not start evals.");
           setBusy(false);
           setTimeout(() => router.refresh(), 2500);
           setTimeout(() => router.refresh(), 7000);
         }}
-        className="rounded-lg px-3 py-1.5 text-sm font-medium text-white disabled:opacity-40"
-        style={{ background: "var(--accent)" }}
+        className={
+          small
+            ? "rounded-lg border px-2.5 py-1 text-xs font-medium disabled:opacity-40"
+            : "rounded-lg px-3 py-1.5 text-sm font-medium text-white disabled:opacity-40"
+        }
+        style={small ? { borderColor: "var(--accent)", color: "var(--accent)" } : { background: "var(--accent)" }}
       >
-        {busy ? "Starting…" : "Run eval suite"}
+        {busy ? "…" : small ? "Run evals" : "Run eval suite"}
       </button>
       {msg && <span className="text-xs" style={{ color: "var(--muted)" }}>{msg}</span>}
     </span>
   );
 }
 
-/** Edit which library skills this agent carries. Writes the CENTRAL skill map
- * (the curriculum); the API replaces the map and drafts a release pinned to
- * the latest version of each mapped skill — eval and promote to make it live
- * (§2.3). Nothing changes for the running agent until that promotion. */
 export function ManageSkills({
   agentSlug,
   currentSkillSlugs,

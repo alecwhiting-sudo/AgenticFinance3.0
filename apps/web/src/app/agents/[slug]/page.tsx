@@ -34,6 +34,7 @@ type Detail = {
   evalRuns: {
     id: string;
     status: string;
+    releaseId: string | null;
     passed: number;
     failed: number;
     startedAt: string;
@@ -231,7 +232,10 @@ export default async function AgentDetail({ params }: { params: Promise<{ slug: 
                     </div>
                   </div>
                   {(r.status === "draft" || r.status === "evaluated") && (
-                    <PromoteButton agentSlug={d.agent.slug} version={r.version} />
+                    <span className="inline-flex items-center gap-2">
+                      <RunEvalsButton agentSlug={d.agent.slug} version={r.version} small />
+                      <PromoteButton agentSlug={d.agent.slug} version={r.version} />
+                    </span>
                   )}
                 </li>
               );
@@ -269,12 +273,19 @@ export default async function AgentDetail({ params }: { params: Promise<{ slug: 
             <RunEvalsButton agentSlug={d.agent.slug} />
           </div>
           <ul className="space-y-3">
-            {d.evalRuns.map((er) => (
+            {d.evalRuns.map((er) => {
+              const rel = d.releases.find((r) => r.id === er.releaseId);
+              return (
               <li key={er.id} className="rounded-lg border p-3" style={{ borderColor: "var(--border)" }}>
                 <div className="flex items-center justify-between text-sm">
                   <span>
                     <Badge tone={toneForStatus(er.status)}>{er.status}</Badge>{" "}
                     <span className="tabular-nums">{er.passed} passed / {er.failed} failed</span>
+                    {rel && (
+                      <span className="ml-2 text-xs" style={{ color: "var(--muted)" }}>
+                        on v{rel.version}{rel.status === "active" ? " (active)" : rel.status === "draft" ? " (draft)" : ""}
+                      </span>
+                    )}
                   </span>
                   <span className="text-xs" style={{ color: "var(--muted)" }}>
                     {new Date(er.startedAt).toLocaleString()}
@@ -294,7 +305,8 @@ export default async function AgentDetail({ params }: { params: Promise<{ slug: 
                   ))}
                 </ul>
               </li>
-            ))}
+              );
+            })}
             {d.evalRuns.length === 0 && (
               <p className="text-sm" style={{ color: "var(--muted)" }}>No eval runs yet.</p>
             )}
