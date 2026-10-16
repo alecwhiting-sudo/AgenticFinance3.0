@@ -142,8 +142,31 @@ _Last updated: 2026-10-16_
    account-name injection guard. The restore drafts on boot, its suite
    should go green and auto-promote (seed-authored); shadow replay over
    the degraded-era cases shows the measured difference.
-   Remaining: M3b AI release reviewer grounded in the impact report → M4
-   real test environment + canary (production phase).
+   **M3b AI release review BUILT 2026-10-16**: the Release Reviewer agent
+   (platform, reasoning tier per the plan) reads a deterministic facts
+   pack the API assembles — draft eval suite, M3a control diff, latest
+   shadow-replay impact — and saves an advisory verdict
+   (promote / hold / insufficient evidence) via `release.review.save`
+   into `agent.release_review` (migration 0019), shown beside Promote
+   with a grounded-vs-"predicted, not measured" badge. Hold is forced by
+   code and skill alike on a failed suite, a dropped never-do line, or
+   any fraud-code change in the replay. Auto-requested when a shadow
+   replay completes; never promotes or blocks. 5 eval cases pin the
+   verdict logic. **First live catch + fix round 2026-10-16**: the
+   reviewer's first real review held the restored-playbook draft and
+   exposed a genuine worker bug — the system prompt's "Permitted command
+   types" line omitted the display-only case commands, so on the MODEL
+   path agents skipped case.options entirely (keyless fallbacks are code
+   and masked it). Fixed in the prompt (display-only commands declared
+   standing authority) and hardened in playbook v7 (exact command shapes,
+   label length cap, tolerance verdict wording required in the summary).
+   The reviewer itself was refined: fraud-replay changes are now judged by
+   DIRECTION (hold only when the draft resolves/completes a hold;
+   strengthening is a caveat), and a removed never-do line with a clean
+   measured replay reads as a rewording (promote + "read the control
+   diff" caveat) rather than an eternal hold — M3a still flags it for the
+   human either way. 7 reviewer eval cases. Remaining: M4 real test
+   environment + canary (production phase).
 2. **Dataset v2 + period lens + chat dashboards** (`plans/DATASET_V2.md`,
    planned 2026-10-04): sequenced packages — A map of existing flaws
    (`plans/TEST_DATA_MAP.md`, done) → **B period lens BUILT 2026-10-04**

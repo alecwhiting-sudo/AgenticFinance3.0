@@ -223,6 +223,25 @@ export const commandDefs = {
       detail: z.record(z.string(), z.unknown()).default({}),
     }),
   },
+  /** Save the Release Reviewer's advisory opinion on a draft release
+   * (plans/RELEASE_GOVERNANCE.md M3b). Advisory only: it informs the human
+   * at the promote decision and never promotes or blocks by itself, so no
+   * approval gate. In the test book (reviewer evals) the write is skipped. */
+  "release.review.save": {
+    requiresApproval: false,
+    params: z.object({
+      reviewId: z.string().uuid(),
+      verdict: z.enum(["recommend_promote", "recommend_hold", "insufficient_evidence"]),
+      /** true only when the opinion reconciles to shadow-replay measurements */
+      grounded: z.boolean(),
+      headline: z.string().min(10).max(300),
+      behaviourChange: z.string().min(10).max(2000),
+      controlImpact: z.string().min(10).max(2000),
+      robustness: z.string().min(10).max(2000),
+      recommendation: z.string().min(10).max(2000),
+      caveats: z.array(z.string().min(3).max(300)).max(8).default([]),
+    }),
+  },
   /** Resolve an invoice exception — ALWAYS a human approval (plans/P2P.md §6). */
   "ap.invoice.resolve": {
     requiresApproval: true,
