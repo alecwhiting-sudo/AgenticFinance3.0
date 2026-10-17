@@ -48,6 +48,7 @@ type Detail = {
   supplierHistory: { invoices: number; open_exceptions: number; paid: number };
   investigating: boolean;
   tolerances: { priceVariancePct?: number; priceVarianceFloorMinor?: number } | null;
+  supplierTolerance: { supplierName: string; priceVariancePct: number; priceVarianceFloorMinor: number } | null;
 };
 
 const CODE_LABELS: Record<string, string> = {
@@ -309,13 +310,25 @@ export default function ExceptionsPage() {
                   ))}
                 </div>
               )}
-              {d.tolerances && (
+              {d.supplierTolerance ? (
                 <p className="mt-2 text-xs" style={{ color: "var(--muted)" }}>
-                  Tolerance policy (parameter set, versioned): price variances within{" "}
-                  {d.tolerances.priceVariancePct ?? 2}% of the approved purchase or{" "}
-                  {money(d.tolerances.priceVarianceFloorMinor ?? 2500)}, whichever is larger, are recommended for
-                  acceptance — every resolution still needs a human approval.
+                  <span className="font-medium" style={{ color: "var(--accent)" }}>Supplier-specific tolerance</span>{" "}
+                  (parameter set, versioned): {d.supplierTolerance.supplierName} has a negotiated allowance — price
+                  variances within {d.supplierTolerance.priceVariancePct}% of the approved purchase or{" "}
+                  {money(d.supplierTolerance.priceVarianceFloorMinor)}, whichever is larger, are recommended for
+                  acceptance (company default: {d.tolerances?.priceVariancePct ?? 2}% /{" "}
+                  {money(d.tolerances?.priceVarianceFloorMinor ?? 2500)}) — every resolution still needs a human
+                  approval.
                 </p>
+              ) : (
+                d.tolerances && (
+                  <p className="mt-2 text-xs" style={{ color: "var(--muted)" }}>
+                    Tolerance policy (parameter set, versioned): price variances within{" "}
+                    {d.tolerances.priceVariancePct ?? 2}% of the approved purchase or{" "}
+                    {money(d.tolerances.priceVarianceFloorMinor ?? 2500)}, whichever is larger, are recommended for
+                    acceptance — every resolution still needs a human approval.
+                  </p>
+                )
               )}
             </div>
 

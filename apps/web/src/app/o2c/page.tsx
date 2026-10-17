@@ -4,7 +4,7 @@ import { getJson } from "@/lib/api";
 import { money, formatDate } from "@/lib/format";
 import { ApiDownBanner } from "@/components/Chrome";
 import { Badge, Card, SectionTitle, toneForStatus } from "@/components/ui";
-import { ApplyReceiptsButton, ChaseButton } from "@/components/O2CActions";
+import { ApplyReceiptsButton, ChaseButton, DisputeButton } from "@/components/O2CActions";
 
 export const metadata: Metadata = { title: "O2C" };
 
@@ -37,7 +37,7 @@ export default async function O2CPage({
   const filter = view && view !== "all" ? view : undefined;
   const query =
     filter === "overdue" ? "?overdue=true&limit=100" : filter ? `?status=${filter}&limit=100` : "?limit=100";
-  const [pipeline, invoices, receiptQueries] = await Promise.all([
+  const [pipeline, invoices, receiptQueries, disputes] = await Promise.all([
     getJson<Pipeline>("/o2c/pipeline"),
     getJson<Invoice[]>(`/o2c/invoices${query}`),
     getJson<{
@@ -54,7 +54,24 @@ export default async function O2CPage({
         }[];
       }[];
     }>("/o2c/receipt-queries"),
+    getJson<{
+      disputes: {
+        id: string;
+        title: string;
+        createdAt: string;
+        invoiceId: string | null;
+        detail: { reason?: string; customerName?: string } | null;
+        options: {
+          resolution: string;
+          label: string;
+          rationale: string;
+          costedNote?: string;
+          emailDraft?: { to: string; subject: string; body: string };
+        }[];
+      }[];
+    }>("/o2c/disputes"),
   ]);
+  const disputedIds = new Set((disputes?.disputes ?? []).map((d) => d.invoiceId).filter(Boolean));
   const apiDown = pipeline === null;
   const st = (s: string) => pipeline?.statuses.find((x) => x.status === s);
   const outstanding = Number(st("posted")?.total ?? 0);
@@ -152,7 +169,16 @@ export default async function O2CPage({
                 </td>
                 <td className="py-2 text-right tabular-nums">{formatDate(i.dueDate)}</td>
                 <td className="py-2 text-right tabular-nums">{money(i.grossMinor)}</td>
-                <td className="py-2 text-right">{i.overdue && <ChaseButton invoiceId={i.id} />}</td>
+                <td className="py-2 text-right">
+                  {disputedIds.has(i.id) ? (
+                    <span className="whitespace-nowrap text-xs" style={{ color: "var(--warn)" }}>disputed — dunning held</span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5">
+                      {i.overdue && <ChaseButton invoiceId={i.id} />}
+                      {i.status === "posted" && <DisputeButton invoiceId={i.id} number={i.number} />}
+                    </span>
+                  )}
+                </td>
               </tr>
             ))}
             {invoices !== null && invoices.length === 0 && (
@@ -190,6 +216,55 @@ export default async function O2CPage({
                         <details className="mt-1.5 rounded border p-1.5" style={{ borderColor: "var(--border)" }}>
                           <summary className="cursor-pointer font-medium" style={{ color: "var(--accent)" }}>
                             Draft query letter
+                          </summary>
+                          <div className="mt-1 space-y-0.5" style={{ color: "var(--muted)" }}>
+                            <div><span className="font-medium">To:</span> {o.emailDraft.to}</div>
+                            <div><span className="font-medium">Subject:</span> {o.emailDraft.subject}</div>
+                            <pre className="mt-1 whitespace-pre-wrap font-sans leading-5">{o.emailDraft.body}</pre>
+                          </div>
+                        </details>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* AR disputes (plans/O2C.md §9 M3 — the P2P exceptions mirror): a
+          disputed invoice is never chased; the Collections Agent lays out
+          the ways forward and a human decides every credit or re-bill. */}
+      {(disputes?.disputes.length ?? 0) > 0 && (
+        <Card>
+          <SectionTitle>Disputes ({disputes!.disputes.length})</SectionTitle>
+          <p className="mb-3 text-sm" style={{ color: "var(--muted)" }}>
+            Invoices the customer has queried. Dunning is held automatically while a dispute is open;
+            crediting or re-billing is a human decision. Draft replies are never sent automatically.
+          </p>
+          <div className="space-y-3">
+            {disputes!.disputes.map((q) => (
+              <div key={q.id} className="rounded-lg border p-3" style={{ borderColor: "var(--border)" }}>
+                <div className="flex items-baseline justify-between">
+                  <span className="text-sm font-medium">{q.title}</span>
+                  <span className="text-xs" style={{ color: "var(--muted)" }}>{formatDate(q.createdAt)}</span>
+                </div>
+                {q.detail?.reason && (
+                  <p className="mt-1 text-xs" style={{ color: "var(--muted)" }}>
+                    Customer says: &ldquo;{q.detail.reason}&rdquo;
+                  </p>
+                )}
+                <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                  {q.options.map((o, i) => (
+                    <div key={i} className="rounded-lg border p-2 text-xs" style={{ borderColor: "var(--border)" }}>
+                      <div className="font-medium">{o.label}</div>
+                      {o.costedNote && <div className="mt-0.5 font-medium" style={{ color: "var(--warn)" }}>{o.costedNote}</div>}
+                      <p className="mt-1 leading-5" style={{ color: "var(--muted)" }}>{o.rationale}</p>
+                      {o.emailDraft && (
+                        <details className="mt-1.5 rounded border p-1.5" style={{ borderColor: "var(--border)" }}>
+                          <summary className="cursor-pointer font-medium" style={{ color: "var(--accent)" }}>
+                            Draft reply — never sent automatically
                           </summary>
                           <div className="mt-1 space-y-0.5" style={{ color: "var(--muted)" }}>
                             <div><span className="font-medium">To:</span> {o.emailDraft.to}</div>
