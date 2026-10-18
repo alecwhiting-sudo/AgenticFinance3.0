@@ -150,10 +150,15 @@ async function gradeEvalCase(
   }
   const passed = failures.length === 0;
 
-  // Append this case's result and close the eval run when all cases are in.
+  // Record this case's result and close the eval run when all cases are in.
+  // Idempotent per case: a duplicate grade (an item requeued by the sweep
+  // whose first run later finished anyway) REPLACES the earlier result, so
+  // counts can never inflate past the case list. A run that already closed
+  // stays closed — late duplicates are dropped.
   const er = await db.query.evalRun.findFirst({ where: (t) => eq(t.id, evalRunId) });
-  if (!er) return;
-  const results = [...er.results, { evalCaseId, runId, name: ec.name, passed, failures }];
+  if (!er || er.status !== "running") return;
+  const prior = er.results.filter((r) => (r as { evalCaseId?: string }).evalCaseId !== evalCaseId);
+  const results = [...prior, { evalCaseId, runId, name: ec.name, passed, failures }];
   const totalCases = await db.query.evalCase.findMany({ where: (t) => eq(t.agentId, er.agentId) });
   const done = results.length >= totalCases.length;
   const passCount = results.filter((r) => (r as { passed?: boolean }).passed).length;
@@ -285,77 +290,96 @@ async function processItem(item: WorkItemRow): Promise<void> {
     summary: `${resolved.agent.name} picked up a ${item.type} task (release v${resolved.release.version})`,
   });
 
-  const isEval = item.type === "eval.case";
-  // shadow.case (governance M2): the ORIGINAL payload re-runs under its
-  // ORIGINAL task type, so the draft faces exactly the work the active
-  // release faced — only the release (and the book) differ.
-  const isShadow = item.type === "shadow.case";
-  const payload =
-    isEval || isShadow ? ((item.payload.input as Record<string, unknown>) ?? {}) : item.payload;
-  const taskType = isEval ? "eval.case" : isShadow ? String(item.payload.taskType ?? "") : item.type;
-
-  let outcome: string;
-  let summary: string;
+  // Heartbeat: a long model-path run is NOT a dead worker. While this item
+  // is being processed its claimed_at is refreshed every minute, so the
+  // stale-claim sweep only ever requeues items whose worker truly died —
+  // never a slow-but-alive run (which double-processing would corrupt).
+  const heartbeat = setInterval(() => {
+    void db!
+      .update(workItem)
+      .set({ claimedAt: new Date() })
+      .where(eq(workItem.id, item.id))
+      .then(
+        () => {},
+        () => {},
+      );
+  }, 60_000);
   try {
-    const result = await runAgentLoop(resolved, run!.id, taskType, payload, );
-    outcome = result.outcome;
-    summary = result.summary;
-  } catch (err) {
-    outcome = "failed";
-    summary = `Unhandled error: ${err instanceof Error ? err.message : String(err)}`;
-  }
+    const isEval = item.type === "eval.case";
+    // shadow.case (governance M2): the ORIGINAL payload re-runs under its
+    // ORIGINAL task type, so the draft faces exactly the work the active
+    // release faced — only the release (and the book) differ.
+    const isShadow = item.type === "shadow.case";
+    const payload =
+      isEval || isShadow ? ((item.payload.input as Record<string, unknown>) ?? {}) : item.payload;
+    const taskType = isEval ? "eval.case" : isShadow ? String(item.payload.taskType ?? "") : item.type;
 
-  await db
-    .update(agentRun)
-    .set({ outcome: outcome as typeof agentRun.$inferSelect.outcome, resultSummary: summary, finishedAt: new Date() })
-    .where(eq(agentRun.id, run!.id));
-  await db
-    .update(workItem)
-    .set({
-      status: outcome === "completed" || outcome === "abstained" ? "completed" : outcome === "escalated" ? "escalated" : "failed",
-      completedAt: new Date(),
-    })
-    .where(eq(workItem.id, item.id));
-
-  await emitActivity({
-    actorType: "agent",
-    actorId: resolved.agent.slug,
-    verb: outcome,
-    objectType: "run",
-    objectId: run!.id,
-    summary: `${resolved.agent.name} ${outcome === "completed" ? "finished" : outcome} the ${item.type} task`,
-  });
-
-  if (isEval && item.payload.evalRunId && item.payload.evalCaseId) {
-    await gradeEvalCase(
-      String(item.payload.evalRunId),
-      String(item.payload.evalCaseId),
-      run!.id,
-      outcome,
-      summary,
-    );
-  }
-  if (isShadow && item.payload.shadowId && item.payload.originalRunId) {
-    await recordShadowCase(String(item.payload.shadowId), String(item.payload.originalRunId), run!.id, outcome);
-  }
-  // M3b bookkeeping: tie the run to its review row; a run that ended without
-  // saving an opinion must not leave the review spinning forever.
-  if (item.type === "release.review" && typeof item.payload.reviewId === "string") {
-    const row = await db.query.releaseReview.findFirst({
-      where: (t) => eq(t.id, String(item.payload.reviewId)),
-    });
-    if (row) {
-      await db
-        .update(releaseReview)
-        .set({
-          runId: run!.id,
-          ...(row.status === "running" && outcome !== "completed"
-            ? { status: "failed", finishedAt: new Date() }
-            : {}),
-        })
-        .where(eq(releaseReview.id, row.id));
+    let outcome: string;
+    let summary: string;
+    try {
+      const result = await runAgentLoop(resolved, run!.id, taskType, payload, );
+      outcome = result.outcome;
+      summary = result.summary;
+    } catch (err) {
+      outcome = "failed";
+      summary = `Unhandled error: ${err instanceof Error ? err.message : String(err)}`;
     }
+
+    await db
+      .update(agentRun)
+      .set({ outcome: outcome as typeof agentRun.$inferSelect.outcome, resultSummary: summary, finishedAt: new Date() })
+      .where(eq(agentRun.id, run!.id));
+    await db
+      .update(workItem)
+      .set({
+        status: outcome === "completed" || outcome === "abstained" ? "completed" : outcome === "escalated" ? "escalated" : "failed",
+        completedAt: new Date(),
+      })
+      .where(eq(workItem.id, item.id));
+
+    await emitActivity({
+      actorType: "agent",
+      actorId: resolved.agent.slug,
+      verb: outcome,
+      objectType: "run",
+      objectId: run!.id,
+      summary: `${resolved.agent.name} ${outcome === "completed" ? "finished" : outcome} the ${item.type} task`,
+    });
+
+    if (isEval && item.payload.evalRunId && item.payload.evalCaseId) {
+      await gradeEvalCase(
+        String(item.payload.evalRunId),
+        String(item.payload.evalCaseId),
+        run!.id,
+        outcome,
+        summary,
+      );
+    }
+    if (isShadow && item.payload.shadowId && item.payload.originalRunId) {
+      await recordShadowCase(String(item.payload.shadowId), String(item.payload.originalRunId), run!.id, outcome);
+    }
+    // M3b bookkeeping: tie the run to its review row; a run that ended without
+    // saving an opinion must not leave the review spinning forever.
+    if (item.type === "release.review" && typeof item.payload.reviewId === "string") {
+      const row = await db.query.releaseReview.findFirst({
+        where: (t) => eq(t.id, String(item.payload.reviewId)),
+      });
+      if (row) {
+        await db
+          .update(releaseReview)
+          .set({
+            runId: run!.id,
+            ...(row.status === "running" && outcome !== "completed"
+              ? { status: "failed", finishedAt: new Date() }
+              : {}),
+          })
+          .where(eq(releaseReview.id, row.id));
+      }
+    }
+  } finally {
+    clearInterval(heartbeat);
   }
+
 }
 
 /** Diff one shadow run against its original and fold it into the replay's
@@ -456,7 +480,12 @@ async function recordShadowCase(
     incomparable,
     changes,
   };
-  const results = [...sr.results, result];
+  // same idempotence as eval grading: one row per original run, duplicates
+  // (sweep-requeued items whose first attempt also landed) replace, not add
+  const results = [
+    ...sr.results.filter((r) => (r as { originalRunId?: string }).originalRunId !== originalRunId),
+    result,
+  ];
   const done = results.length >= sr.cases;
   let summary: Record<string, unknown> | undefined;
   if (done) {
