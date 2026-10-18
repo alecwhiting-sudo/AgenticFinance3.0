@@ -40,6 +40,7 @@ export function ChaseButton({ invoiceId }: { invoiceId: string }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
+  const [held, setHeld] = useState<string | null>(null);
   const run = async () => {
     setBusy(true);
     try {
@@ -49,10 +50,21 @@ export function ChaseButton({ invoiceId }: { invoiceId: string }) {
         body: JSON.stringify({ invoiceId }),
       });
       if (res.ok) setSent(true);
+      else {
+        const d = (await res.json().catch(() => ({}))) as { error?: string };
+        // a disputed invoice is never chased — surface the hold, not a mystery
+        if (d.error?.startsWith("dunning held")) setHeld(d.error);
+      }
     } catch { /* state unchanged */ }
     setBusy(false);
     router.refresh();
   };
+  if (held)
+    return (
+      <span className="whitespace-nowrap text-xs" style={{ color: "var(--warn)" }} title={held}>
+        held — disputed
+      </span>
+    );
   // The Collections Agent drafts the letter, then proposes ar.dunning.send —
   // external comms always need a human, so the draft lands in Approvals.
   if (sent)
@@ -72,6 +84,57 @@ export function ChaseButton({ invoiceId }: { invoiceId: string }) {
       style={{ borderColor: "var(--warn)", color: "var(--warn)" }}
     >
       {busy ? "…" : "Chase"}
+    </button>
+  );
+}
+
+/** Raise a customer dispute on an invoice (plans/O2C.md §9 M3): the
+ * Collections Agent opens the case with grounded ways forward, and the API
+ * holds dunning while it is open. Crediting/re-billing stays human. */
+export function DisputeButton({ invoiceId, number }: { invoiceId: string; number: string }) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const [state, setState] = useState<"idle" | "raised" | "already">("idle");
+  const run = async () => {
+    const reason = window.prompt(
+      `What does the customer say is wrong with ${number}?\n(The Collections Agent grounds the case options in this reason.)`,
+    );
+    if (!reason || reason.trim().length < 5) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`${apiUrl}/o2c/invoices/${invoiceId}/dispute`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ reason: reason.trim(), raisedBy: "workbench" }),
+      });
+      if (res.ok) setState("raised");
+      else {
+        const d = (await res.json().catch(() => ({}))) as { error?: string };
+        if (d.error?.includes("already has an open dispute")) setState("already");
+      }
+    } catch { /* state unchanged */ }
+    setBusy(false);
+    router.refresh();
+  };
+  if (state === "raised")
+    return (
+      <span className="whitespace-nowrap text-xs" style={{ color: "var(--muted)" }}>
+        disputed —{" "}
+        <a href="/o2c" className="hover:underline" style={{ color: "var(--accent)" }}>
+          case on O2C →
+        </a>
+      </span>
+    );
+  if (state === "already")
+    return <span className="whitespace-nowrap text-xs" style={{ color: "var(--warn)" }}>already disputed</span>;
+  return (
+    <button
+      disabled={busy}
+      onClick={run}
+      className="whitespace-nowrap rounded border px-2 py-0.5 text-xs disabled:opacity-40"
+      style={{ borderColor: "var(--border)", color: "var(--muted)" }}
+    >
+      {busy ? "…" : "Dispute"}
     </button>
   );
 }

@@ -7,6 +7,24 @@ import { applyReceiptsByRule } from "../services/arIntake.js";
 
 const today = () => new Date().toISOString().slice(0, 10);
 
+/** The open ar_dispute case holding this invoice, if any. The invoice link
+ * lives in the case's opening note (case.open detail.invoiceId); demo-scale
+ * scan, bounded by the open-dispute count. */
+async function openDisputeCase(db: ReturnType<typeof requireDb>, invoiceId: string) {
+  const cases = await db.query.evidenceCase.findMany({
+    where: (t, { and: a, eq: e }) => a(e(t.kind, "ar_dispute"), e(t.status, "open")),
+    limit: 100,
+  });
+  for (const c of cases) {
+    const note = await db.query.caseEvent.findFirst({
+      where: (t, { and: a, eq: e }) => a(e(t.caseId, c.id), e(t.kind, "note")),
+      orderBy: (t) => t.at,
+    });
+    if (((note?.detail ?? {}) as { invoiceId?: string }).invoiceId === invoiceId) return c;
+  }
+  return null;
+}
+
 export function o2cRoutes(app: FastifyInstance): void {
   app.get("/o2c/pipeline", async () => {
     const db = requireDb();
@@ -65,6 +83,83 @@ export function o2cRoutes(app: FastifyInstance): void {
     }
     return { queries: out };
   });
+
+  /** Open AR disputes (plans/O2C.md §9 M3): the P2P exception mirror. Each
+   * carries the Collections Agent's grounded ways forward; the one automatic
+   * effect of an open dispute is that dunning is held (see /o2c/chase). */
+  app.get("/o2c/disputes", async () => {
+    const db = requireDb();
+    const cases = await db.query.evidenceCase.findMany({
+      where: (t, { and: a, eq: e }) => a(e(t.kind, "ar_dispute"), e(t.status, "open")),
+      orderBy: (t, { desc: d }) => d(t.createdAt),
+      limit: 25,
+    });
+    const out = [];
+    for (const c of cases) {
+      const events = await db.query.caseEvent.findMany({
+        where: (t) => eq(t.caseId, c.id),
+        orderBy: (t) => t.at,
+      });
+      const optionsEvent = [...events].reverse().find((e) => e.kind === "options");
+      const noteEvent = events.find((e) => e.kind === "note");
+      const detail = (noteEvent?.detail ?? null) as { invoiceId?: string } | null;
+      out.push({
+        id: c.id,
+        title: c.title,
+        createdAt: c.createdAt,
+        invoiceId: detail?.invoiceId ?? null,
+        detail,
+        options: (optionsEvent?.detail as { options?: unknown[] } | null)?.options ?? [],
+      });
+    }
+    return { disputes: out };
+  });
+
+  /** Raise a dispute on an AR invoice: the Collections Agent assembles the
+   * evidence case and the ways forward; a human decides every resolution. */
+  app.post<{ Params: { id: string }; Body: { reason?: string; raisedBy?: string } }>(
+    "/o2c/invoices/:id/dispute",
+    async (req, reply) => {
+      const db = requireDb();
+      const reason = String(req.body?.reason ?? "").trim();
+      if (reason.length < 5) return reply.code(400).send({ error: "a dispute needs a reason (what does the customer say is wrong?)" });
+      const inv = await db.query.arInvoice.findFirst({ where: (t) => eq(t.id, req.params.id) });
+      if (!inv) return reply.code(404).send({ error: "invoice not found" });
+      if (inv.status !== "posted") return reply.code(409).send({ error: `invoice is ${inv.status} — only a posted invoice can be disputed` });
+      if (await openDisputeCase(db, inv.id))
+        return reply.code(409).send({ error: `${inv.number} already has an open dispute case` });
+      const cust = await db.query.customer.findFirst({ where: (t) => eq(t.id, inv.customerId) });
+      const agentRow = await db.query.agent.findFirst({ where: (t) => eq(t.slug, "collections") });
+      if (!agentRow) return reply.code(409).send({ error: "collections agent not seeded" });
+      const [wi] = await db
+        .insert(workItem)
+        .values({
+          type: "ar.dispute",
+          agentId: agentRow.id,
+          payload: {
+            invoiceId: inv.id,
+            number: inv.number,
+            customerName: cust?.name ?? "the customer",
+            grossMinor: inv.grossMinor,
+            invoiceDate: inv.invoiceDate,
+            dueDate: inv.dueDate,
+            reason,
+            raisedBy: String(req.body?.raisedBy ?? "workbench"),
+          },
+          priority: 4,
+        })
+        .returning();
+      await emitActivity({
+        actorType: "human",
+        actorId: String(req.body?.raisedBy ?? "workbench"),
+        verb: "raised_dispute",
+        objectType: "ar_invoice",
+        objectId: inv.id,
+        summary: `Dispute raised on ${inv.number}: "${reason.slice(0, 80)}" — Collections Agent assembling the case; dunning held`,
+      });
+      return { workItemId: wi!.id };
+    },
+  );
 
   app.get<{ Querystring: { status?: string; overdue?: string; limit?: string } }>(
     "/o2c/invoices",
@@ -198,12 +293,18 @@ export function o2cRoutes(app: FastifyInstance): void {
     return { workItemId: wi!.id };
   });
 
-  /** Chase an overdue invoice: the Collections Agent drafts the letter. */
+  /** Chase an overdue invoice: the Collections Agent drafts the letter.
+   * Deterministic control (plans/O2C.md §9 M3): a disputed invoice is never
+   * chased — code decides this, no model involved. */
   app.post<{ Body: { invoiceId: string } }>("/o2c/chase", async (req, reply) => {
     const db = requireDb();
     const inv = await db.query.arInvoice.findFirst({ where: (t) => eq(t.id, req.body.invoiceId) });
     if (!inv) return reply.code(404).send({ error: "invoice not found" });
     if (inv.status !== "posted") return reply.code(409).send({ error: `invoice is ${inv.status}` });
+    if (await openDisputeCase(db, inv.id))
+      return reply
+        .code(409)
+        .send({ error: `dunning held — ${inv.number} is under an open dispute; resolve the case first` });
     const cust = await db.query.customer.findFirst({ where: (t) => eq(t.id, inv.customerId) });
     const agentRow = await db.query.agent.findFirst({ where: (t) => eq(t.slug, "collections") });
     if (!agentRow) return reply.code(409).send({ error: "collections agent not seeded" });

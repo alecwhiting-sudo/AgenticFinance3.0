@@ -184,6 +184,11 @@ export const commandDefs = {
               "apply_residual",
               "refund_overpay",
               "hold_query",
+              // AR dispute options (plans/O2C.md §9, M3): every one is a
+              // human decision — the agent only lays out the ways forward
+              "hold_dunning",
+              "reissue_invoice",
+              "issue_credit",
             ]),
             label: z.string().min(3).max(140),
             rationale: z.string().min(10).max(1000),

@@ -300,6 +300,18 @@ if (!existingPs) {
 // Exception tolerance policy (plans/P2P.md §10 M2): a versioned parameter
 // set, not skill prose — the recommendation logic reads it, the workbench
 // shows it, and changing policy is a parameter-set change, never a reword.
+// Per-supplier overrides (M3): keyed by supplier CODE; a negotiated
+// tolerance is policy data a human can edit, never a code change. SUP-036
+// (Farrier & Sons) is the dataset's repeat price-variance supplier — the
+// agreed-uplift story the playbook tells.
+const TOLERANCE_SUPPLIERS = {
+  "SUP-036": {
+    name: "Farrier & Sons Maintenance",
+    priceVariancePct: 5,
+    priceVarianceFloorMinor: 5000, // £50
+    note: "Negotiated uplift accepted while the 2026 rate review completes.",
+  },
+} as const;
 const existingTol = await db.query.fdpParameterSet.findFirst({
   where: (t, { and, eq }) => and(eq(t.name, "exception-tolerances"), eq(t.status, "active")),
 });
@@ -313,9 +325,18 @@ if (!existingTol) {
       priceVariancePct: 2,
       priceVarianceFloorMinor: 2500, // £25
       note: "Applies to recommendations only — every resolution still needs a human approval.",
+      suppliers: TOLERANCE_SUPPLIERS,
     },
   });
-  console.log("seeded exception-tolerances parameter set v1");
+  console.log("seeded exception-tolerances parameter set v1 (with per-supplier overrides)");
+} else if (!(existingTol.parameters as { suppliers?: unknown }).suppliers) {
+  // non-destructive upgrade for rows seeded before M3: add the supplier
+  // overrides, keep whatever company-wide numbers the row already carries
+  await db
+    .update(fdpParameterSet)
+    .set({ parameters: { ...(existingTol.parameters as Record<string, unknown>), suppliers: TOLERANCE_SUPPLIERS } })
+    .where(eq(fdpParameterSet.id, existingTol.id));
+  console.log("exception-tolerances upgraded in place: per-supplier overrides added (M3)");
 }
 
 console.log(

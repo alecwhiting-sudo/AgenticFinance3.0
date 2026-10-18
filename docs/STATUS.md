@@ -279,8 +279,19 @@ _Last updated: 2026-10-16_
    apply-residual / refund / hold-and-query options + draft letters,
    surfaced on /o2c as "Receipt queries". Seed now publishes skill text
    as a new version even over a UI-authored latest (no stranded
-   curriculum updates). Remaining (M3): AR dispute mirror, per-supplier
-   tolerances, model-path option evals as live cases.
+   curriculum updates). **M3 BUILT 2026-10-16**: per-supplier tolerances
+   (parameters.suppliers keyed by supplier code; SUP-036 Farrier & Sons
+   seeded at 5%/£50, cited as the supplier-specific policy on the
+   workbench and in recommendations; existing parameter rows upgrade in
+   place); AR dispute mirror (Dispute button on posted AR invoices →
+   Collections opens an ar_dispute case with hold_dunning /
+   reissue_invoice / issue_credit options + draft reply, always
+   escalates; /o2c/chase refuses disputed invoices — dunning held by
+   code); live-data option evals (nonfraud exception must carry options;
+   fraud hold must never be resolved nor carry an email draft — a
+   standing live control, skipped-passed when no fraud hold is open).
+   Remaining (M4 ideas): tolerance editing UI, contract-grounded
+   disputes.
 10. **A2R — Acquire to Retire** (fixed assets: capitalise from P2P,
    depreciation as engine-derived period ticks, disposals) — low priority
    (MASTER_PLAN Phase 7).

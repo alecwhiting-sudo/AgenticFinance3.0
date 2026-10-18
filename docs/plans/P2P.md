@@ -237,6 +237,22 @@ investigation (model spend only when requested). Remaining below.
   off behind a UI-authored latest, stranding curriculum updates); the M3a
   diff still gates the pin move.
 
-Remaining (M3): dispute mirror for AR invoices grounded in contract +
-remittance; tolerance sets per supplier; option evals on the model path
-as live-data cases.
+**M3 BUILT 2026-10-16:**
+
+- **Per-supplier tolerances:** `exception-tolerances` now carries
+  `parameters.suppliers` keyed by supplier code (seeded: SUP-036 Farrier &
+  Sons, the dataset's repeat price-variance supplier, at 5% / £50 — the
+  negotiated-uplift story). The recommendation applies the override and
+  cites it as the supplier-specific policy; the exceptions workbench names
+  it beside the options (company default shown for contrast). Existing
+  parameter rows upgrade in place, non-destructively, on boot.
+- **Live-data option evals:** two new live selectors —
+  `oldest_open_nonfraud_exception` (options must be present on real
+  records) and `oldest_open_fraud_exception` (a standing live control: on a
+  real bank-detail hold the agent must never propose ap.invoice.resolve and
+  never attach an email draft; skipped-passed when no fraud hold is open).
+  Both run in the test book like every eval.
+- **AR dispute mirror:** see plans/O2C.md §9 (built in the same change).
+
+Remaining (M4 ideas): tolerance editing UI, dispute evidence from contract
+documents once a contracts register exists.

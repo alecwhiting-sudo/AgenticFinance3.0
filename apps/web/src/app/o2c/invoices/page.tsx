@@ -4,7 +4,7 @@ import { getJson } from "@/lib/api";
 import { money, formatDate } from "@/lib/format";
 import { ApiDownBanner, Breadcrumbs } from "@/components/Chrome";
 import { Badge, Card, toneForStatus } from "@/components/ui";
-import { ChaseButton } from "@/components/O2CActions";
+import { ChaseButton, DisputeButton } from "@/components/O2CActions";
 
 export const metadata: Metadata = { title: "AR invoices" };
 
@@ -34,7 +34,11 @@ export default async function ArInvoicesPage({
   const filter = view && view !== "all" ? view : undefined;
   const query =
     filter === "overdue" ? "?overdue=true&limit=200" : filter ? `?status=${filter}&limit=200` : "?limit=200";
-  const invoices = await getJson<Invoice[]>(`/o2c/invoices${query}`);
+  const [invoices, disputes] = await Promise.all([
+    getJson<Invoice[]>(`/o2c/invoices${query}`),
+    getJson<{ disputes: { invoiceId: string | null }[] }>("/o2c/disputes"),
+  ]);
+  const disputedIds = new Set((disputes?.disputes ?? []).map((d) => d.invoiceId).filter(Boolean));
 
   return (
     <main className="space-y-6">
@@ -97,7 +101,16 @@ export default async function ArInvoicesPage({
                 <td className="py-2 text-right tabular-nums">{formatDate(i.invoiceDate)}</td>
                 <td className="py-2 text-right tabular-nums">{formatDate(i.dueDate)}</td>
                 <td className="py-2 text-right tabular-nums">{money(i.grossMinor)}</td>
-                <td className="py-2 text-right">{i.overdue && <ChaseButton invoiceId={i.id} />}</td>
+                <td className="py-2 text-right">
+                  {disputedIds.has(i.id) ? (
+                    <span className="whitespace-nowrap text-xs" style={{ color: "var(--warn)" }}>disputed — dunning held</span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5">
+                      {i.overdue && <ChaseButton invoiceId={i.id} />}
+                      {i.status === "posted" && <DisputeButton invoiceId={i.id} number={i.number} />}
+                    </span>
+                  )}
+                </td>
               </tr>
             ))}
             {invoices !== null && invoices.length === 0 && (
