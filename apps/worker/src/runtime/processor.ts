@@ -248,6 +248,20 @@ async function processItem(item: WorkItemRow): Promise<void> {
       objectId: item.id,
       summary: `No active release for the assigned agent — item escalated`,
     });
+    // an eval or shadow case escalated here still reports into its suite or
+    // replay — the aggregate must close even when the release went away
+    if (item.type === "eval.case" && item.payload.evalRunId && item.payload.evalCaseId) {
+      await gradeEvalCase(
+        String(item.payload.evalRunId),
+        String(item.payload.evalCaseId),
+        item.id,
+        "failed",
+        "The release this case targeted is retired or missing — case marked failed.",
+      );
+    }
+    if (item.type === "shadow.case" && item.payload.shadowId && item.payload.originalRunId) {
+      await recordShadowCase(String(item.payload.shadowId), String(item.payload.originalRunId), String(item.payload.originalRunId), "failed");
+    }
     return;
   }
 
@@ -556,6 +570,21 @@ async function sweepStaleClaims(log: (msg: string) => void): Promise<void> {
         .set({ status: "failed", completedAt: new Date() })
         .where(eq(workItem.id, item.id));
       log(`stale claim FAILED after ${item.attempts} attempts: ${item.type} (${item.id})`);
+      // a dead eval case still grades into its suite — a suite must never
+      // hang at "running" because one of its cases kept dying
+      if (item.type === "eval.case" && item.payload.evalRunId && item.payload.evalCaseId) {
+        const run = await db.query.agentRun.findFirst({
+          where: (t) => eq(t.workItemId, item.id),
+          orderBy: (t, { desc }) => desc(t.startedAt),
+        });
+        await gradeEvalCase(
+          String(item.payload.evalRunId),
+          String(item.payload.evalCaseId),
+          run?.id ?? item.id,
+          "failed",
+          `The case died ${item.attempts} times (worker restarts) and was marked failed by the stale-claim sweep.`,
+        );
+      }
       // a dead shadow case still closes its replay, honestly marked failed
       if (item.type === "shadow.case" && item.payload.shadowId && item.payload.originalRunId) {
         const sr = await db.query.shadowReplay.findFirst({
@@ -583,6 +612,37 @@ async function sweepStaleClaims(log: (msg: string) => void): Promise<void> {
         summary: `A ${item.type} task died ${item.attempts} times (worker restarts) — marked failed`,
       });
     }
+  }
+
+  // Zombie suites: an eval run still "running" long after its queue items are
+  // gone (a worker outage ate them, or a reset wiped the queue) would spin in
+  // the UI forever. With no live items left there is nothing that can ever
+  // grade it — close it honestly as failed; re-running is one click.
+  const zombies = (
+    await db.execute(sql`
+      select er.id from agent.eval_run er
+      where er.status = 'running'
+        and er.started_at < now() - interval '20 minutes'
+        and not exists (
+          select 1 from agent.work_item w
+          where w.type = 'eval.case'
+            and w.status in ('pending', 'claimed', 'running')
+            and w.payload->>'evalRunId' = er.id::text
+        )
+      limit 5
+    `)
+  ).rows as { id: string }[];
+  for (const z of zombies) {
+    await db.update(evalRun).set({ status: "failed", finishedAt: new Date() }).where(eq(evalRun.id, z.id));
+    log(`zombie eval run closed as failed: ${z.id} (no live eval.case items remain)`);
+    await emitActivity({
+      actorType: "system",
+      actorId: WORKER_ID,
+      verb: "failed_zombie_eval_run",
+      objectType: "eval_run",
+      objectId: z.id,
+      summary: `An eval suite was stranded with no queue items left (worker outage) — closed as failed; re-run it from the agent page`,
+    });
   }
 }
 
