@@ -317,7 +317,25 @@ async function processItem(item: WorkItemRow): Promise<void> {
     let outcome: string;
     let summary: string;
     try {
-      const result = await runAgentLoop(resolved, run!.id, taskType, payload, );
+      // Hard time budget per run: releases cap model calls and cost, but a
+      // HUNG call (network, SDK retry storm) caps neither — and the
+      // heartbeat would keep a hung run claimed forever. Past the budget the
+      // run is failed honestly, graded into its suite, and the queue moves
+      // on; the stray loop's late writes are ignored by idempotent grading.
+      const budgetMs = Number(process.env.WORKER_RUN_TIMEOUT_MS ?? 10 * 60 * 1000);
+      let budgetTimer: ReturnType<typeof setTimeout> | undefined;
+      const budget = new Promise<{ outcome: "failed"; summary: string }>((resolve) => {
+        budgetTimer = setTimeout(
+          () =>
+            resolve({
+              outcome: "failed",
+              summary: `Run exceeded the ${Math.round(budgetMs / 60000)}-minute time budget (a model or API call hung) — marked failed so the queue moves on. Re-run to retry.`,
+            }),
+          budgetMs,
+        );
+      });
+      const result = await Promise.race([runAgentLoop(resolved, run!.id, taskType, payload), budget]);
+      clearTimeout(budgetTimer);
       outcome = result.outcome;
       summary = result.summary;
     } catch (err) {
