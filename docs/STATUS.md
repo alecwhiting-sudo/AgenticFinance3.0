@@ -6,7 +6,7 @@ decision. Detail lives in `MASTER_PLAN.md` (phases), `ARCHITECTURE.md`
 (decisions D1–D16), `docs/plans/*` (per-process), and the living diagram
 `docs/architecture.html` (in-app at `/admin/architecture`).
 
-_Last updated: 2026-10-16_
+_Last updated: 2026-10-19_
 
 ## Phase tracker
 
@@ -292,10 +292,17 @@ _Last updated: 2026-10-16_
    standing live control, skipped-passed when no fraud hold is open).
    Remaining (M4 ideas): tolerance editing UI, contract-grounded
    disputes.
-10. **A2R — Acquire to Retire** (fixed assets: capitalise from P2P,
+10. **Mail room BUILT 2026-10-19** (`plans/P2P.md` §11): picking an
+   exception option with a draft letter materialises it as an editable
+   outbox message (`evidence.mail_message`, migration 0020); the human
+   edits and Releases it in-app — the click is the external-comms
+   approval, recorded on the message, case timeline and activity feed
+   (demo transport simulated). Inbox = the dataset's supplier covering
+   emails as the front door. Agents still only ever draft.
+11. **A2R — Acquire to Retire** (fixed assets: capitalise from P2P,
    depreciation as engine-derived period ticks, disposals) — low priority
    (MASTER_PLAN Phase 7).
-11. **Phase 5 PM** — parked on user's call.
+12. **Phase 5 PM** — parked on user's call.
 
 ## Day log — 2026-10-04 (for a fast, safe pickup)
 

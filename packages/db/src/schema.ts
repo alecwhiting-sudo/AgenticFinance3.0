@@ -459,6 +459,37 @@ export const caseEvent = ev.table("case_event", {
   detail: jsonb("detail").$type<Record<string, unknown>>().notNull().default({}),
 });
 
+/** Mail room (plans/P2P.md §11): the correspondence that resolutions
+ * trigger, kept INSIDE the workbench — no round trip to Outlook. Agents only
+ * ever produce display-only drafts on case options; picking an option
+ * materialises the draft here as an editable OUTBOX message, and a human
+ * edits and releases it. Sending is a human act recorded with who/when; in
+ * the demo the transport is simulated (status moves to sent, the case
+ * timeline gets the evidence, nothing leaves the sandbox). Inbound rows are
+ * the front door — supplier correspondence tied to its document. */
+export const mailMessage = ev.table("mail_message", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  direction: text("direction").notNull(), // in | out
+  status: text("status").notNull().default("draft"), // draft | sent | received | archived
+  toAddr: text("to_addr").notNull(),
+  fromAddr: text("from_addr").notNull(),
+  subject: text("subject").notNull(),
+  body: text("body").notNull(),
+  /** where it came from: option_pick | agent | manual | intake */
+  source: text("source").notNull().default("manual"),
+  caseId: uuid("case_id").references(() => evidenceCase.id),
+  invoiceId: uuid("invoice_id"),
+  invoiceNumber: text("invoice_number"),
+  counterparty: text("counterparty"),
+  /** the resolution option that triggered this draft, for the audit trail */
+  optionLabel: text("option_label"),
+  createdBy: text("created_by").notNull(),
+  editedBy: text("edited_by"),
+  sentBy: text("sent_by"),
+  sentAt: timestamp("sent_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 /* ------------------------------------------------------------------ */
 /* erp: GL + P2P (unified Purchase model — plans/P2P.md §2, D12)       */
 /* ------------------------------------------------------------------ */

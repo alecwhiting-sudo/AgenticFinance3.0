@@ -30,7 +30,7 @@ type Option = {
   emailDraft?: { to: string; subject: string; body: string };
 };
 type Detail = {
-  invoice: { id: string; supplierInvoiceNumber: string; invoiceDate: string; grossMinor: number; exceptionCode: string; documentPath: string | null; emailPath: string | null };
+  invoice: { id: string; supplierInvoiceNumber: string; invoiceDate: string; grossMinor: number; exceptionCode: string; documentPath: string | null; emailPath: string | null; caseId: string | null };
   supplier: { name: string } | null;
   purchase: { number: string; id: string; approvedBy: string | null; approvalBand: string | null } | null;
   diff: {
@@ -109,6 +109,43 @@ export default function ExceptionsPage() {
     setBusy(false);
     if (sel) await loadDetail(sel);
   };
+
+  // Pick an option's letter: materialise the display-only draft as an
+
+  // editable outbox message and jump to the mail room to release it.
+
+  const openDraft = async (optionIndex: number) => {
+
+    if (!d?.invoice.caseId) return;
+
+    setBusy(true);
+
+    try {
+
+      const r = await fetch(`${apiUrl}/p2p/mail/from-option`, {
+
+        method: "POST",
+
+        headers: { "content-type": "application/json" },
+
+        body: JSON.stringify({ caseId: d.invoice.caseId, optionIndex, createdBy: "alec" }),
+
+      });
+
+      const data = (await r.json()) as { mail?: { id: string } };
+
+      if (r.ok && data.mail) window.location.href = `/p2p/mail?open=${data.mail.id}`;
+
+    } catch {
+
+      /* stay on page */
+
+    }
+
+    setBusy(false);
+
+  };
+
 
   const apply = async (o: Option) => {
     if (!sel) return;
@@ -290,6 +327,14 @@ export default function ExceptionsPage() {
                             <div><span className="font-medium">Subject:</span> {o.emailDraft.subject}</div>
                             <pre className="mt-1 whitespace-pre-wrap font-sans leading-5">{o.emailDraft.body}</pre>
                           </div>
+                          <button
+                            disabled={busy}
+                            onClick={() => openDraft(i)}
+                            className="mt-2 rounded-lg border px-2.5 py-1 text-xs font-medium disabled:opacity-40"
+                            style={{ borderColor: "var(--accent)", color: "var(--accent)" }}
+                          >
+                            Edit &amp; send in the mail room →
+                          </button>
                         </details>
                       )}
                       {o.resolution === "human_verify" ? (
