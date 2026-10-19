@@ -51,7 +51,7 @@ type InboxDoc = {
 };
 
 const BOXES = [
-  { key: "outbox", label: "Outbox" },
+  { key: "outbox", label: "Drafts" },
   { key: "sent", label: "Sent" },
   { key: "inbox", label: "Inbox" },
 ] as const;
@@ -65,6 +65,10 @@ export default function MailRoom({ process }: { process: "p2p" | "o2c" }) {
   const [openMail, setOpenMail] = useState<string | null>(openId);
   const [edit, setEdit] = useState<{ to: string; subject: string; body: string } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [reader, setReader] = useState<{
+    from: string; to: string; date: string; subject: string; attachment: string | null;
+    body: string; invoiceId: string; invoiceNumber: string; emailPath: string; documentPath: string | null;
+  } | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [apiDown, setApiDown] = useState(false);
 
@@ -155,13 +159,13 @@ export default function MailRoom({ process }: { process: "p2p" | "o2c" }) {
       <Breadcrumbs
         trail={
           process === "o2c"
-            ? [{ href: "/o2c", label: "Order to Cash" }, { label: "Mail room" }]
-            : [{ href: "/p2p", label: "Procure to Pay" }, { label: "Mail room" }]
+            ? [{ href: "/o2c", label: "Order to Cash" }, { label: "O2C Mail" }]
+            : [{ href: "/p2p", label: "Procure to Pay" }, { label: "P2P Mail" }]
         }
       />
       <ApiDownBanner show={apiDown} />
       <section>
-        <h2 className="text-2xl font-semibold tracking-tight">Mail room — {process === "o2c" ? "Order to Cash" : "Procure to Pay"}</h2>
+        <h2 className="text-2xl font-semibold tracking-tight">{process === "o2c" ? "O2C Mail" : "P2P Mail"}</h2>
         <p className="mt-1 max-w-3xl text-sm" style={{ color: "var(--muted)" }}>
           The correspondence your resolutions trigger, handled without leaving the workbench. Agents
           only ever <em>draft</em> — picking a resolution option puts its letter here; you edit it and
@@ -178,6 +182,7 @@ export default function MailRoom({ process }: { process: "p2p" | "o2c" }) {
               setBox(b.key);
               setOpenMail(null);
               setEdit(null);
+              setReader(null);
             }}
             className="rounded-lg border px-3 py-1.5 text-sm font-medium"
             style={
@@ -325,6 +330,40 @@ export default function MailRoom({ process }: { process: "p2p" | "o2c" }) {
         </section>
       )}
 
+      {/* inbox reading pane — the email, readable without downloading */}
+      {box === "inbox" && reader && (
+        <section className="rounded-xl border p-4" style={{ borderColor: "var(--accent)", background: "var(--card)" }}>
+          <div className="flex items-baseline justify-between gap-2">
+            <SectionTitle>{reader.subject}</SectionTitle>
+            <button onClick={() => setReader(null)} className="text-xs hover:underline" style={{ color: "var(--muted)" }}>
+              close
+            </button>
+          </div>
+          <p className="mt-1 text-xs" style={{ color: "var(--muted)" }}>
+            From {reader.from} · To {reader.to} · {reader.date}
+          </p>
+          <pre className="mt-3 whitespace-pre-wrap font-sans text-sm leading-6">{reader.body}</pre>
+          <p className="mt-3 text-xs" style={{ color: "var(--muted)" }}>
+            {reader.attachment && <>Attachment: {reader.attachment} · </>}
+            <Link href={`/p2p/invoices/${reader.invoiceId}`} className="hover:underline" style={{ color: "var(--accent)" }}>
+              open invoice {reader.invoiceNumber}
+            </Link>
+            {reader.documentPath && (
+              <>
+                {" "}·{" "}
+                <a href={`${apiUrl}/${reader.documentPath}`} target="_blank" rel="noreferrer" className="hover:underline" style={{ color: "var(--accent)" }}>
+                  invoice PDF ↗
+                </a>
+              </>
+            )}
+            {" "}·{" "}
+            <a href={`${apiUrl}/${reader.emailPath}`} target="_blank" rel="noreferrer" className="hover:underline" style={{ color: "var(--accent)" }}>
+              original .eml ↗
+            </a>
+          </p>
+        </section>
+      )}
+
       {/* inbox: front door */}
       {box === "inbox" && (
         <section className="rounded-xl border" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
@@ -349,15 +388,20 @@ export default function MailRoom({ process }: { process: "p2p" | "o2c" }) {
             {documents.map((d) => (
               <li key={d.invoiceId} className="flex items-baseline justify-between gap-3 px-4 py-3">
                 <span className="min-w-0">
-                  <a
-                    href={`${apiUrl}/${d.emailPath}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-sm font-medium hover:underline"
+                  <button
+                    onClick={async () => {
+                      try {
+                        const r = await fetch(`${apiUrl}/p2p/mail/doc/${d.invoiceId}`);
+                        if (r.ok) setReader(await r.json());
+                      } catch {
+                        /* leave reader closed */
+                      }
+                    }}
+                    className="text-left text-sm font-medium hover:underline"
                     style={{ color: "var(--accent)" }}
                   >
                     {d.subject}
-                  </a>
+                  </button>
                   <span className="ml-2 text-xs" style={{ color: "var(--muted)" }}>
                     from {d.from} · {d.counterparty}
                   </span>

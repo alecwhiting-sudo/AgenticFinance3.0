@@ -1,4 +1,7 @@
 import type { FastifyInstance } from "fastify";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { desc, eq, sql } from "drizzle-orm";
 import { mailMessage } from "@af/db";
 import { requireDb } from "../lib/db.js";
@@ -92,6 +95,45 @@ export function mailRoutes(app: FastifyInstance): void {
     const tagged = await tagProcess(db, rows);
     const proc = req.query.process;
     return { messages: proc ? tagged.filter((m) => m.process === proc) : tagged, documents: [] };
+  });
+
+
+  /** Read a supplier covering email IN the app: parses the stored .eml
+   * (headers, body, attachment name) so the inbox never forces a download.
+   * Addressed by invoiceId — the path on the invoice row is the only file
+   * ever read, so nothing user-supplied touches the filesystem. */
+  app.get<{ Params: { invoiceId: string } }>("/p2p/mail/doc/:invoiceId", async (req, reply) => {
+    const db = requireDb();
+    const inv = await db.query.apInvoice.findFirst({ where: (t, { eq: e }) => e(t.id, req.params.invoiceId) });
+    if (!inv?.emailPath) return reply.code(404).send({ error: "no covering email on this invoice" });
+    const docsRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../../packages/db/seed/documents");
+    const rel = inv.emailPath.replace(/^documents\//, "");
+    let raw: string;
+    try {
+      raw = await readFile(path.join(docsRoot, rel), "utf8");
+    } catch {
+      return reply.code(404).send({ error: "email file not found" });
+    }
+    const sep = raw.indexOf("\n\n");
+    const headerText = sep === -1 ? raw : raw.slice(0, sep);
+    const body = sep === -1 ? "" : raw.slice(sep + 2).trim();
+    const headers: Record<string, string> = {};
+    for (const line of headerText.split("\n")) {
+      const i = line.indexOf(":");
+      if (i > 0) headers[line.slice(0, i).trim().toLowerCase()] = line.slice(i + 1).trim();
+    }
+    return {
+      from: headers["from"] ?? "",
+      to: headers["to"] ?? "",
+      date: headers["date"] ?? "",
+      subject: headers["subject"] ?? `Invoice ${inv.supplierInvoiceNumber}`,
+      attachment: headers["x-attachment"] ?? null,
+      body,
+      invoiceId: inv.id,
+      invoiceNumber: inv.supplierInvoiceNumber,
+      emailPath: inv.emailPath,
+      documentPath: inv.documentPath,
+    };
   });
 
   /** Materialise a case option's display-only draft into an editable outbox
