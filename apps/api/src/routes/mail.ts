@@ -19,15 +19,37 @@ import { emitActivity } from "../lib/activity.js";
  * The inbox is the front door: the dataset's supplier covering emails (tied
  * to their invoices) plus any inbound rows recorded later.
  */
+
+/** Which process a message belongs to, from the case that produced it:
+ * ar_* cases (disputes, receipt queries) are O2C, everything else P2P. */
+async function tagProcess<T extends { caseId: string | null }>(
+  db: ReturnType<typeof requireDb>,
+  rows: T[],
+): Promise<(T & { process: "p2p" | "o2c" })[]> {
+  const ids = [...new Set(rows.map((r) => r.caseId).filter(Boolean))] as string[];
+  const kinds = new Map<string, string>();
+  if (ids.length) {
+    const cases = await db.query.evidenceCase.findMany({ where: (t, { inArray }) => inArray(t.id, ids) });
+    for (const c of cases) kinds.set(c.id, c.kind);
+  }
+  return rows.map((r) => ({
+    ...r,
+    process: (((r.caseId && (kinds.get(r.caseId) ?? "").startsWith("ar_")) ||
+      (r as { source?: string }).source === "dispute"
+        ? "o2c"
+        : "p2p")) as "p2p" | "o2c",
+  }));
+}
+
 export function mailRoutes(app: FastifyInstance): void {
   /** List a mailbox. Outbox = editable drafts; sent = released mail; inbox =
    * inbound rows + the dataset's covering emails (read-only documents). */
-  app.get<{ Querystring: { box?: string; limit?: string } }>("/p2p/mail", async (req) => {
+  app.get<{ Querystring: { box?: string; limit?: string; process?: "p2p" | "o2c" } }>("/p2p/mail", async (req) => {
     const db = requireDb();
     const box = req.query.box ?? "outbox";
     const limit = Math.min(200, Math.max(1, Number(req.query.limit ?? 50)));
     if (box === "inbox") {
-      const rows = await db.query.mailMessage.findMany({
+      const inRows = await db.query.mailMessage.findMany({
         where: (t, { eq: e }) => e(t.direction, "in"),
         orderBy: (t) => desc(t.createdAt),
         limit,
@@ -44,9 +66,12 @@ export function mailRoutes(app: FastifyInstance): void {
           limit ${limit}
         `)
       ).rows as { id: string; number: string; invoice_date: string; gross_minor: string; email_path: string; supplier: string; supplier_email: string | null }[];
+      const taggedIn = await tagProcess(db, inRows);
+      const procIn = req.query.process;
       return {
-        messages: rows,
-        documents: docs.map((d) => ({
+        messages: procIn ? taggedIn.filter((m) => m.process === procIn) : taggedIn,
+        // the covering-email front door is AP correspondence — P2P only
+        documents: (procIn === "o2c" ? [] : docs).map((d) => ({
           invoiceId: d.id,
           invoiceNumber: d.number,
           receivedOn: d.invoice_date,
@@ -64,7 +89,9 @@ export function mailRoutes(app: FastifyInstance): void {
       orderBy: (t) => (box === "sent" ? desc(t.sentAt) : desc(t.createdAt)),
       limit,
     });
-    return { messages: rows, documents: [] };
+    const tagged = await tagProcess(db, rows);
+    const proc = req.query.process;
+    return { messages: proc ? tagged.filter((m) => m.process === proc) : tagged, documents: [] };
   });
 
   /** Materialise a case option's display-only draft into an editable outbox

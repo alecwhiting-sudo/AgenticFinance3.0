@@ -39,6 +39,7 @@ const NAV: Parent[] = [
     children: [
       { href: "/o2c", label: "Receivables", exact: true },
       { href: "/o2c/invoices", label: "Invoices" },
+      { href: "/o2c/mail", label: "Mail room" },
     ],
   },
   {

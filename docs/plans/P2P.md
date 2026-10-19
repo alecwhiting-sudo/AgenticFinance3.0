@@ -274,4 +274,10 @@ covering emails tied to their invoices, plus recorded inbound rows.
 Surfaces: P2P → Mail room (Outbox / Sent / Inbox, draft editor), and an
 "Edit & send in the mail room →" button on every exception option that
 carries a draft. Sent mail is immutable evidence; unsent drafts can be
-discarded without trace.
+discarded without trace. **Per-process rooms (2026-10-19):** one shared
+MailRoom component mounted at P2P → Mail room (supplier letters; inbox =
+covering emails) and O2C → Mail room (customer letters; inbox = recorded
+customer queries — raising a dispute files the customer's stated reason as
+inbound mail). Messages are tagged by the case kind that produced them
+(ar_* → O2C), and dispute/receipt-query options on the O2C page carry the
+same "Edit & send in the mail room" button.

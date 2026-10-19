@@ -149,6 +149,21 @@ export function o2cRoutes(app: FastifyInstance): void {
           priority: 4,
         })
         .returning();
+      // the customer's query is inbound correspondence — the O2C front door
+      const { mailMessage } = await import("@af/db");
+      await db.insert(mailMessage).values({
+        direction: "in",
+        status: "received",
+        toAddr: "accounts.receivable@brightline.example",
+        fromAddr: "customer accounts contact on file",
+        subject: `Query on invoice ${inv.number}`,
+        body: reason,
+        source: "dispute",
+        invoiceId: inv.id,
+        invoiceNumber: inv.number,
+        counterparty: cust?.name ?? null,
+        createdBy: String(req.body?.raisedBy ?? "workbench"),
+      });
       await emitActivity({
         actorType: "human",
         actorId: String(req.body?.raisedBy ?? "workbench"),

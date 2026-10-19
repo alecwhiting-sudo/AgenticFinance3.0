@@ -5,6 +5,7 @@ import { money, formatDate } from "@/lib/format";
 import { ApiDownBanner } from "@/components/Chrome";
 import { Badge, Card, SectionTitle, toneForStatus } from "@/components/ui";
 import { ApplyReceiptsButton, ChaseButton, DisputeButton } from "@/components/O2CActions";
+import MailDraftButton from "@/components/MailDraftButton";
 
 export const metadata: Metadata = { title: "O2C" };
 
@@ -224,6 +225,7 @@ export default async function O2CPage({
                           </div>
                         </details>
                       )}
+                      {o.emailDraft && <MailDraftButton caseId={q.id} optionIndex={i} dest="/o2c/mail" />}
                     </div>
                   ))}
                 </div>
@@ -273,6 +275,7 @@ export default async function O2CPage({
                           </div>
                         </details>
                       )}
+                      {o.emailDraft && <MailDraftButton caseId={q.id} optionIndex={i} dest="/o2c/mail" />}
                     </div>
                   ))}
                 </div>
