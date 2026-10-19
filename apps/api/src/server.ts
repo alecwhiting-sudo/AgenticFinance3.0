@@ -13,6 +13,7 @@ import { workRoutes } from "./routes/work.js";
 import { commandRoutes } from "./routes/commands.js";
 import { activityRoutes } from "./routes/activity.js";
 import { p2pRoutes } from "./routes/p2p.js";
+import { mailRoutes } from "./routes/mail.js";
 import { dripRoutes } from "./routes/drip.js";
 import { paymentRoutes } from "./routes/payments.js";
 import { r2rRoutes } from "./routes/r2r.js";
@@ -115,6 +116,7 @@ r2rRoutes(app);
 adminRoutes(app);
 dashboardRoutes(app);
 o2cRoutes(app);
+mailRoutes(app);
 
 const port = Number(process.env.PORT ?? 3001);
 // "::" = dual-stack: Railway private networking is IPv6-only, so an

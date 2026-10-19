@@ -256,3 +256,22 @@ investigation (model spend only when requested). Remaining below.
 
 Remaining (M4 ideas): tolerance editing UI, dispute evidence from contract
 documents once a contracts register exists.
+
+
+## 11. Mail room — in-app correspondence (Alec, 2026-10-19) — BUILT
+
+The resolution goes all the way without a round trip to Outlook. Division of
+labour per the finance safety rule: AGENTS only ever attach display-only
+drafts to case options (unchanged — they cannot send); a HUMAN picks an
+option and its letter materialises as an editable OUTBOX message
+(`evidence.mail_message`, migration 0020); the human edits and clicks
+Release — that click is the approval for external comms, recorded with
+who/when on the message, the case timeline and the activity feed. Transport
+is simulated in the demo (status → sent, nothing leaves the sandbox); a
+real SMTP/Graph connector slots in behind the send route without touching
+the approval model. The INBOX is the front door: the dataset's supplier
+covering emails tied to their invoices, plus recorded inbound rows.
+Surfaces: P2P → Mail room (Outbox / Sent / Inbox, draft editor), and an
+"Edit & send in the mail room →" button on every exception option that
+carries a draft. Sent mail is immutable evidence; unsent drafts can be
+discarded without trace.

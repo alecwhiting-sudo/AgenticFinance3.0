@@ -141,6 +141,13 @@
       "when": 1792164832417,
       "tag": "0019_panoramic_the_phantom",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1792434299546,
+      "tag": "0020_sloppy_mindworm",
+      "breakpoints": true
     }
   ]
 }
