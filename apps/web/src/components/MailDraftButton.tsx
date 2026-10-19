@@ -15,6 +15,13 @@ export default function MailDraftButton({
   dest: "/p2p/mail" | "/o2c/mail";
 }) {
   const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  if (msg)
+    return (
+      <span className="mt-1.5 block text-xs" style={{ color: "var(--bad)" }}>
+        {msg}
+      </span>
+    );
   return (
     <button
       disabled={busy}
@@ -26,10 +33,11 @@ export default function MailDraftButton({
             headers: { "content-type": "application/json" },
             body: JSON.stringify({ caseId, optionIndex, createdBy: "alec" }),
           });
-          const d = (await r.json()) as { mail?: { id: string } };
+          const d = (await r.json()) as { mail?: { id: string }; error?: string };
           if (r.ok && d.mail) window.location.href = `${dest}?open=${d.mail.id}`;
+          else setMsg(`Could not open a draft: ${d.error ?? `the API said ${r.status}`}.`);
         } catch {
-          /* stay on page */
+          setMsg("Could not reach the API — it may be mid-deploy; try again in a minute.");
         }
         setBusy(false);
       }}

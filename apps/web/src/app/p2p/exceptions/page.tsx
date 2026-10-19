@@ -68,6 +68,7 @@ export default function ExceptionsPage() {
   const [d, setD] = useState<Detail | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [draftMsg, setDraftMsg] = useState<string | null>(null);
 
   const loadList = useCallback(async () => {
     try {
@@ -115,35 +116,28 @@ export default function ExceptionsPage() {
   // editable outbox message and jump to the mail room to release it.
 
   const openDraft = async (optionIndex: number) => {
-
-    if (!d?.invoice.caseId) return;
-
-    setBusy(true);
-
-    try {
-
-      const r = await fetch(`${apiUrl}/p2p/mail/from-option`, {
-
-        method: "POST",
-
-        headers: { "content-type": "application/json" },
-
-        body: JSON.stringify({ caseId: d.invoice.caseId, optionIndex, createdBy: "alec" }),
-
-      });
-
-      const data = (await r.json()) as { mail?: { id: string } };
-
-      if (r.ok && data.mail) window.location.href = `/p2p/mail?open=${data.mail.id}`;
-
-    } catch {
-
-      /* stay on page */
-
+    if (!d?.invoice.caseId) {
+      setDraftMsg("This exception has no case yet — ask the agent for options first.");
+      return;
     }
-
+    setBusy(true);
+    setDraftMsg(null);
+    try {
+      const r = await fetch(`${apiUrl}/p2p/mail/from-option`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ caseId: d.invoice.caseId, optionIndex, createdBy: "alec" }),
+      });
+      const data = (await r.json()) as { mail?: { id: string }; error?: string };
+      if (r.ok && data.mail) {
+        window.location.href = `/p2p/mail?open=${data.mail.id}`;
+      } else {
+        setDraftMsg(`Could not open a draft: ${data.error ?? `the API said ${r.status}`}.`);
+      }
+    } catch {
+      setDraftMsg("Could not reach the API — it may be mid-deploy; try again in a minute.");
+    }
     setBusy(false);
-
   };
 
 
@@ -302,6 +296,7 @@ export default function ExceptionsPage() {
                   {d.investigating ? "agent working…" : d.options.length ? "Re-investigate" : "Ask the agent for options"}
                 </button>
               </div>
+              {draftMsg && <p className="mb-2 text-xs" style={{ color: "var(--bad)" }}>{draftMsg}</p>}
               {d.options.length === 0 ? (
                 <p className="text-sm" style={{ color: "var(--muted)" }}>
                   No options on the case yet — ask the agent, or resolve from the invoice page.
