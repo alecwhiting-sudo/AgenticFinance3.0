@@ -128,7 +128,7 @@ type AgentSeed = {
       maxCostMinor: number;
       notes?: string;
     };
-    evalCases: { name: string; input: Record<string, unknown>; assertions: { kind: string; value: string }[] }[];
+    evalCases: { name: string; renamedFrom?: string; input: Record<string, unknown>; assertions: { kind: string; value: string }[] }[];
   }[];
 };
 const agentSeedPath = path.resolve(
@@ -256,14 +256,24 @@ for (const a of agentData.agents) {
   }
 
   for (const c of a.evalCases) {
-    const existing = await db.query.evalCase.findFirst({
-      where: (t, { and, eq }) => and(eq(t.agentId, agentRow.id), eq(t.name, c.name)),
-    });
+    // cases match by (agent, name); a renamed case names its old title in
+    // `renamedFrom` so the existing row is updated in place — otherwise the
+    // old row would live on with stale assertions and fail every suite
+    const existing =
+      (await db.query.evalCase.findFirst({
+        where: (t, { and, eq }) => and(eq(t.agentId, agentRow.id), eq(t.name, c.name)),
+      })) ??
+      (c.renamedFrom
+        ? await db.query.evalCase.findFirst({
+            where: (t, { and, eq }) => and(eq(t.agentId, agentRow.id), eq(t.name, c.renamedFrom!)),
+          })
+        : undefined);
     if (!existing) {
       await db
         .insert(evalCase)
         .values({ agentId: agentRow.id, name: c.name, input: c.input, assertions: c.assertions });
     } else if (
+      existing.name !== c.name ||
       JSON.stringify(existing.input) !== JSON.stringify(c.input) ||
       JSON.stringify(existing.assertions) !== JSON.stringify(c.assertions)
     ) {
@@ -271,7 +281,7 @@ for (const a of agentData.agents) {
       // updating the case in place (matched by agent + name)
       await db
         .update(evalCase)
-        .set({ input: c.input, assertions: c.assertions })
+        .set({ name: c.name, input: c.input, assertions: c.assertions })
         .where(eq(evalCase.id, existing.id));
     }
   }

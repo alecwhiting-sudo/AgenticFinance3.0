@@ -213,8 +213,12 @@ investigation (model spend only when requested). Remaining below.
   short-pay notification (qty short), duplicate notice, corrected-invoice
   request (total mismatch) — grounded in the records, signed off Accounts
   Payable, shown on the workbench behind "Draft supplier email — never
-  sent automatically". Fraud-risk codes (bank_detail_*) NEVER carry a
-  draft: no contact via details from the suspect document.
+  sent automatically". Fraud-risk policy
+  (narrowed 2026-10-20, Alec): a fraud-risk option carries ONE
+  contact-initiation draft to the supplier MASTER's email — "please have
+  your finance contact call us on the number we hold" — never to an
+  address from the suspect document and never naming or confirming an
+  account detail; the verification itself stays verbal.
 - **Tolerance policy as a parameter set:** `exception-tolerances` (v1:
   price variance within 2% of the approved purchase or £25, whichever
   larger → recommend acceptance citing the policy; beyond → recommend a

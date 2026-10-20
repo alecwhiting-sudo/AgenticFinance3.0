@@ -953,17 +953,31 @@ async function invoiceExceptionFallback(
       },
       { resolution: "approve_adjusted", label: "Confirmed as a separate charge — post at invoiced amounts", rationale: `If review shows this is a genuinely separate charge (${detail}), post at invoiced amounts.` },
     );
-  } else if (code === "bank_detail_change") {
+  } else if (code === "bank_detail_change" || code === "bank_detail_mismatch") {
+    // Contact-INITIATION draft only (policy 2026-10-20): addressed to the
+    // supplier MASTER's email (never an address from the suspect document),
+    // asking their finance contact to CALL the number we hold. It never
+    // names, requests or confirms an account — verification stays verbal.
+    const initiation = {
+      to: supplier?.email ?? "supplier accounts contact on file (master data)",
+      subject: `Verification needed on your account with Brightline Services — please call us`,
+      body: `Dear ${supplier?.name ?? "supplier"},
+
+We need to verify a change relating to your account with us before we can release payment. For security we do not confirm account details by email.
+
+Please have your finance contact call us on the number we hold for your account, and we will complete the verification together.${signOff}`,
+    };
     options.push({
       resolution: "human_verify",
-      label: "Verify with the supplier out of band — never from this email",
-      rationale: `The covering email requests a bank detail change (${detail}). Call the supplier on the number already on file; if genuine, update details through master data, then release. If not, reject and report.`,
-    });
-  } else if (code === "bank_detail_mismatch") {
-    options.push({
-      resolution: "human_verify",
-      label: "Verify the bank details out of band — never from the document",
-      rationale: `The IBAN printed on the invoice differs from the supplier master's verified bank details (${detail}). Confirm the correct account with the supplier via a channel already on file; if the master is stale, update it through master data and re-capture. If not, reject and report.`,
+      label:
+        code === "bank_detail_change"
+          ? "Verify with the supplier by phone — never from this email"
+          : "Verify the bank details by phone — never from the document",
+      rationale:
+        code === "bank_detail_change"
+          ? `The covering email requests a bank detail change (${detail}). Call the supplier on the number already on file; if genuine, update details through master data, then release. If not, reject and report. The attached note only asks them to call us — it never confirms account details by email.`
+          : `The IBAN printed on the invoice differs from the supplier master's verified bank details (${detail}). Confirm the correct account with the supplier via a channel already on file; if the master is stale, update it through master data and re-capture. If not, reject and report. The attached note only asks them to call us — it never confirms account details by email.`,
+      emailDraft: initiation,
     });
   } else if (code === "total_mismatch") {
     options.push(

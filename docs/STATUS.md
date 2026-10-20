@@ -288,8 +288,17 @@ _Last updated: 2026-10-19_
    reissue_invoice / issue_credit options + draft reply, always
    escalates; /o2c/chase refuses disputed invoices — dunning held by
    code); live-data option evals (nonfraud exception must carry options;
-   fraud hold must never be resolved nor carry an email draft — a
-   standing live control, skipped-passed when no fraud hold is open).
+   fraud hold must never be resolved — a standing live control,
+   skipped-passed when no fraud hold is open).
+   **Fraud policy narrowed 2026-10-20 (Alec):** a fraud-risk option now
+   carries exactly ONE contact-initiation email draft — to the supplier
+   MASTER's email only (never an address from the suspect document),
+   asking their finance contact to call the number we hold; it never
+   names, requests or confirms an account detail — verification itself
+   stays verbal. Playbook rules 6-7 + never-do narrowed, evals assert
+   the note exists and says "call us on the number we hold" (the live
+   fraud case renamed via the seeder's new `renamedFrom` in-place
+   rename, so no stale-named case lingers with old assertions).
    Remaining (M4 ideas): tolerance editing UI, contract-grounded
    disputes.
 10. **Mail room BUILT 2026-10-19** (`plans/P2P.md` §11): picking an

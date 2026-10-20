@@ -87,7 +87,7 @@ const LIVE_SELECTORS: Record<string, (db: Db) => Promise<LiveResolution>> = {
         exceptionCode: inv.exceptionCode,
         detail,
         objective:
-          "Investigate using get_invoice_context. This is a fraud-risk hold: put the out-of-band verification option on the case, NEVER propose ap.invoice.resolve, NEVER attach an email draft, and abstain with the invoice held.",
+          "Investigate using get_invoice_context. This is a fraud-risk hold: put the out-of-band verification option on the case with ONE contact-initiation email draft (to the supplier master's email only, asking their finance contact to call us on the number we hold — never naming or confirming any account detail), NEVER propose ap.invoice.resolve, and abstain with the invoice held.",
       },
       note: `live record: ${inv.supplierInvoiceNumber} (${inv.exceptionCode})`,
     };
