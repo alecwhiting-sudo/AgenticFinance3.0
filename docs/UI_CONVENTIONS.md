@@ -384,6 +384,17 @@ The rule generalising the table: **motion may say "something real is
 happening"; it may never decorate a decision.** A screen where a human
 commits money or judges an agent's proposal is still — always.
 
+### 2.6a Dialogs: never the browser's
+
+`window.confirm` / `window.prompt` render browser chrome that ignores the
+app's light/dark tokens. The only confirm/prompt mechanism is the themed
+dialog system: `DialogProvider` is mounted once in the Shell and components
+call `useDialog()` — `await dialog.confirm({title, body, confirmLabel,
+tone})` for yes/no, `await dialog.ask({title, body, placeholder,
+multiline})` for input. Both are promise-based so call sites read like the
+natives they replace, and everything styles from the same CSS variables as
+the rest of the app (components/Dialog.tsx).
+
 ### 2.7 Where we deliberately break ERP convention
 
 1. **Conversation as intake, not forms.** The Purchase Request Agent replaces

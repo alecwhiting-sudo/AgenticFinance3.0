@@ -93,8 +93,15 @@ export function mailRoutes(app: FastifyInstance): void {
       limit,
     });
     const tagged = await tagProcess(db, rows);
+    const withDocs = await Promise.all(
+      tagged.map(async (m) => {
+        if (!m.invoiceId) return { ...m, invoiceDocPath: null as string | null };
+        const inv = await db.query.apInvoice.findFirst({ where: (t, { eq: e }) => e(t.id, m.invoiceId!) });
+        return { ...m, invoiceDocPath: inv?.documentPath ?? null };
+      }),
+    );
     const proc = req.query.process;
-    return { messages: proc ? tagged.filter((m) => m.process === proc) : tagged, documents: [] };
+    return { messages: proc ? withDocs.filter((m) => m.process === proc) : withDocs, documents: [] };
   });
 
 
@@ -162,12 +169,20 @@ export function mailRoutes(app: FastifyInstance): void {
       const invoiceId = typeof detail.invoiceId === "string" ? detail.invoiceId : null;
       let invoiceNumber: string | null = typeof detail.invoiceNumber === "string" ? detail.invoiceNumber : null;
       let counterparty: string | null = typeof detail.customerName === "string" ? detail.customerName : null;
-      if (invoiceId && (!invoiceNumber || !counterparty)) {
+      // the document under discussion travels WITH the letter by default —
+      // the human can detach it in the editor before releasing
+      const attachments: { label: string; path: string }[] = [];
+      if (invoiceId) {
         const inv = await db.query.apInvoice.findFirst({ where: (t, { eq: e }) => e(t.id, invoiceId) });
         if (inv) {
           invoiceNumber = invoiceNumber ?? inv.supplierInvoiceNumber;
           const s = await db.query.supplier.findFirst({ where: (t, { eq: e }) => e(t.id, inv.supplierId) });
           counterparty = counterparty ?? s?.name ?? null;
+          if (inv.documentPath)
+            attachments.push({
+              label: `Invoice ${inv.supplierInvoiceNumber} (${inv.documentPath.endsWith(".xml") ? "e-invoice XML" : "PDF"})`,
+              path: inv.documentPath,
+            });
         }
       }
       const existing = await db.query.mailMessage.findFirst({
@@ -189,6 +204,7 @@ export function mailRoutes(app: FastifyInstance): void {
           invoiceNumber,
           counterparty,
           optionLabel: opt.label ?? null,
+          attachments,
           createdBy,
         })
         .returning();
@@ -204,7 +220,10 @@ export function mailRoutes(app: FastifyInstance): void {
   );
 
   /** Edit a draft — only drafts; sent mail is evidence and immutable. */
-  app.patch<{ Params: { id: string }; Body: { to?: string; subject?: string; body?: string; editedBy?: string } }>(
+  app.patch<{
+    Params: { id: string };
+    Body: { to?: string; subject?: string; body?: string; editedBy?: string; attachments?: { label: string; path: string }[] };
+  }>(
     "/p2p/mail/:id",
     async (req, reply) => {
       const db = requireDb();
@@ -217,6 +236,13 @@ export function mailRoutes(app: FastifyInstance): void {
           ...(req.body?.to ? { toAddr: req.body.to } : {}),
           ...(req.body?.subject ? { subject: req.body.subject } : {}),
           ...(req.body?.body ? { body: req.body.body } : {}),
+          ...(Array.isArray(req.body?.attachments)
+            ? {
+                attachments: req.body.attachments
+                  .filter((a) => typeof a?.label === "string" && typeof a?.path === "string" && a.path.startsWith("documents/"))
+                  .map((a) => ({ label: a.label.slice(0, 120), path: a.path })),
+              }
+            : {}),
           editedBy: String(req.body?.editedBy ?? "workbench"),
         })
         .where(eq(mailMessage.id, req.params.id))
@@ -248,7 +274,10 @@ export function mailRoutes(app: FastifyInstance): void {
           actorType: "human",
           actorId: sentBy,
           kind: "note",
-          detail: { note: `Email released to ${row.toAddr}: "${row.subject}" (sent from the mail room — simulated transport)`, mailId: row.id },
+          detail: {
+            note: `Email released to ${row.toAddr}: "${row.subject}"${row.attachments.length ? ` with ${row.attachments.length} attachment(s): ${row.attachments.map((a) => a.label).join(", ")}` : ""} (sent from the mail room — simulated transport)`,
+            mailId: row.id,
+          },
         });
       }
       await emitActivity({
@@ -258,7 +287,7 @@ export function mailRoutes(app: FastifyInstance): void {
         objectType: "mail",
         objectId: row.id,
         caseId: row.caseId ?? undefined,
-        summary: `${sentBy} released "${row.subject}" to ${row.toAddr}${row.invoiceNumber ? ` (${row.invoiceNumber})` : ""}`,
+        summary: `${sentBy} released "${row.subject}" to ${row.toAddr}${row.invoiceNumber ? ` (${row.invoiceNumber})` : ""}${row.attachments.length ? ` with ${row.attachments.length} attachment(s)` : ""}`,
       });
       return { mail: sent };
     },

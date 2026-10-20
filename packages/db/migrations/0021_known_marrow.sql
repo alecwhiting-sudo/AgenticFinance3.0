@@ -1,0 +1,1 @@
+ALTER TABLE "evidence"."mail_message" ADD COLUMN "attachments" jsonb DEFAULT '[]'::jsonb NOT NULL;

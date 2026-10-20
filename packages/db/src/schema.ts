@@ -483,6 +483,9 @@ export const mailMessage = ev.table("mail_message", {
   counterparty: text("counterparty"),
   /** the resolution option that triggered this draft, for the audit trail */
   optionLabel: text("option_label"),
+  /** documents released with the message: [{label, path}] — paths into the
+   * served document store, chosen by the human in the editor */
+  attachments: jsonb("attachments").$type<{ label: string; path: string }[]>().notNull().default([]),
   createdBy: text("created_by").notNull(),
   editedBy: text("edited_by"),
   sentBy: text("sent_by"),

@@ -16,6 +16,7 @@ import Link from "next/link";
 import { PUBLIC_API_URL as apiUrl } from "@/lib/api";
 import { Badge, SectionTitle } from "@/components/ui";
 import { ApiDownBanner, Breadcrumbs } from "@/components/Chrome";
+import { useDialog } from "@/components/Dialog";
 import { formatDate, money } from "@/lib/format";
 
 type Mail = {
@@ -38,6 +39,8 @@ type Mail = {
   sentAt: string | null;
   createdAt: string;
   process?: "p2p" | "o2c";
+  attachments: { label: string; path: string }[];
+  invoiceDocPath?: string | null;
 };
 type InboxDoc = {
   invoiceId: string;
@@ -64,6 +67,8 @@ export default function MailRoom({ process }: { process: "p2p" | "o2c" }) {
   const [documents, setDocuments] = useState<InboxDoc[]>([]);
   const [openMail, setOpenMail] = useState<string | null>(openId);
   const [edit, setEdit] = useState<{ to: string; subject: string; body: string } | null>(null);
+  const [attach, setAttach] = useState<{ label: string; path: string }[]>([]);
+  const dialog = useDialog();
   const [busy, setBusy] = useState(false);
   const [reader, setReader] = useState<{
     from: string; to: string; date: string; subject: string; attachment: string | null;
@@ -90,8 +95,10 @@ export default function MailRoom({ process }: { process: "p2p" | "o2c" }) {
 
   const current = messages?.find((m) => m.id === openMail) ?? null;
   useEffect(() => {
-    if (current && current.status === "draft" && !edit)
+    if (current && current.status === "draft" && !edit) {
       setEdit({ to: current.toAddr, subject: current.subject, body: current.body });
+      setAttach(current.attachments ?? []);
+    }
   }, [current, edit]);
 
   const save = async () => {
@@ -101,7 +108,7 @@ export default function MailRoom({ process }: { process: "p2p" | "o2c" }) {
       await fetch(`${apiUrl}/p2p/mail/${current.id}`, {
         method: "PATCH",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ ...edit, editedBy: "alec" }),
+        body: JSON.stringify({ ...edit, attachments: attach, editedBy: "alec" }),
       });
       setNotice("Draft saved.");
       await load(box);
@@ -113,14 +120,19 @@ export default function MailRoom({ process }: { process: "p2p" | "o2c" }) {
 
   const send = async () => {
     if (!current || !edit) return;
-    if (!window.confirm(`Release this email to ${edit.to}?\n\nThis is the human approval for external comms — the send is recorded on the case and the activity feed. (Demo transport: simulated, nothing leaves the sandbox.)`)) return;
+    const ok = await dialog.confirm({
+      title: `Release this email to ${edit.to}?`,
+      body: `${attach.length ? `Going with it: ${attach.map((a) => a.label).join(", ")}.\n\n` : ""}This is the human approval for external comms — the send is recorded on the case and the activity feed. (Demo transport: simulated, nothing leaves the sandbox.)`,
+      confirmLabel: "Release — send",
+    });
+    if (!ok) return;
     setBusy(true);
     try {
       // save any edits first so what is sent is exactly what is on screen
       await fetch(`${apiUrl}/p2p/mail/${current.id}`, {
         method: "PATCH",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ ...edit, editedBy: "alec" }),
+        body: JSON.stringify({ ...edit, attachments: attach, editedBy: "alec" }),
       });
       const r = await fetch(`${apiUrl}/p2p/mail/${current.id}/send`, {
         method: "POST",
@@ -141,7 +153,13 @@ export default function MailRoom({ process }: { process: "p2p" | "o2c" }) {
 
   const discard = async () => {
     if (!current) return;
-    if (!window.confirm("Discard this draft? It will not be sent and leaves no trace on the case.")) return;
+    const ok = await dialog.confirm({
+      title: "Discard this draft?",
+      body: "It will not be sent and leaves no trace on the case.",
+      confirmLabel: "Discard",
+      tone: "danger",
+    });
+    if (!ok) return;
     setBusy(true);
     try {
       await fetch(`${apiUrl}/p2p/mail/${current.id}/discard`, { method: "POST" });
@@ -239,6 +257,37 @@ export default function MailRoom({ process }: { process: "p2p" | "o2c" }) {
               />
             </label>
           </div>
+          <div className="mt-3 text-xs">
+            <span className="font-medium" style={{ color: "var(--muted)" }}>Attachments: </span>
+            {attach.map((a, i) => (
+              <span key={i} className="mr-2 inline-flex items-center gap-1 rounded-lg border px-2 py-0.5" style={{ borderColor: "var(--border)" }}>
+                <a href={`${apiUrl}/${a.path}`} target="_blank" rel="noreferrer" className="hover:underline" style={{ color: "var(--accent)" }}>
+                  {a.label}
+                </a>
+                <button onClick={() => setAttach(attach.filter((_, j) => j !== i))} title="Remove attachment" style={{ color: "var(--muted)" }}>
+                  ×
+                </button>
+              </span>
+            ))}
+            {attach.length === 0 && <span style={{ color: "var(--muted)" }}>none — </span>}
+            {current.invoiceDocPath && !attach.some((a) => a.path === current.invoiceDocPath) && (
+              <button
+                onClick={() =>
+                  setAttach([
+                    ...attach,
+                    {
+                      label: `Invoice ${current.invoiceNumber ?? ""} (${current.invoiceDocPath!.endsWith(".xml") ? "e-invoice XML" : "PDF"})`.replace("  ", " "),
+                      path: current.invoiceDocPath!,
+                    },
+                  ])
+                }
+                className="hover:underline"
+                style={{ color: "var(--accent)" }}
+              >
+                + attach invoice document
+              </button>
+            )}
+          </div>
           <div className="mt-3 flex items-center gap-2">
             <button
               disabled={busy}
@@ -285,6 +334,16 @@ export default function MailRoom({ process }: { process: "p2p" | "o2c" }) {
             {current.invoiceNumber ? ` · ${current.invoiceNumber}` : ""} — sent mail is evidence and cannot be edited.
           </p>
           <pre className="mt-3 whitespace-pre-wrap font-sans text-sm leading-6">{current.body}</pre>
+          {(current.attachments ?? []).length > 0 && (
+            <p className="mt-3 text-xs" style={{ color: "var(--muted)" }}>
+              Attachments:{" "}
+              {current.attachments.map((a, i) => (
+                <a key={i} href={`${apiUrl}/${a.path}`} target="_blank" rel="noreferrer" className="mr-2 hover:underline" style={{ color: "var(--accent)" }}>
+                  {a.label} ↗
+                </a>
+              ))}
+            </p>
+          )}
         </section>
       )}
 
@@ -298,6 +357,7 @@ export default function MailRoom({ process }: { process: "p2p" | "o2c" }) {
                   onClick={() => {
                     setOpenMail(m.id);
                     setEdit(m.status === "draft" ? { to: m.toAddr, subject: m.subject, body: m.body } : null);
+                    setAttach(m.attachments ?? []);
                   }}
                   className="flex w-full items-baseline justify-between gap-3 px-4 py-3 text-left hover:opacity-80"
                 >
@@ -311,6 +371,7 @@ export default function MailRoom({ process }: { process: "p2p" | "o2c" }) {
                     </span>
                   </span>
                   <span className="shrink-0 text-xs" style={{ color: "var(--muted)" }}>
+                    {(m.attachments ?? []).length > 0 && <span title={m.attachments.map((a) => a.label).join(", ")}>📎{m.attachments.length} </span>}
                     <Badge tone={m.status === "sent" ? "good" : "warn"}>{m.status}</Badge>{" "}
                     {formatDate(m.sentAt ?? m.createdAt)}
                   </span>

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { PUBLIC_API_URL as apiUrl } from "@/lib/api";
+import { useDialog } from "@/components/Dialog";
 
 export function ApplyReceiptsButton() {
   const router = useRouter();
@@ -95,10 +96,15 @@ export function DisputeButton({ invoiceId, number }: { invoiceId: string; number
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [state, setState] = useState<"idle" | "raised" | "already">("idle");
+  const dialog = useDialog();
   const run = async () => {
-    const reason = window.prompt(
-      `What does the customer say is wrong with ${number}?\n(The Collections Agent grounds the case options in this reason.)`,
-    );
+    const reason = await dialog.ask({
+      title: `Raise a dispute on ${number}`,
+      body: "What does the customer say is wrong? The Collections Agent grounds the case options in this reason, and dunning is held while the dispute is open.",
+      placeholder: "e.g. day rate billed above the agreed schedule",
+      multiline: true,
+      confirmLabel: "Raise dispute",
+    });
     if (!reason || reason.trim().length < 5) return;
     setBusy(true);
     try {

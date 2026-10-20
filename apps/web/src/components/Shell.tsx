@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 import CommandPalette from "@/components/CommandPalette";
 import AnalystPanel from "@/components/AnalystPanel";
 import TourEngine, { startTourEvent } from "@/components/Tour";
+import { DialogProvider } from "@/components/Dialog";
 
 type Item = { href: string; label: string; exact?: boolean };
 type Parent = Item & { short?: string; children?: Item[] };
@@ -111,6 +112,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   const parentActive = (p: Parent) => isActive(p) || (p.children ?? []).some(isActive);
 
   return (
+    <DialogProvider>
     <div className="flex min-h-screen">
       <aside
         className={`sticky top-0 h-screen w-56 shrink-0 flex-col overflow-y-auto border-r px-3 py-5 ${navOpen ? "hidden md:flex" : "hidden"}`}
@@ -239,5 +241,6 @@ export default function Shell({ children }: { children: React.ReactNode }) {
       )}
       <TourEngine />
     </div>
+    </DialogProvider>
   );
 }
