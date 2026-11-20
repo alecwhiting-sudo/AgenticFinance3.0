@@ -202,6 +202,55 @@ export function exceptionRoutes(app: FastifyInstance): void {
     return { workItemId: wi!.id };
   });
 
+  /** Queue EVERY open exception that has no options yet and no agent already
+   * on it — the demo "set the agents loose" button. Same per-case payload as
+   * single investigate; still on-demand model spend, so the UI confirms with
+   * the count first. */
+  app.post("/p2p/exceptions/investigate-all", async (_req, reply) => {
+    const db = requireDb();
+    const agentRow = await db.query.agent.findFirst({ where: (t) => eq(t.slug, "invoice-exception") });
+    if (!agentRow) return reply.code(409).send({ error: "invoice-exception agent not seeded" });
+    const rows = (
+      await db.execute(sql`
+        select i.id, i.case_id, i.exception_code, i.supplier_invoice_number,
+               (select ce.detail->>'detail' from evidence.case_event ce
+                 where ce.case_id = i.case_id order by ce.at limit 1) as detail
+        from erp.ap_invoice i
+        where i.book <> 'test' and i.status = 'exception'
+          and not exists (select 1 from evidence.case_event ce
+                          where ce.case_id = i.case_id and ce.kind = 'options')
+          and not exists (select 1 from agent.work_item w
+                          where w.case_id = i.case_id and w.status in ('pending', 'claimed', 'running'))
+      `)
+    ).rows as { id: string; case_id: string | null; exception_code: string; supplier_invoice_number: string; detail: string | null }[];
+    if (rows.length === 0) return { queued: 0 };
+    await db.insert(workItem).values(
+      rows.map((r) => ({
+        type: "invoice.exception",
+        agentId: agentRow.id,
+        caseId: r.case_id,
+        payload: {
+          invoiceId: r.id,
+          caseId: r.case_id,
+          exceptionCode: r.exception_code,
+          detail: r.detail ?? r.exception_code,
+          objective:
+            "Investigate using get_invoice_context, then (1) propose case.options with 2-3 grounded, costed resolution options (params: caseId, options[{resolution: approve_adjusted|part_approve|record_receipt|reject|retro_purchase|human_verify, label, rationale, costedNote?, adjustedQuantities?}]) and (2) propose ap.invoice.resolve for your single recommended option. Never resolve bank_detail_change — options there are human_verify guidance only.",
+        },
+        priority: 4,
+      })),
+    );
+    await emitActivity({
+      actorType: "human",
+      actorId: "workbench",
+      verb: "requested_investigation",
+      objectType: "ap_invoice",
+      objectId: rows[0]!.id,
+      summary: `${rows.length} open exceptions sent to the Invoice Exception Agent for options (investigate all)`,
+    });
+    return { queued: rows.length };
+  });
+
   /** A human applies one of the options (or their own resolution). Executes
    * through the same resolve service as an approved command and records an
    * executed command row so the decision history stays complete. */

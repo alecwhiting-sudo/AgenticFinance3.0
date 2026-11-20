@@ -221,6 +221,28 @@ export default function ExceptionsPage() {
     await loadList();
   };
 
+  // the demo accelerator: send every untouched exception to the agent at once
+  const uninvestigated = rows.filter((r) => !r.has_options && !r.investigating).length;
+  const investigateAll = async () => {
+    const ok = await dialog.confirm({
+      title: `Send ${uninvestigated} exceptions to the agent?`,
+      body: "Every open exception without options gets its own investigation — on-demand model spend, one run per case. Options land on each case as the runs finish.",
+      confirmLabel: "Investigate all",
+    });
+    if (!ok) return;
+    setBusy(true);
+    setMsg(null);
+    try {
+      const res = await fetch(`${apiUrl}/p2p/exceptions/investigate-all`, { method: "POST" });
+      const body = (await res.json()) as { queued?: number; error?: string };
+      setMsg(res.ok ? `${body.queued} investigations queued — options land on each case as the agent works through them.` : (body.error ?? "failed"));
+    } catch {
+      setMsg(`Cannot reach the API at ${apiUrl}.`);
+    }
+    setBusy(false);
+    await loadList();
+  };
+
   const groups = new Map<string, Row[]>();
   for (const r of rows) {
     const g = groups.get(r.exception_code) ?? [];
@@ -238,9 +260,21 @@ export default function ExceptionsPage() {
             resolution actions. {rows.length} open.
           </p>
         </div>
-        <Link href="/p2p" className="rounded-lg border px-3 py-1.5 text-sm" style={{ borderColor: "var(--border)" }}>
-          ← P2P
-        </Link>
+        <span className="flex items-center gap-2">
+          {uninvestigated > 0 && (
+            <button
+              disabled={busy}
+              onClick={investigateAll}
+              className="rounded-lg px-3 py-1.5 text-sm font-medium text-white disabled:opacity-40"
+              style={{ background: "var(--accent)" }}
+            >
+              Investigate all ({uninvestigated})
+            </button>
+          )}
+          <Link href="/p2p" className="rounded-lg border px-3 py-1.5 text-sm" style={{ borderColor: "var(--border)" }}>
+            ← P2P
+          </Link>
+        </span>
       </section>
       {msg && <p className="text-sm" style={{ color: "var(--muted)" }}>{msg}</p>}
 
