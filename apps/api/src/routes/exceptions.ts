@@ -99,6 +99,22 @@ export function exceptionRoutes(app: FastifyInstance): void {
         })
       : null;
 
+    // the most recent FINISHED investigation, so the workbench can say what
+    // the agent actually did instead of silently re-offering the button —
+    // a failed or option-less run is information, not nothing
+    const [lastRun] = inv.caseId
+      ? ((
+          await db.execute(sql`
+            select r.id as run_id, r.outcome, r.result_summary, w.status as wi_status,
+                   to_char(coalesce(r.finished_at, w.completed_at, w.created_at), 'YYYY-MM-DD HH24:MI') as at
+            from agent.work_item w
+            left join agent.agent_run r on r.work_item_id = w.id
+            where w.case_id = ${inv.caseId} and w.status in ('completed', 'escalated', 'failed')
+            order by coalesce(w.completed_at, w.created_at) desc limit 1
+          `)
+        ).rows as { run_id: string | null; outcome: string | null; result_summary: string | null; wi_status: string; at: string }[])
+      : [undefined];
+
     // the tolerance policy the recommendation used (plans/P2P.md §10 M2,
     // per-supplier M3) — the workbench shows the policy beside the options
     // it shaped, naming the supplier-specific tolerance when one applies
@@ -124,6 +140,14 @@ export function exceptionRoutes(app: FastifyInstance): void {
       options,
       supplierHistory: history,
       investigating: !!investigating,
+      lastInvestigation: lastRun
+        ? {
+            runId: lastRun.run_id,
+            outcome: lastRun.outcome ?? lastRun.wi_status,
+            summary: lastRun.result_summary,
+            at: lastRun.at,
+          }
+        : null,
       emailPath: inv.emailPath,
       tolerances: tolPs?.parameters ?? null,
       /** the per-supplier tolerance applied to THIS case's supplier, if any */

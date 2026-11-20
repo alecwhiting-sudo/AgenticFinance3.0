@@ -47,6 +47,7 @@ type Detail = {
   options: Option[];
   supplierHistory: { invoices: number; open_exceptions: number; paid: number };
   investigating: boolean;
+  lastInvestigation: { runId: string | null; outcome: string; summary: string | null; at: string } | null;
   tolerances: { priceVariancePct?: number; priceVarianceFloorMinor?: number } | null;
   supplierTolerance: { supplierName: string; priceVariancePct: number; priceVarianceFloorMinor: number } | null;
 };
@@ -298,9 +299,28 @@ export default function ExceptionsPage() {
               </div>
               {draftMsg && <p className="mb-2 text-xs" style={{ color: "var(--bad)" }}>{draftMsg}</p>}
               {d.options.length === 0 ? (
-                <p className="text-sm" style={{ color: "var(--muted)" }}>
-                  No options on the case yet — ask the agent, or resolve from the invoice page.
-                </p>
+                d.investigating ? (
+                  <p className="text-sm" style={{ color: "var(--muted)" }}>
+                    The Invoice Exception Agent is on the case — options land here when the run finishes.
+                  </p>
+                ) : d.lastInvestigation ? (
+                  // the agent DID run and attached nothing — say what happened,
+                  // never silently re-offer the button
+                  <p className="text-sm" style={{ color: d.lastInvestigation.outcome === "completed" ? "var(--muted)" : "var(--warn)" }}>
+                    The agent last ran {d.lastInvestigation.at} and finished “{d.lastInvestigation.outcome}” without
+                    attaching options{d.lastInvestigation.summary ? ` — ${d.lastInvestigation.summary}` : ""}.{" "}
+                    {d.lastInvestigation.runId && (
+                      <Link href={`/runs/${d.lastInvestigation.runId}`} className="hover:underline" style={{ color: "var(--accent)" }}>
+                        View the run →
+                      </Link>
+                    )}{" "}
+                    Re-investigate to try again.
+                  </p>
+                ) : (
+                  <p className="text-sm" style={{ color: "var(--muted)" }}>
+                    No options on the case yet — ask the agent, or resolve from the invoice page.
+                  </p>
+                )
               ) : (
                 <div className="grid gap-3 sm:grid-cols-2">
                   {d.options.map((o, i) => (
