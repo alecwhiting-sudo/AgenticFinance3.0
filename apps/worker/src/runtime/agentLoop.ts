@@ -794,7 +794,7 @@ async function invoiceExceptionFallback(
     emailDraft?: { to: string; subject: string; body: string };
   };
   const gbp = (m: number) => `£${(Math.abs(m) / 100).toLocaleString("en-GB", { minimumFractionDigits: 2 })}`;
-  let inv: { lines: { lineNo: number; qty: number; unitPriceMinor: number; description: string }[]; grossMinor: number; purchaseId: string | null } | null = null;
+  let inv: { lines: { lineNo: number; qty: number; unitPriceMinor: number; description: string; accountCode?: string }[]; grossMinor: number; purchaseId: string | null } | null = null;
   let po: { lines: { lineNo: number; qty: number; unitPriceMinor: number }[]; totalMinor: number } | null = null;
   let receivedBy: Map<number, number> | null = null;
   let supplier: { name: string; email: string | null; code: string | null } | null = null;
@@ -930,14 +930,23 @@ async function invoiceExceptionFallback(
       { resolution: "reject", label: "No goods received — reject the invoice", rationale: `No goods receipt and no confirmation of delivery (${detail}).` },
     );
   } else if (code === "no_purchase") {
+    // Unapproved spend is the BUSINESS's to own (policy 2026-11-20): AP never
+    // raises the retro PO itself — the option refers it to the budget holder
+    // with an internal email draft asking them to raise and approve it.
+    const accountCode = inv?.lines[0]?.accountCode ?? "the spend category";
     options.push(
       {
-        resolution: "retro_purchase",
-        label: "Raise a retro purchase to put the commitment on the books",
-        rationale: `Invoice arrived without a purchase record (${detail}). A retro purchase restores the control trail; band approval applies automatically.`,
-        costedNote: inv ? `commits ${gbp(inv.grossMinor)}` : undefined,
+        resolution: "refer_purchaser",
+        label: "Ask the budget holder to raise the retro PO — their spend to own",
+        rationale: `Invoice arrived without a purchase record (${detail}). Unapproved spend is committed by the business, not by AP: the budget holder for ${accountCode} should raise the retro purchase (band approval applies automatically), and the invoice matches and posts once it exists.`,
+        costedNote: inv ? `holds ${gbp(inv.grossMinor)} until the business commits it` : undefined,
+        emailDraft: {
+          to: `budget.holders@brightline.example (${accountCode} budget holder)`,
+          subject: `Invoice ${invNumber} has no purchase record — please raise a retro PO if this spend is yours`,
+          body: `Hi,\n\nSupplier invoice ${invNumber} from ${supplier?.name ?? "a supplier"}${inv ? ` for ${gbp(inv.grossMinor)} gross` : ""} arrived with no purchase record against ${accountCode}. We hold payment until the commitment is on the books.\n\nIf this spend is yours, please raise a retrospective purchase for it in the workbench (approval routes automatically by band) and reply with the PO number — the invoice will then match and post. If you don't recognise it, say so and we will reject it as unapproved spend.${signOff}`,
+        },
       },
-      { resolution: "reject", label: "Unapproved spend — reject", rationale: `No purchase record and no approver on file (${detail}).` },
+      { resolution: "reject", label: "Unapproved spend — reject", rationale: `No purchase record and no approver on file (${detail}). If no budget holder claims the spend, reject so nothing unapproved is paid.` },
     );
   } else if (code === "duplicate_suspect") {
     options.push(
@@ -1037,7 +1046,10 @@ Please have your finance contact call us on the number we hold for your account,
       );
     }
     case "no_purchase":
-      return propose("retro_purchase", `Invoice arrived without a purchase record (${detail}). Spend classifies as routine; recommending a retro purchase so the commitment is on the books — director approval applies automatically if it exceeds the auto band.`);
+      return {
+        outcome: "escalated",
+        summary: `Invoice arrived without a purchase record (${detail}). Unapproved spend is the business's to commit, not AP's: the case carries a referral to the budget holder with a draft email asking them to raise the retro PO (release it from the mail room). The invoice stays held until the commitment exists or the spend is disowned and rejected.`,
+      };
     case "missing_receipt":
       return {
         outcome: "escalated",

@@ -447,6 +447,11 @@ export default function ExceptionsPage() {
                         <span className="mt-2 text-xs font-medium" style={{ color: "var(--warn)" }}>
                           guidance only — record the phone verification below to release or reject
                         </span>
+                      ) : o.resolution === "refer_purchaser" ? (
+                        // the budget holder acts, not AP — the email IS the action
+                        <span className="mt-2 text-xs font-medium" style={{ color: "var(--warn)" }}>
+                          for the budget holder to action — send them the request from the mail room
+                        </span>
                       ) : (
                         <button
                           disabled={busy}

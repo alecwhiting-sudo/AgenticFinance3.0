@@ -179,6 +179,9 @@ export const commandDefs = {
               "record_receipt",
               "reject",
               "retro_purchase",
+              // referral: the BUDGET HOLDER raises the retro PO, not AP —
+              // the option carries an internal email draft, never an Apply
+              "refer_purchaser",
               "human_verify",
               // AR receipt-query options (plans/O2C.md §9 mirror)
               "apply_residual",

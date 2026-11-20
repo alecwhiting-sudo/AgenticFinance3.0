@@ -318,6 +318,12 @@ _Last updated: 2026-10-19_
    workbench now surfaces the agent's last finished run (outcome +
    summary + run link) when no options landed, instead of silently
    re-offering the button.
+   **no_purchase policy narrowed 2026-11-20 (Alec):** unapproved spend is
+   the BUSINESS's to commit, never AP's — the agent now refers the budget
+   holder (new `refer_purchaser` option kind with an internal email draft
+   asking them to raise the retro PO themselves) and escalates with the
+   invoice held, instead of recommending retro_purchase for AP to apply.
+   Playbook rule 4 + never-do updated, eval case added (13/13 keyless).
    Remaining (M4 ideas): tolerance editing UI, contract-grounded
    disputes.
 10. **Mail room BUILT 2026-10-19** (`plans/P2P.md` §11): picking an
