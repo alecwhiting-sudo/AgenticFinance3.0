@@ -793,3 +793,51 @@ export const extractionTemplate = ag.table("extraction_template", {
   lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+/* ================= EPM — Performance Management (plans/PM.md, Phase 5) ====
+ * Plans are plans, never journals: actuals are posted facts in `erp`,
+ * budget/forecast/scenario lines live here, variance is a query. Driver
+ * sets are versioned like releases — a change is a new row. */
+
+export const epm = pgSchema("epm");
+
+/** Named, versioned planning assumptions (plans/PM.md §2). The budget and
+ * every forecast derive from one of these — line amounts are never typed. */
+export const driverSet = epm.table("driver_set", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  code: text("code").notNull(), // e.g. DRV-2026
+  version: integer("version").notNull().default(1),
+  label: text("label").notNull(),
+  assumptions: jsonb("assumptions").$type<Record<string, unknown>>().notNull(),
+  status: text("status").notNull().default("draft"), // draft | active | superseded
+  createdBy: text("created_by").notNull().default("seed"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [unique("driver_set_code_version").on(t.code, t.version)]);
+
+export const planVersion = epm.table("plan_version", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  kind: text("kind").notNull(), // budget | forecast | scenario
+  code: text("code").notNull(), // BUD-2026 | FC-2026-09 | SCN-...
+  label: text("label").notNull(),
+  status: text("status").notNull().default("draft"), // draft | active | superseded
+  driverSetId: uuid("driver_set_id").references(() => driverSet.id),
+  /** what this version adjusted (a forecast based on the budget, a scenario
+   * based on a forecast) — the provenance chain */
+  basedOnId: uuid("based_on_id"),
+  notes: text("notes"),
+  createdBy: text("created_by").notNull().default("seed"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  activatedBy: text("activated_by"),
+  activatedAt: timestamp("activated_at", { withTimezone: true }),
+}, (t) => [unique("plan_version_code").on(t.code)]);
+
+/** account × period × amount, SIGNED AS POSTED (income negative, expense
+ * positive) so variance maths matches the ledger; display flips. */
+export const planLine = epm.table("plan_line", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  planVersionId: uuid("plan_version_id").notNull().references(() => planVersion.id),
+  accountCode: text("account_code").notNull(),
+  periodCode: text("period_code").notNull(), // YYYY-MM
+  amountMinor: integer("amount_minor").notNull(),
+  note: text("note"),
+}, (t) => [unique("plan_line_unique").on(t.planVersionId, t.accountCode, t.periodCode)]);

@@ -185,7 +185,12 @@
       <tr data-info="s-evidence">
         <td class="schemaName">evidence</td>
         <td>Cases &amp; audit trail</td>
-        <td><code>case</code> <code>case_event</code>; documents (PDF/XML/eml) live in the repo and are served by the API (D10)</td>
+        <td><code>case</code> <code>case_event</code> <code>mail_message</code> (drafted by agents, released by humans); documents (PDF/XML/eml) live in the repo and are served by the API (D10)</td>
+      </tr>
+      <tr data-info="s-epm">
+        <td class="schemaName">epm</td>
+        <td>Plans, never journals (Phase 5)</td>
+        <td><code>driver_set</code> (versioned named assumptions) <code>plan_version</code> (budget | forecast | scenario; draft → active, human-activated) <code>plan_line</code> (account × period, signed as posted); variance is a query joining plans to <code>erp</code> actuals — see <code>plans/PM.md</code></td>
       </tr>
     </table>
     <div class="invariant">Flow of a pound: module event → <code>fdp.event</code> → <code>fdp.movement</code> + <code>erp.journal_line</code> (same deltas, enforced) → LES views → statements. Corrections are new events; certified history (once LRS lands) is never edited.</div>

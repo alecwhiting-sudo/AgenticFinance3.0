@@ -25,7 +25,11 @@ import {
   skillVersion,
   supplier,
   fdpParameterSet,
+  driverSet,
+  planVersion,
+  planLine,
 } from "./schema.js";
+import { buildBudgetLines, type DriverAssumptions } from "./epm.js";
 
 type SeedFile = {
   company: { code: string; name: string; currency: string };
@@ -347,6 +351,46 @@ if (!existingTol) {
     .set({ parameters: { ...(existingTol.parameters as Record<string, unknown>), suppliers: TOLERANCE_SUPPLIERS } })
     .where(eq(fdpParameterSet.id, existingTol.id));
   console.log("exception-tolerances upgraded in place: per-supplier overrides added (M3)");
+}
+
+// EPM: FY2026 driver set + the budget it builds (plans/PM.md M1). The
+// budget derives from committed, named assumptions — never typed lines —
+// and seeds once: planning data is a human's to evolve afterwards.
+const existingBudget = await db.query.planVersion.findFirst({
+  where: (t, { eq }) => eq(t.code, "BUD-2026"),
+});
+if (!existingBudget) {
+  const driversDoc = JSON.parse(
+    readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../seed/epm-drivers.json"), "utf8"),
+  ) as { code: string; label: string; assumptions: DriverAssumptions };
+  const [ds] = await db
+    .insert(driverSet)
+    .values({
+      code: driversDoc.code,
+      version: 1,
+      label: driversDoc.label,
+      assumptions: driversDoc.assumptions as unknown as Record<string, unknown>,
+      status: "active",
+      createdBy: "seed",
+    })
+    .returning();
+  const [pv] = await db
+    .insert(planVersion)
+    .values({
+      kind: "budget",
+      code: "BUD-2026",
+      label: "FY2026 budget (driver-based)",
+      status: "active",
+      driverSetId: ds!.id,
+      notes: "Built from DRV-2026 v1 by the deterministic budget builder — see plans/PM.md.",
+      createdBy: "seed",
+      activatedBy: "seed",
+      activatedAt: new Date(),
+    })
+    .returning();
+  const lines = buildBudgetLines(driversDoc.assumptions, 2026);
+  await db.insert(planLine).values(lines.map((l) => ({ ...l, planVersionId: pv!.id })));
+  console.log(`seeded EPM: ${driversDoc.code} v1 + BUD-2026 active (${lines.length} lines)`);
 }
 
 console.log(
