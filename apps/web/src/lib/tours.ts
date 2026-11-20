@@ -77,6 +77,13 @@ const fullLoop: Tour = {
         "Customer receipts auto-apply when the evidence is unambiguous. When it isn't — two invoices at the same amount, a part-payment, an unknown payer — the Cash Application Agent opens a receipt query with grounded options and a draft letter, and holds the cash for a human.",
     },
     {
+      route: "/processes",
+      title: "The whole function on one page",
+      body:
+        "Every process family as a lane: where work sits in each pipe, what is stuck, and — in the strip on top — everything currently waiting on a HUMAN: approvals, mail drafts, fraud holds. Each row links straight to its queue.",
+      tryIt: "The fraud-risk tile stays red until someone verifies by phone — the one thing agents are never allowed to clear.",
+    },
+    {
       route: "/reports",
       title: "Statements with a period lens",
       body:
