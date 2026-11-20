@@ -44,13 +44,6 @@ const fullLoop: Tour = {
       tryIt: "Note the straight-through rate: the share of invoices no human ever had to touch.",
     },
     {
-      route: "/test",
-      title: "The Test panel drives the demo",
-      body:
-        "Brightline Services plc is a generated company: 15 months of invoices, receipts, bank lines and 54 deliberately planted flaws — wrong IBANs, duplicate bills, a multi-page invoice whose stated total lies. Each scenario card says what it does, what it proves and what it costs before you run it.",
-      tryIt: "“Simulate a day” is the best single button: fresh documents arrive and flow through everything you are about to see.",
-    },
-    {
       route: "/p2p/invoices",
       title: "Documents become data",
       body:
@@ -123,6 +116,13 @@ const fullLoop: Tour = {
       title: "Under the hood",
       body:
         "The living architecture diagram — click any component for what it is and why it exists. The short version: one Postgres, an API that owns all business logic, a worker that runs the agents, and a command gateway that makes “agents propose, humans approve” structurally true rather than a policy hope.",
+    },
+    {
+      route: "/test",
+      title: "Now drive it yourself — the Test panel",
+      body:
+        "Brightline Services plc is a generated company: 15 months of invoices, receipts, bank lines and 54 deliberately planted flaws — wrong IBANs, duplicate bills, a multi-page invoice whose stated total lies. Each scenario card says what it does, what it proves and what it costs before you run it.",
+      tryIt: "“Simulate a day” is the best single button: fresh documents arrive and flow through everything you just toured.",
     },
   ],
 };
