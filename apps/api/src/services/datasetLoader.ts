@@ -339,6 +339,8 @@ export async function truncateTransactions(db: Db): Promise<void> {
       and not exists (select 1 from agent.agent_run r where r.work_item_id = w.id)`);
   await db.execute(sql`delete from evidence.case_event`);
   await db.execute(sql`update evidence.document set case_id = null where case_id is not null`);
+  // mail room messages hang off cases and invoices — both wiped here
+  await db.execute(sql`delete from evidence.mail_message`);
   await db.execute(sql`delete from evidence."case"`);
 }
 
