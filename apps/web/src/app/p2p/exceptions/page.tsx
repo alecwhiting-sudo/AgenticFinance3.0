@@ -72,6 +72,7 @@ export default function ExceptionsPage() {
   const [busy, setBusy] = useState(false);
   const [draftMsg, setDraftMsg] = useState<string | null>(null);
   const dialog = useDialog();
+  const [verifyMsg, setVerifyMsg] = useState<string | null>(null);
 
   const loadList = useCallback(async () => {
     try {
@@ -150,24 +151,33 @@ export default function ExceptionsPage() {
   // record — the API refuses without it.
   const recordVerification = async (verdict: "genuine" | "fraudulent") => {
     if (!sel || !d) return;
+    setVerifyMsg(null);
     const spokeWith = await dialog.ask({
       title: "Who did you speak to?",
       body: `Name and role of the person you called at ${d.supplier?.name ?? "the supplier"} — on the phone number we hold on the supplier master, never one from the email or invoice.`,
       placeholder: "e.g. Jane Smith, finance manager",
     });
     if (!spokeWith) return;
-    const note = await dialog.ask({
-      title: "What did they confirm?",
-      body:
-        verdict === "genuine"
-          ? "What was verified on the call. This attestation is the audit record that releases the invoice."
-          : "What the call established. This attestation is the audit record for rejecting the invoice.",
-      placeholder:
-        verdict === "genuine"
-          ? "e.g. confirmed the bank detail change is genuine; new account verified verbally"
-          : "e.g. supplier has not changed bank details — the request is fraudulent",
-      multiline: true,
-    });
+    // the attestation is the audit record — keep asking until it says
+    // something, rather than letting the API bounce it after the fact
+    let note: string | null = null;
+    let nudge = "";
+    do {
+      note = await dialog.ask({
+        title: "What did they confirm?",
+        body:
+          nudge +
+          (verdict === "genuine"
+            ? "What was verified on the call, in a sentence. This attestation is the audit record that releases the invoice."
+            : "What the call established, in a sentence. This attestation is the audit record for rejecting the invoice."),
+        placeholder:
+          verdict === "genuine"
+            ? "e.g. confirmed the bank detail change is genuine; new account verified verbally"
+            : "e.g. supplier has not changed bank details — the request is fraudulent",
+        multiline: true,
+      });
+      nudge = "A couple of words isn't an audit record — say what was actually confirmed on the call. ";
+    } while (note !== null && note.trim().length < 10);
     if (!note) return;
     const ok = await dialog.confirm({
       title: verdict === "genuine" ? `Release ${d.invoice.supplierInvoiceNumber} for payment?` : `Reject ${d.invoice.supplierInvoiceNumber} as fraudulent?`,
@@ -177,7 +187,6 @@ export default function ExceptionsPage() {
     });
     if (!ok) return;
     setBusy(true);
-    setMsg(null);
     try {
       const res = await fetch(`${apiUrl}/p2p/exceptions/${sel}/verify-release`, {
         method: "POST",
@@ -185,15 +194,17 @@ export default function ExceptionsPage() {
         body: JSON.stringify({ verdict, spokeWith, note, decidedBy: "workbench-user" }),
       });
       const body = (await res.json()) as { error?: string; result?: { status?: string } };
-      setMsg(
+      // success or failure lands IN the verification card, next to the
+      // buttons that caused it — never only at the top of the page
+      setVerifyMsg(
         res.ok
           ? verdict === "genuine"
             ? "Verification recorded — hold released, invoice posted."
             : "Verification recorded — invoice rejected, nothing will be paid."
-          : (body.error ?? "failed"),
+          : `Not recorded: ${body.error ?? "failed"}`,
       );
     } catch {
-      setMsg(`Cannot reach the API at ${apiUrl}.`);
+      setVerifyMsg(`Cannot reach the API at ${apiUrl}.`);
     }
     setBusy(false);
     await loadList();
@@ -289,7 +300,7 @@ export default function ExceptionsPage() {
                 {list.map((r) => (
                   <button
                     key={r.id}
-                    onClick={() => { setSel(r.id); setMsg(null); }}
+                    onClick={() => { setSel(r.id); setMsg(null); setVerifyMsg(null); }}
                     className="block w-full rounded-lg border p-2.5 text-left text-sm"
                     style={{ borderColor: sel === r.id ? "var(--accent)" : "var(--border)", background: "var(--card)" }}
                   >
@@ -500,6 +511,14 @@ export default function ExceptionsPage() {
                   never a number from the email or invoice. Then record the call here: the attestation is the
                   audit record, and your verdict releases the invoice for payment or rejects it.
                 </p>
+                {verifyMsg && (
+                  <p
+                    className="mt-2 text-sm font-medium"
+                    style={{ color: verifyMsg.startsWith("Verification recorded") ? "var(--good)" : "var(--bad)" }}
+                  >
+                    {verifyMsg}
+                  </p>
+                )}
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button
                     disabled={busy}
