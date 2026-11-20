@@ -28,6 +28,8 @@ export default function TourEngine() {
   const pathname = usePathname();
   const [tour, setTour] = useState<Tour | null>(null);
   const [step, setStep] = useState(0);
+  const [minimised, setMinimised] = useState(false);
+  const [side, setSide] = useState<"right" | "left">("right");
   const cleanupRef = useRef<(() => void) | null>(null);
 
   // resume a tour after a reload; listen for the header button
@@ -153,9 +155,30 @@ export default function TourEngine() {
 
   if (!tour || !current) return null;
 
+  // the card must never sit on top of what a step asks the viewer to click:
+  // it can be minimised to a pill (same spot, click to bring it back) or
+  // flipped to the other side of the screen
+  const sideClass = side === "right" ? "right-4" : "left-4";
+
+  if (minimised)
+    return (
+      <button
+        onClick={() => setMinimised(false)}
+        className={`fixed bottom-4 ${sideClass} z-50 flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium shadow-lg`}
+        style={{ borderColor: "var(--accent)", background: "var(--card)", color: "var(--accent)" }}
+        aria-label="Restore the guided tour"
+      >
+        <span
+          className="inline-block h-2 w-2 rounded-full"
+          style={{ background: "var(--accent)", animation: "breathe 1.6s ease-in-out infinite" }}
+        />
+        Tour {step + 1}/{tour.steps.length} — bring back
+      </button>
+    );
+
   return (
     <div
-      className="fixed bottom-4 right-4 z-50 w-96 max-w-[calc(100vw-2rem)] rounded-xl border p-4 shadow-lg"
+      className={`fixed bottom-4 ${sideClass} z-50 w-96 max-w-[calc(100vw-2rem)] rounded-xl border p-4 shadow-lg`}
       style={{ borderColor: "var(--accent)", background: "var(--card)" }}
       role="dialog"
       aria-label="Guided tour"
@@ -164,9 +187,29 @@ export default function TourEngine() {
         <span className="text-[10px] font-semibold uppercase tracking-[0.15em]" style={{ color: "var(--accent)" }}>
           {tour.name} · {step + 1} / {tour.steps.length}
         </span>
-        <button onClick={exit} className="text-xs hover:underline" style={{ color: "var(--muted)" }}>
-          exit tour
-        </button>
+        <span className="flex items-center gap-2.5">
+          <button
+            onClick={() => setSide(side === "right" ? "left" : "right")}
+            className="text-xs hover:underline"
+            style={{ color: "var(--muted)" }}
+            title="Move the card to the other side"
+            aria-label="Move the tour card to the other side"
+          >
+            {side === "right" ? "⇤ move left" : "move right ⇥"}
+          </button>
+          <button
+            onClick={() => setMinimised(true)}
+            className="text-xs hover:underline"
+            style={{ color: "var(--muted)" }}
+            title="Minimise — the tour stays where it is"
+            aria-label="Minimise the tour card"
+          >
+            minimise
+          </button>
+          <button onClick={exit} className="text-xs hover:underline" style={{ color: "var(--muted)" }}>
+            exit
+          </button>
+        </span>
       </div>
       <h3 className="mt-1 text-sm font-semibold">{current.title}</h3>
       <p className="mt-1 text-xs leading-5" style={{ color: "var(--muted)" }}>{current.body}</p>

@@ -112,6 +112,13 @@ const fullLoop: Tour = {
       tryIt: "Open the Invoice Exception Agent and expand a changed case in the shadow replay report.",
     },
     {
+      route: "/agents/skills",
+      title: "Skills are the written procedures",
+      body:
+        "Every agent works from versioned skills — the written procedures of the finance function, clustered by process. A skill is immutable once published: editing one creates a new version, the control-regression check flags any dropped never-do line, and the agent only picks it up through a new release that passes its evals. This is how you change what an agent does: edit the words, let governance prove them.",
+      tryIt: "Open the Exception investigation playbook — the never-do list is the fraud control you watched on the exceptions page.",
+    },
+    {
       route: "/admin/architecture",
       title: "Under the hood",
       body:
