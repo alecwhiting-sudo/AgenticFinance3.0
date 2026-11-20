@@ -29,7 +29,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">1265.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Print run — brochures</cbc:Name>
+      <cbc:Name>Market sizing study</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">1265.00</cbc:PriceAmount></cac:Price>

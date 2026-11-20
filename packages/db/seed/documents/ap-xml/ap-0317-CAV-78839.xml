@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">650.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>AV equipment hire</cbc:Name>
+      <cbc:Name>Cable &amp; mount sundries</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">650.00</cbc:PriceAmount></cac:Price>
@@ -40,7 +40,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">306.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Courier &amp; postage batch</cbc:Name>
+      <cbc:Name>Digital signage — monthly</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">306.00</cbc:PriceAmount></cac:Price>

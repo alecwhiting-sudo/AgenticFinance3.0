@@ -29,7 +29,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">4987.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Office cleaning — monthly</cbc:Name>
+      <cbc:Name>Access control fobs x10</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">4987.00</cbc:PriceAmount></cac:Price>

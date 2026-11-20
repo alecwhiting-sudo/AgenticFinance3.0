@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">2278.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Office rent — monthly</cbc:Name>
+      <cbc:Name>Plant maintenance — monthly</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">2278.00</cbc:PriceAmount></cac:Price>
@@ -40,7 +40,7 @@
     <cbc:InvoicedQuantity unitCode="EA">7</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">4655.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Office rent — monthly</cbc:Name>
+      <cbc:Name>Plant maintenance — monthly</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">665.00</cbc:PriceAmount></cac:Price>
@@ -50,7 +50,7 @@
     <cbc:InvoicedQuantity unitCode="EA">8</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">39048.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Desk hire x4</cbc:Name>
+      <cbc:Name>Replacement plants batch</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">4881.00</cbc:PriceAmount></cac:Price>

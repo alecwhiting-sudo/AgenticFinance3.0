@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">167.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Monitor arms x4</cbc:Name>
+      <cbc:Name>Client meeting catering</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">167.00</cbc:PriceAmount></cac:Price>

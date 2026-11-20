@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">4881.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Electricity Q bill</cbc:Name>
+      <cbc:Name>EV charger electricity</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">4881.00</cbc:PriceAmount></cac:Price>

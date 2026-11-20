@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">2</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">750.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Office plant maintenance — quarterly</cbc:Name>
+      <cbc:Name>Microphone kit hire</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">375.00</cbc:PriceAmount></cac:Price>
@@ -40,7 +40,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">460.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Coffee &amp; kitchen supplies</cbc:Name>
+      <cbc:Name>Boardroom AV maintenance</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">460.00</cbc:PriceAmount></cac:Price>

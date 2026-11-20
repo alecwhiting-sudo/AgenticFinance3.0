@@ -32,7 +32,9 @@ _Last updated: 2026-10-19_
   exceptions across 8 codes (incl. v2: bank_detail_mismatch wrong-IBAN
   fraud ×5, total_mismatch multi-page trap ×1), 600 AR invoices, 821 bank
   lines, 135 UBL e-invoices, 75 scan PDFs (10 poor tier), 5 multi-page
-  invoices. Flaw catalogue: `plans/TEST_DATA_MAP.md`. All committed in
+  invoices. Flaw catalogue: `plans/TEST_DATA_MAP.md`. Supplier-plausible
+  line items since 2026-11-20 (per-supplier label pools, RNG-stable — see
+  the map). All committed in
   `packages/db/seed/generated/` — internal docs (PO/GRN) are schema rows;
   only supplier-facing artefacts are rendered PDFs.
 - **Agents (10, by family):** p2p: purchase-request, invoice-extraction

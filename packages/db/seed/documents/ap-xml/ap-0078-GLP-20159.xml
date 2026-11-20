@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">1614.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Payroll bureau — monthly</cbc:Name>
+      <cbc:Name>Shareholder agreement amendment</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">1614.00</cbc:PriceAmount></cac:Price>

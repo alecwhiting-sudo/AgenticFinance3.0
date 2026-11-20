@@ -29,7 +29,7 @@
     <cbc:InvoicedQuantity unitCode="EA">8</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">1064.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>First aid restock</cbc:Name>
+      <cbc:Name>Storage pallet spaces</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">133.00</cbc:PriceAmount></cac:Price>

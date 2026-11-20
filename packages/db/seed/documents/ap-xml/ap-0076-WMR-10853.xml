@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">1136.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Print run — brochures</cbc:Name>
+      <cbc:Name>Market sizing study</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">1136.00</cbc:PriceAmount></cac:Price>
@@ -40,7 +40,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">3255.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Webinar platform</cbc:Name>
+      <cbc:Name>NPS tracking — quarterly</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">3255.00</cbc:PriceAmount></cac:Price>
@@ -50,7 +50,7 @@
     <cbc:InvoicedQuantity unitCode="EA">12</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">3228.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Campaign management — monthly</cbc:Name>
+      <cbc:Name>Customer survey wave</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">269.00</cbc:PriceAmount></cac:Price>

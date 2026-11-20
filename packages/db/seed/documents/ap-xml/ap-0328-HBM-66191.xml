@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">7</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">12607.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Webinar platform</cbc:Name>
+      <cbc:Name>Display campaign</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">1801.00</cbc:PriceAmount></cac:Price>

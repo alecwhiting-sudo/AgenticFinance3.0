@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">685.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Monitor arms x4</cbc:Name>
+      <cbc:Name>Video conferencing install</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">685.00</cbc:PriceAmount></cac:Price>
@@ -40,7 +40,7 @@
     <cbc:InvoicedQuantity unitCode="EA">5</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">1230.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>AV equipment hire</cbc:Name>
+      <cbc:Name>Cable &amp; mount sundries</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">246.00</cbc:PriceAmount></cac:Price>

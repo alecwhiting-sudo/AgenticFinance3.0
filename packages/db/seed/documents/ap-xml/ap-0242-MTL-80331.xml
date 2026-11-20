@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">8</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">13328.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>CRM licences x10</cbc:Name>
+      <cbc:Name>Mobile fleet x12 — monthly</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">1666.00</cbc:PriceAmount></cac:Price>
@@ -40,7 +40,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">2282.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Cloud hosting — monthly</cbc:Name>
+      <cbc:Name>Business broadband — monthly</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">2282.00</cbc:PriceAmount></cac:Price>
@@ -50,7 +50,7 @@
     <cbc:InvoicedQuantity unitCode="EA">8</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">7912.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Password manager — team</cbc:Name>
+      <cbc:Name>Leased line — monthly</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">989.00</cbc:PriceAmount></cac:Price>

@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">747.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Coffee &amp; kitchen supplies</cbc:Name>
+      <cbc:Name>Boardroom lunch x12</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">747.00</cbc:PriceAmount></cac:Price>

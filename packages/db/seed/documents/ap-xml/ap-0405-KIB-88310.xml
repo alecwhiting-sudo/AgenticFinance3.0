@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">1875.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Quarterly accounts review</cbc:Name>
+      <cbc:Name>Combined policy premium</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">1875.00</cbc:PriceAmount></cac:Price>
@@ -40,7 +40,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">1724.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Quarterly accounts review</cbc:Name>
+      <cbc:Name>Combined policy premium</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">1724.00</cbc:PriceAmount></cac:Price>

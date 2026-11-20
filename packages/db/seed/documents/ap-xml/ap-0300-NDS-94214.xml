@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">9</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">21582.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>CI runner minutes</cbc:Name>
+      <cbc:Name>Dataset licence — quarterly</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">2398.00</cbc:PriceAmount></cac:Price>

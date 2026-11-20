@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">766.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Print &amp; finishing order</cbc:Name>
+      <cbc:Name>Pallet shipment</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">766.00</cbc:PriceAmount></cac:Price>
@@ -40,7 +40,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">71.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Office chairs x2</cbc:Name>
+      <cbc:Name>Next-day parcels batch</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">71.00</cbc:PriceAmount></cac:Price>
@@ -50,7 +50,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">181.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Monitor arms x4</cbc:Name>
+      <cbc:Name>International shipment</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">181.00</cbc:PriceAmount></cac:Price>

@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">6</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">18744.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Insurance premium</cbc:Name>
+      <cbc:Name>Policy mid-term adjustment</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">3124.00</cbc:PriceAmount></cac:Price>
@@ -40,7 +40,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">2084.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Payroll bureau — monthly</cbc:Name>
+      <cbc:Name>Broker service fee</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">2084.00</cbc:PriceAmount></cac:Price>
@@ -50,7 +50,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">3539.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Insurance premium</cbc:Name>
+      <cbc:Name>Policy mid-term adjustment</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">3539.00</cbc:PriceAmount></cac:Price>

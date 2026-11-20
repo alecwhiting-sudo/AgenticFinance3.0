@@ -18,6 +18,7 @@ import {
   supplierNames,
   supplyCategories,
   categoryKeywords,
+  itemsFor,
 } from "./pools.js";
 import type { ApChain, ArInvoice, BankTxn, Dataset, Line } from "./types.js";
 
@@ -112,7 +113,7 @@ export function generate(seed = 20261001, apCount = 300, arCount = 400): Dataset
     const lines: Line[] = Array.from({ length: lineCount }, () => {
       const unit = int(rng, cat.band[0], cat.band[1]);
       return {
-        description: pick(rng, cat.items),
+        description: pick(rng, itemsFor(supplier.name, cat)),
         qty: chance(rng, 0.75) ? 1 : int(rng, 2, 12),
         unitPriceMinor: Math.round(unit / 100) * 100,
         account: cat.account,

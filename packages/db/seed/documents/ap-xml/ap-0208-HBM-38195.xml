@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">266.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Campaign management — monthly</cbc:Name>
+      <cbc:Name>Sponsored newsletter</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">266.00</cbc:PriceAmount></cac:Price>
@@ -40,7 +40,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">2162.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Sponsored newsletter</cbc:Name>
+      <cbc:Name>Webinar promotion</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">2162.00</cbc:PriceAmount></cac:Price>
@@ -50,7 +50,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">781.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Campaign management — monthly</cbc:Name>
+      <cbc:Name>Sponsored newsletter</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">781.00</cbc:PriceAmount></cac:Price>

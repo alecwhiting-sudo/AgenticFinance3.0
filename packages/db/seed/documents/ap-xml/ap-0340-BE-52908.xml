@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">8</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">20344.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Electricity Q bill</cbc:Name>
+      <cbc:Name>Emergency lighting test</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">2543.00</cbc:PriceAmount></cac:Price>

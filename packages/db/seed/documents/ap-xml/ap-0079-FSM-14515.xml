@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">10</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">39880.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Office rent — monthly</cbc:Name>
+      <cbc:Name>Reactive repair visit</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">3988.00</cbc:PriceAmount></cac:Price>

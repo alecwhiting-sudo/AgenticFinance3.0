@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">5</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">11485.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Observability platform</cbc:Name>
+      <cbc:Name>CDN bandwidth</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">2297.00</cbc:PriceAmount></cac:Price>

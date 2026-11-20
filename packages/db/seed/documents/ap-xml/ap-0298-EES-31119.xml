@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">12</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">57240.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Meeting room hire</cbc:Name>
+      <cbc:Name>Gas Q bill</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">4770.00</cbc:PriceAmount></cac:Price>
@@ -40,7 +40,7 @@
     <cbc:InvoicedQuantity unitCode="EA">10</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">46740.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Office cleaning — monthly</cbc:Name>
+      <cbc:Name>Standing charges — quarterly</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">4674.00</cbc:PriceAmount></cac:Price>
@@ -50,7 +50,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">3163.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Electricity Q bill</cbc:Name>
+      <cbc:Name>EV charger electricity</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">3163.00</cbc:PriceAmount></cac:Price>

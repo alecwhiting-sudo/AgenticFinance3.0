@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">159.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Mileage reimbursement batch</cbc:Name>
+      <cbc:Name>Lease vehicle service &amp; tyres</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">159.00</cbc:PriceAmount></cac:Price>
@@ -40,7 +40,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">221.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Hotel — 2 nights</cbc:Name>
+      <cbc:Name>Excess mileage charge</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">221.00</cbc:PriceAmount></cac:Price>
@@ -50,7 +50,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">1183.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Rail travel — client visits</cbc:Name>
+      <cbc:Name>Vehicle lease — monthly</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">1183.00</cbc:PriceAmount></cac:Price>

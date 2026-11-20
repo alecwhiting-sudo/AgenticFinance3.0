@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">8</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">29968.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Office cleaning — monthly</cbc:Name>
+      <cbc:Name>Acoustic panels x6</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">3746.00</cbc:PriceAmount></cac:Price>
@@ -40,7 +40,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">2607.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Electricity Q bill</cbc:Name>
+      <cbc:Name>Reception refresh</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">2607.00</cbc:PriceAmount></cac:Price>
@@ -50,7 +50,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">903.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Electricity Q bill</cbc:Name>
+      <cbc:Name>Reception refresh</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">903.00</cbc:PriceAmount></cac:Price>

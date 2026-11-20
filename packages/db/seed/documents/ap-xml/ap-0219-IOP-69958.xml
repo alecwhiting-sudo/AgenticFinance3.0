@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">12</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">37584.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Office rent — monthly</cbc:Name>
+      <cbc:Name>Plant maintenance — monthly</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">3132.00</cbc:PriceAmount></cac:Price>
@@ -40,7 +40,7 @@
     <cbc:InvoicedQuantity unitCode="EA">9</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">45045.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Electricity Q bill</cbc:Name>
+      <cbc:Name>Living wall service</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">5005.00</cbc:PriceAmount></cac:Price>

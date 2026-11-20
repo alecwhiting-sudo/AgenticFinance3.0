@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">147.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>AV equipment hire</cbc:Name>
+      <cbc:Name>Desk trays x8</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">147.00</cbc:PriceAmount></cac:Price>

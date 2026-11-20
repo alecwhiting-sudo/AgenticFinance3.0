@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">9</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">7353.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Observability platform</cbc:Name>
+      <cbc:Name>VoIP seats x20</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">817.00</cbc:PriceAmount></cac:Price>

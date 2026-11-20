@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">673.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Hotel — 2 nights</cbc:Name>
+      <cbc:Name>Excess mileage charge</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">673.00</cbc:PriceAmount></cac:Price>

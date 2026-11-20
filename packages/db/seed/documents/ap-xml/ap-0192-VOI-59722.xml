@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">3</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">12786.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Meeting room hire</cbc:Name>
+      <cbc:Name>Desk reconfiguration</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">4262.00</cbc:PriceAmount></cac:Price>

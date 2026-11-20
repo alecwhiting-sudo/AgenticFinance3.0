@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">2462.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Conference stand</cbc:Name>
+      <cbc:Name>Event AV package</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">2462.00</cbc:PriceAmount></cac:Price>
@@ -40,7 +40,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">3484.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Print run — brochures</cbc:Name>
+      <cbc:Name>Furniture hire — launch event</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">3484.00</cbc:PriceAmount></cac:Price>

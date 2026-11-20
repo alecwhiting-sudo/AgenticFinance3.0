@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">5038.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Office rent — monthly</cbc:Name>
+      <cbc:Name>PAT testing — annual</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">5038.00</cbc:PriceAmount></cac:Price>
@@ -40,7 +40,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">2031.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Desk hire x4</cbc:Name>
+      <cbc:Name>Socket installs x6</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">2031.00</cbc:PriceAmount></cac:Price>

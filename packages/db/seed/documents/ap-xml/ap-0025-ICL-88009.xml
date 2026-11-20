@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">11</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">55209.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Specialist data engineering</cbc:Name>
+      <cbc:Name>Machined parts batch</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">5019.00</cbc:PriceAmount></cac:Price>
@@ -40,7 +40,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">834.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Associate subcontract — days</cbc:Name>
+      <cbc:Name>Component supply — project</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">834.00</cbc:PriceAmount></cac:Price>
@@ -50,7 +50,7 @@
     <cbc:InvoicedQuantity unitCode="EA">10</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">53350.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Associate subcontract — days</cbc:Name>
+      <cbc:Name>Component supply — project</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">5335.00</cbc:PriceAmount></cac:Price>

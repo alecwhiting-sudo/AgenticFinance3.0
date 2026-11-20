@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">3396.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Trademark renewal</cbc:Name>
+      <cbc:Name>DSE assessments x10</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">3396.00</cbc:PriceAmount></cac:Price>
@@ -40,7 +40,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">3407.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Insurance premium</cbc:Name>
+      <cbc:Name>Safety training session</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">3407.00</cbc:PriceAmount></cac:Price>
@@ -50,7 +50,7 @@
     <cbc:InvoicedQuantity unitCode="EA">9</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">22644.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Insurance premium</cbc:Name>
+      <cbc:Name>Safety training session</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">2516.00</cbc:PriceAmount></cac:Price>

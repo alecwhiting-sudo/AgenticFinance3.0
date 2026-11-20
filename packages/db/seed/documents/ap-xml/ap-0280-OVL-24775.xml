@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">763.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Rail travel — client visits</cbc:Name>
+      <cbc:Name>Vehicle lease — monthly</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">763.00</cbc:PriceAmount></cac:Price>

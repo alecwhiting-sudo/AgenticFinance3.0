@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">2902.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Employment law advice</cbc:Name>
+      <cbc:Name>Professional indemnity renewal</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">2902.00</cbc:PriceAmount></cac:Price>
@@ -40,7 +40,7 @@
     <cbc:InvoicedQuantity unitCode="EA">9</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">27396.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Payroll bureau — monthly</cbc:Name>
+      <cbc:Name>Broker service fee</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">3044.00</cbc:PriceAmount></cac:Price>
@@ -50,7 +50,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">3954.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Employment law advice</cbc:Name>
+      <cbc:Name>Professional indemnity renewal</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">3954.00</cbc:PriceAmount></cac:Price>

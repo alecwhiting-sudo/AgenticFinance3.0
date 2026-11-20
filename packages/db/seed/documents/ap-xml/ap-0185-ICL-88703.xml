@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">5201.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Associate subcontract — days</cbc:Name>
+      <cbc:Name>Component supply — project</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">5201.00</cbc:PriceAmount></cac:Price>

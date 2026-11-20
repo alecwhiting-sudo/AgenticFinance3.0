@@ -15,7 +15,7 @@
  *  - the ordinary exception taxonomy pro-rata, incl. 1 more fraud email.
  */
 import { chance, int, mulberry32, pick, type Rng } from "./rng.js";
-import { firstNames, lastNames, supplyCategories } from "./pools.js";
+import { firstNames, itemsFor, lastNames, supplyCategories } from "./pools.js";
 import { buildApEmail } from "./generate.js";
 import type { ApChain, ArInvoice, BankTxn, Dataset, Line } from "./types.js";
 
@@ -141,7 +141,7 @@ export function extendV2(ds: Dataset, seed = 20261001, apCount = 150, arCount = 
     const lines: Line[] = Array.from({ length: lineCount }, () => {
       const unit = int(rng, cat.band[0], cat.band[1]);
       return {
-        description: pick(rng, cat.items),
+        description: pick(rng, itemsFor(supplier.name, cat)),
         qty: chance(rng, 0.75) ? 1 : int(rng, 2, mp ? 6 : 12),
         unitPriceMinor: Math.round(unit / 100) * 100,
         account: cat.account,

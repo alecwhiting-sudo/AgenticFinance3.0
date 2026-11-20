@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">134.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Office plant maintenance — quarterly</cbc:Name>
+      <cbc:Name>Trimming &amp; packing</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">134.00</cbc:PriceAmount></cac:Price>

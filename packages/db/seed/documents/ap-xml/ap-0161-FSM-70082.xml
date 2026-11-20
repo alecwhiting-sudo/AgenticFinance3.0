@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">12</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">18516.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Office cleaning — monthly</cbc:Name>
+      <cbc:Name>Door hardware replacement</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">1543.00</cbc:PriceAmount></cac:Price>

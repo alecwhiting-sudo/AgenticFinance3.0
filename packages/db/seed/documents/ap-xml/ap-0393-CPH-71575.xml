@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">12</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">1920.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>CI runner minutes</cbc:Name>
+      <cbc:Name>Load balancer add-on</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">160.00</cbc:PriceAmount></cac:Price>

@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">364.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Office chairs x2</cbc:Name>
+      <cbc:Name>Toner cartridges x4</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">364.00</cbc:PriceAmount></cac:Price>

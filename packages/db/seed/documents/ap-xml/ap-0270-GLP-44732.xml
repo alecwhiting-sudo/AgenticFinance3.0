@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">825.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Payroll bureau — monthly</cbc:Name>
+      <cbc:Name>Shareholder agreement amendment</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">825.00</cbc:PriceAmount></cac:Price>
@@ -40,7 +40,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">3194.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Quarterly accounts review</cbc:Name>
+      <cbc:Name>Employment law advice</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">3194.00</cbc:PriceAmount></cac:Price>
@@ -50,7 +50,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">3097.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Quarterly accounts review</cbc:Name>
+      <cbc:Name>Employment law advice</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">3097.00</cbc:PriceAmount></cac:Price>

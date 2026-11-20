@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">2698.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Employment law advice</cbc:Name>
+      <cbc:Name>Contract review — supplier MSA</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">2698.00</cbc:PriceAmount></cac:Price>
@@ -40,7 +40,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">2630.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Insurance premium</cbc:Name>
+      <cbc:Name>Data protection advice</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">2630.00</cbc:PriceAmount></cac:Price>

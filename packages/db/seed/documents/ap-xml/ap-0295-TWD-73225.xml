@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">9</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">12672.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>CRM licences x10</cbc:Name>
+      <cbc:Name>Landing page build</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">1408.00</cbc:PriceAmount></cac:Price>

@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">847.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Courier &amp; postage batch</cbc:Name>
+      <cbc:Name>Digital signage — monthly</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">847.00</cbc:PriceAmount></cac:Price>
@@ -40,7 +40,7 @@
     <cbc:InvoicedQuantity unitCode="EA">9</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">5328.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Office chairs x2</cbc:Name>
+      <cbc:Name>Projector lamp replacement</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">592.00</cbc:PriceAmount></cac:Price>

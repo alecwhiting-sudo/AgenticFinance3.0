@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">2738.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Insurance premium</cbc:Name>
+      <cbc:Name>Management accounts support</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">2738.00</cbc:PriceAmount></cac:Price>

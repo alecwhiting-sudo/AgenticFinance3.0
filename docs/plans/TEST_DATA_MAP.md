@@ -11,6 +11,14 @@ PDF, 135 UBL XML e-invoices, 75 scan-style PDFs (image only, no text
 layer — 10 of them at a deliberately POOR quality tier). Fully regenerable
 by the Demo Data Studio — deterministic, no LLM. The v1 months (Apr–Sep)
 regenerate byte-identical; v2 only appends (Jan–Mar + the plants below).
+**Supplier-plausible line items (2026-11-20, Alec):** every supplier now
+bills only its own trade (Oakhurst Vehicle Leasing bills vehicle leases,
+never hotels) via per-supplier label pools in `studio/src/pools.ts`
+(`supplierItems`) — each pool is the same LENGTH as its category's, so the
+RNG stream, every amount, every invoice number and all 54 plants are
+unchanged; only the words on the documents differ. All 1,710 PDFs, 450
+emails, 135 UBL XMLs and 75 scans re-rendered; byte-identical regeneration
+now holds against this generator version.
 
 ## 1. Planted exceptions (54 across AP, 12% of volume)
 

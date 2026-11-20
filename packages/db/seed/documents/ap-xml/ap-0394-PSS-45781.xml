@@ -30,7 +30,7 @@
     <cbc:InvoicedQuantity unitCode="EA">1</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">2529.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Meeting room hire</cbc:Name>
+      <cbc:Name>CCTV maintenance visit</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">2529.00</cbc:PriceAmount></cac:Price>
@@ -40,7 +40,7 @@
     <cbc:InvoicedQuantity unitCode="EA">5</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="GBP">21090.00</cbc:LineExtensionAmount>
     <cac:Item>
-      <cbc:Name>Meeting room hire</cbc:Name>
+      <cbc:Name>CCTV maintenance visit</cbc:Name>
       <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID></cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price><cbc:PriceAmount currencyID="GBP">4218.00</cbc:PriceAmount></cac:Price>
