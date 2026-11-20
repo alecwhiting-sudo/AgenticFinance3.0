@@ -9,6 +9,7 @@ import { useCallback, useEffect, useState } from "react";
 import { PUBLIC_API_URL as apiUrl } from "@/lib/api";
 import { money } from "@/lib/format";
 import { Badge } from "@/components/ui";
+import { useDialog } from "@/components/Dialog";
 
 type Row = {
   id: string;
@@ -70,6 +71,7 @@ export default function ExceptionsPage() {
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [draftMsg, setDraftMsg] = useState<string | null>(null);
+  const dialog = useDialog();
 
   const loadList = useCallback(async () => {
     try {
@@ -141,6 +143,61 @@ export default function ExceptionsPage() {
     setBusy(false);
   };
 
+
+  // Out-of-band verification on fraud-risk holds: the human attests to the
+  // phone call (who, on the number on file, what they confirmed) and the
+  // verdict releases or rejects the invoice. The attestation is the audit
+  // record — the API refuses without it.
+  const recordVerification = async (verdict: "genuine" | "fraudulent") => {
+    if (!sel || !d) return;
+    const spokeWith = await dialog.ask({
+      title: "Who did you speak to?",
+      body: `Name and role of the person you called at ${d.supplier?.name ?? "the supplier"} — on the phone number we hold on the supplier master, never one from the email or invoice.`,
+      placeholder: "e.g. Jane Smith, finance manager",
+    });
+    if (!spokeWith) return;
+    const note = await dialog.ask({
+      title: "What did they confirm?",
+      body:
+        verdict === "genuine"
+          ? "What was verified on the call. This attestation is the audit record that releases the invoice."
+          : "What the call established. This attestation is the audit record for rejecting the invoice.",
+      placeholder:
+        verdict === "genuine"
+          ? "e.g. confirmed the bank detail change is genuine; new account verified verbally"
+          : "e.g. supplier has not changed bank details — the request is fraudulent",
+      multiline: true,
+    });
+    if (!note) return;
+    const ok = await dialog.confirm({
+      title: verdict === "genuine" ? `Release ${d.invoice.supplierInvoiceNumber} for payment?` : `Reject ${d.invoice.supplierInvoiceNumber} as fraudulent?`,
+      body: `Attestation: spoke with ${spokeWith} on the number on file — ${note}`,
+      confirmLabel: verdict === "genuine" ? "Verified genuine — release" : "Fraud confirmed — reject",
+      tone: verdict === "genuine" ? "accent" : "danger",
+    });
+    if (!ok) return;
+    setBusy(true);
+    setMsg(null);
+    try {
+      const res = await fetch(`${apiUrl}/p2p/exceptions/${sel}/verify-release`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ verdict, spokeWith, note, decidedBy: "workbench-user" }),
+      });
+      const body = (await res.json()) as { error?: string; result?: { status?: string } };
+      setMsg(
+        res.ok
+          ? verdict === "genuine"
+            ? "Verification recorded — hold released, invoice posted."
+            : "Verification recorded — invoice rejected, nothing will be paid."
+          : (body.error ?? "failed"),
+      );
+    } catch {
+      setMsg(`Cannot reach the API at ${apiUrl}.`);
+    }
+    setBusy(false);
+    await loadList();
+  };
 
   const apply = async (o: Option) => {
     if (!sel) return;
@@ -354,7 +411,7 @@ export default function ExceptionsPage() {
                       )}
                       {o.resolution === "human_verify" ? (
                         <span className="mt-2 text-xs font-medium" style={{ color: "var(--warn)" }}>
-                          guidance only — requires out-of-band verification
+                          guidance only — record the phone verification below to release or reject
                         </span>
                       ) : (
                         <button
@@ -391,6 +448,39 @@ export default function ExceptionsPage() {
                 )
               )}
             </div>
+
+            {/* out-of-band verification: the human checkpoint fraud holds wait
+                for — attest to the phone call, then release or reject */}
+            {(d.invoice.exceptionCode === "bank_detail_change" || d.invoice.exceptionCode === "bank_detail_mismatch") && (
+              <div className="rounded-xl border p-4" style={{ borderColor: "var(--warn)", background: "var(--card)" }}>
+                <h4 className="text-sm font-semibold uppercase tracking-wide" style={{ color: "var(--warn)" }}>
+                  Out-of-band verification
+                </h4>
+                <p className="mt-1 text-sm" style={{ color: "var(--muted)" }}>
+                  Call {d.supplier?.name ?? "the supplier"} on the phone number we hold on the supplier master —
+                  never a number from the email or invoice. Then record the call here: the attestation is the
+                  audit record, and your verdict releases the invoice for payment or rejects it.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    disabled={busy}
+                    onClick={() => recordVerification("genuine")}
+                    className="rounded-lg px-3 py-1.5 text-sm font-medium text-white disabled:opacity-40"
+                    style={{ background: "var(--accent)" }}
+                  >
+                    I’ve verified by phone — release…
+                  </button>
+                  <button
+                    disabled={busy}
+                    onClick={() => recordVerification("fraudulent")}
+                    className="rounded-lg border px-3 py-1.5 text-sm font-medium disabled:opacity-40"
+                    style={{ borderColor: "var(--bad)", color: "var(--bad)" }}
+                  >
+                    Fraud confirmed — reject…
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* case timeline */}
             <div className="rounded-xl border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>

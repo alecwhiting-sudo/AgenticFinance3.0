@@ -360,3 +360,66 @@ export async function resolveInvoiceException(
     }
   }
 }
+
+/** Clear a fraud-risk hold after OUT-OF-BAND verification (plans/P2P.md §10).
+ * The one path through the fraud guard above: a named human attests they
+ * called the supplier on the number on file and records what was confirmed.
+ * verdict "genuine" releases and posts the invoice; "fraudulent" rejects it.
+ * The attestation (who was called, what they said) is the audit record —
+ * it lands on the case timeline, the activity feed and decision history. */
+export async function releaseFraudHold(
+  db: Db,
+  args: { invoiceId: string; verdict: "genuine" | "fraudulent"; spokeWith: string; note: string },
+  decidedBy: string,
+): Promise<Record<string, unknown>> {
+  const inv = await db.query.apInvoice.findFirst({ where: (t) => eq(t.id, args.invoiceId) });
+  if (!inv) throw Object.assign(new Error("invoice not found"), { statusCode: 404 });
+  if (inv.status !== "exception")
+    throw Object.assign(new Error(`invoice is ${inv.status}, not exception`), { statusCode: 409 });
+  if (inv.exceptionCode !== "bank_detail_change" && inv.exceptionCode !== "bank_detail_mismatch")
+    throw Object.assign(new Error(`${inv.exceptionCode} is not a fraud-risk hold — resolve it normally`), {
+      statusCode: 409,
+    });
+
+  const attestation = `Phone verification on the number on file — spoke with ${args.spokeWith}: ${args.note}`;
+  if (inv.caseId) {
+    await db.insert(caseEvent).values({
+      caseId: inv.caseId,
+      actorType: "human",
+      actorId: decidedBy,
+      kind: "verification",
+      detail: { verdict: args.verdict, spokeWith: args.spokeWith, note: args.note, channel: "phone (number on file)" },
+    });
+    await db
+      .update(evidenceCase)
+      .set({ status: "resolved", resolvedAt: new Date() })
+      .where(eq(evidenceCase.id, inv.caseId));
+  }
+
+  if (args.verdict === "fraudulent") {
+    await db.update(apInvoice).set({ status: "rejected" }).where(eq(apInvoice.id, inv.id));
+    await emitActivity({
+      actorType: "human",
+      actorId: decidedBy,
+      verb: "confirmed_fraud",
+      objectType: "ap_invoice",
+      objectId: inv.id,
+      caseId: inv.caseId ?? undefined,
+      summary: `${inv.exceptionCode} on ${inv.supplierInvoiceNumber}: verified FRAUDULENT by phone — invoice rejected, nothing paid. ${attestation}`,
+    });
+    return { status: "rejected", attestation };
+  }
+
+  await db.update(apInvoice).set({ status: "approved", exceptionCode: null }).where(eq(apInvoice.id, inv.id));
+  const j = await postApInvoice(db, inv.id, decidedBy);
+  await emitActivity({
+    actorType: "human",
+    actorId: decidedBy,
+    verb: "released_fraud_hold",
+    objectType: "ap_invoice",
+    objectId: inv.id,
+    caseId: inv.caseId ?? undefined,
+    summary: `${inv.exceptionCode} on ${inv.supplierInvoiceNumber}: verified genuine by phone — hold released, invoice posted. ${attestation}`,
+  });
+  return { status: "posted", journalId: j.journalId, attestation };
+}

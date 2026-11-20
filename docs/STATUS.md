@@ -307,6 +307,17 @@ _Last updated: 2026-10-19_
    the note exists and says "call us on the number we hold" (the live
    fraud case renamed via the seeder's new `renamedFrom` in-place
    rename, so no stale-named case lingers with old assertions).
+   **Verification checkpoint BUILT 2026-11-20**: fraud holds now have
+   their human-approval place in-app — an "Out-of-band verification" card
+   on the exception records WHO was called (on the master-file number)
+   and WHAT they confirmed via themed dialogs; verdict genuine releases
+   and posts the invoice, fraudulent rejects it (releaseFraudHold — the
+   one path through the resolve service's fraud guard, refused without a
+   substantive attestation). Lands on the case timeline (kind
+   "verification"), activity feed and decision history. Also: the
+   workbench now surfaces the agent's last finished run (outcome +
+   summary + run link) when no options landed, instead of silently
+   re-offering the button.
    Remaining (M4 ideas): tolerance editing UI, contract-grounded
    disputes.
 10. **Mail room BUILT 2026-10-19** (`plans/P2P.md` §11): picking an

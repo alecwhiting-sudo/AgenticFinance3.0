@@ -9,7 +9,7 @@ import { desc, eq, sql } from "drizzle-orm";
 import { command, workItem } from "@af/db";
 import { requireDb } from "../lib/db.js";
 import { emitActivity } from "../lib/activity.js";
-import { resolveInvoiceException, type ResolveParams } from "../services/invoiceIntake.js";
+import { releaseFraudHold, resolveInvoiceException, type ResolveParams } from "../services/invoiceIntake.js";
 
 type Option = {
   resolution: string;
@@ -239,6 +239,45 @@ export function exceptionRoutes(app: FastifyInstance): void {
         decision_reason = 'superseded: resolved from the exceptions workbench', decided_at = now()
       where status = 'proposed' and type = 'ap.invoice.resolve' and params->>'invoiceId' = ${req.params.id}
     `);
+    return { ok: true, result };
+  });
+
+  /** Record the out-of-band phone verification on a fraud-risk hold and act
+   * on the verdict — the human-approval checkpoint the fraud codes wait
+   * for. "genuine" releases and posts the invoice; "fraudulent" rejects it.
+   * The attestation is required: who was called (on the number on file)
+   * and what they confirmed. */
+  app.post<{
+    Params: { id: string };
+    Body: { verdict: "genuine" | "fraudulent"; spokeWith: string; note: string; decidedBy?: string };
+  }>("/p2p/exceptions/:id/verify-release", async (req, reply) => {
+    const db = requireDb();
+    const { verdict, spokeWith, note } = req.body ?? ({} as never);
+    const decidedBy = req.body?.decidedBy || "workbench-user";
+    if (verdict !== "genuine" && verdict !== "fraudulent")
+      return reply.code(400).send({ error: "verdict must be genuine or fraudulent" });
+    if (!spokeWith?.trim() || !note?.trim() || note.trim().length < 10)
+      return reply.code(400).send({ error: "spokeWith and a substantive note are required — the attestation is the audit record" });
+    const result = await releaseFraudHold(
+      db,
+      { invoiceId: req.params.id, verdict, spokeWith: spokeWith.trim(), note: note.trim() },
+      decidedBy,
+    );
+    await db.insert(command).values({
+      type: "ap.invoice.resolve",
+      params: {
+        invoiceId: req.params.id,
+        resolution: verdict === "genuine" ? "release_after_verification" : "reject_after_verification",
+        rationale: `Phone verification (number on file), spoke with ${spokeWith.trim()}: ${note.trim()}`,
+      },
+      idempotencyKey: `verify:${req.params.id}:${Date.now()}`,
+      requiresApproval: true,
+      status: "executed",
+      decidedBy,
+      decisionReason: "out-of-band verification recorded on the exceptions workbench",
+      decidedAt: new Date(),
+      result,
+    });
     return { ok: true, result };
   });
 
