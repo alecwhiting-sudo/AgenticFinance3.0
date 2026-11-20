@@ -156,7 +156,7 @@ function Lane({
         <span className="flex items-center gap-2">
           {attention > 0 && (
             <span
-              className="rounded-full px-2 py-0.5 text-[10px] font-medium"
+              className="whitespace-nowrap rounded-md px-2 py-0.5 text-[10px] font-medium"
               style={{ background: "color-mix(in srgb, var(--warn) 15%, transparent)", color: "var(--warn)" }}
             >
               {attention} need{attention === 1 ? "s" : ""} a human
