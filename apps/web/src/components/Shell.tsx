@@ -18,6 +18,7 @@ type Parent = Item & { short?: string; children?: Item[] };
 
 const NAV: Parent[] = [
   { href: "/", label: "Dashboard", exact: true },
+  { href: "/processes", label: "Processes" },
   {
     href: "/p2p",
     label: "Procure to Pay",

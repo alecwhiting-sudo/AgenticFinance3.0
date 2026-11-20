@@ -20,7 +20,7 @@ _Last updated: 2026-10-19_
 | 4 — O2C | ✅ built | AR invoices through the pipe, cash application + agent, collections agent + dunning approval |
 | 4c — Analytics + Analyst | ✅ built | plan: `plans/ANALYTICS.md`. M1 `/analytics` (flux waterfall, P&L trend, AP/AR aging, counterparty, cash — all drill, all have table views). M2 Analyst Agent + right-hand chat panel (top-bar toggle): answers from the curated views only, cites sources, keyless fallback for set question shapes. Remaining 4c ideas: saved views/dashboard |
 | 5 — Performance Management | 📋 planned | user: not ready yet |
-| 6 — Demo polish | 🔶 partial | agent staff strip, release pipeline, permissions matrix, decision history, per-agent period cost (D14), admin reset/replay done; guided tour built 2026-10-10 (declarative registry in lib/tours.ts); cross-process dashboard outstanding |
+| 6 — Demo polish | ✅ built | agent staff strip, release pipeline, permissions matrix, decision history, per-agent period cost (D14), admin reset/replay, guided tour (lib/tours.ts), cross-process dashboard `/processes` (2026-11-20) |
 | P — Production | ⬜ stub | deliberately undesigned |
 
 ## What runs today
@@ -263,7 +263,15 @@ _Last updated: 2026-10-19_
    engine (`components/Tour.tsx`) highlights the sidebar entry for each
    step's route by href and optionally a `data-tour` anchor, both
    degrading gracefully when a page moves; progress survives reloads
-   (localStorage). Remaining: cross-process dashboard.
+   (localStorage). **Cross-process dashboard BUILT 2026-11-20** (`/processes`,
+   nav "Processes"): the finance function at a glance — a lane per process
+   family (P2P buying→invoice funnel→paying, O2C receivables→cash
+   application→cases, R2R latest-month close health + assurance) over one
+   `GET /dashboard/processes` payload, with a controls strip on top counting
+   everything waiting on a HUMAN (approvals, mail drafts to release,
+   fraud-risk holds, straight-through rate, agent suites green). Every row
+   links to its queue; all figures derived + book-filtered; tour step added.
+   Phase 6 demo polish is now complete.
    (Demo scenarios + mission control at `/admin/pipeline` built 2026-10-03:
    month-by-month processing, timed full-speed 10x run with remembered
    side-by-side, simulate-a-day — `plans/DEMO_SCRIPTS.md`.)
