@@ -112,6 +112,21 @@ export default function AnalystPanel({ onClose }: { onClose: () => void }) {
     }
   };
 
+  // In-app routes the Analyst names (e.g. "/analytics", "/analytics/boards/x")
+  // become real links — "there is a dashboard" must be clickable, not a hunt.
+  const linkifyRoutes = (text: string): React.ReactNode[] => {
+    const parts = text.split(/(\/(?:analytics|p2p|o2c|r2r|reports|agents|journals|ledger|processes|approvals|work)(?:\/[\w\-?=&%]+)*)/g);
+    return parts.map((p, i) =>
+      i % 2 === 1 ? (
+        <Link key={i} href={p} className="underline" style={{ color: "var(--accent)" }}>
+          {p}
+        </Link>
+      ) : (
+        p
+      ),
+    );
+  };
+
   const renderAnswer = (text: string) => {
     const { body: withoutBoard, board } = parseBoard(text);
     const lines = withoutBoard.split("\n");
@@ -120,7 +135,7 @@ export default function AnalystPanel({ onClose }: { onClose: () => void }) {
     const sources = srcIdx >= 0 ? lines[srcIdx]!.trim() : null;
     return (
       <>
-        <div className="whitespace-pre-wrap">{body}</div>
+        <div className="whitespace-pre-wrap">{linkifyRoutes(body)}</div>
         {board && (
           <div className="mt-2 rounded-lg border p-2.5" style={{ borderColor: "var(--accent)" }}>
             <div className="text-xs font-semibold">{board.title}</div>
