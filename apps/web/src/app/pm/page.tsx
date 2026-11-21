@@ -14,7 +14,7 @@ export const metadata: Metadata = { title: "Performance" };
  * other number in the workbench. */
 
 type Variance = {
-  budget: { id: string; code: string; label: string };
+  budget: { id: string; code: string; label: string; kind: string };
   window: { from: string; to: string };
   accounts: { code: string; name: string; type: string }[];
   cells: { accountCode: string; periodCode: string; budgetMinor: number; actualMinor: number }[];
@@ -27,15 +27,35 @@ const contribution = (ledgerMinor: number) => -ledgerMinor;
 const monthName = (p: string) =>
   new Date(`${p}-01T00:00:00Z`).toLocaleDateString("en-GB", { month: "short", year: "numeric" });
 
-export default async function PmPage({ searchParams }: { searchParams: Promise<{ lens?: string }> }) {
-  const { lens } = await searchParams;
+export default async function PmPage({ searchParams }: { searchParams: Promise<{ lens?: string; vs?: string }> }) {
+  const { lens, vs } = await searchParams;
   const L = parsePeriodLens(lens);
-  const q = L ? `?from=${L.from}&to=${L.to}` : "";
+  const vsForecast = vs === "forecast";
+  const params = new URLSearchParams();
+  if (L) {
+    params.set("from", L.from);
+    params.set("to", L.to);
+  }
+  if (vsForecast) params.set("vs", "forecast");
+  const q = params.size > 0 ? `?${params.toString()}` : "";
   const v = await getJson<Variance>(`/pm/variance${q}`).catch(() => null);
   if (!v)
     return (
       <main>
-        <PageHeader title="Performance" context="No active budget yet — it seeds on deploy (plans/PM.md M1)." />
+        <PageHeader
+          title="Performance"
+          context={
+            vsForecast ? (
+              <>
+                No adopted forecast yet — draft and adopt one on the{" "}
+                <Link href="/pm/forecast" className="underline" style={{ color: "var(--accent)" }}>Forecast page</Link>, or{" "}
+                <Link href="/pm" className="underline" style={{ color: "var(--accent)" }}>compare against the budget</Link>.
+              </>
+            ) : (
+              "No active budget yet — it seeds on deploy (plans/PM.md M1)."
+            )
+          }
+        />
       </main>
     );
 
@@ -103,8 +123,24 @@ export default async function PmPage({ searchParams }: { searchParams: Promise<{
         title="Performance"
         context={
           <>
-            Actuals against <span className="font-medium">{v.budget.label}</span> ({v.budget.code}) — a driver-based
-            budget: every line derives from named assumptions, nothing is typed in. Window: {windowLabel}.
+            Actuals against <span className="font-medium">{v.budget.label}</span> ({v.budget.code})
+            {vsForecast ? " — the forecast you adopted." : " — a driver-based budget: every line derives from named assumptions, nothing is typed in."}{" "}
+            Window: {windowLabel}. Compare vs{" "}
+            <Link href={`/pm${lens ? `?lens=${encodeURIComponent(lens)}` : ""}`} className={vsForecast ? "underline" : "font-semibold"} style={{ color: "var(--accent)" }}>
+              budget
+            </Link>{" "}
+            ·{" "}
+            <Link
+              href={`/pm?vs=forecast${lens ? `&lens=${encodeURIComponent(lens)}` : ""}`}
+              className={vsForecast ? "font-semibold" : "underline"}
+              style={{ color: "var(--accent)" }}
+            >
+              forecast
+            </Link>{" "}
+            ·{" "}
+            <Link href="/pm/forecast" className="underline" style={{ color: "var(--accent)" }}>
+              manage versions →
+            </Link>
           </>
         }
         actions={<PeriodPicker periods={periods} lens={lens} />}
@@ -126,7 +162,12 @@ export default async function PmPage({ searchParams }: { searchParams: Promise<{
           value={moneyCompact(resultActual)}
           hint={`budget ${moneyCompact(resultBudget)} · ${resultActual >= resultBudget ? "+" : "−"}${moneyCompact(Math.abs(resultActual - resultBudget))}`}
         />
-        <Kpi label="Budget" value={v.budget.code} hint="driver-based — plans/PM.md · forecast lands in M2" />
+        <Kpi
+          label={vsForecast ? "Comparing against" : "Budget"}
+          value={v.budget.code}
+          hint={vsForecast ? "the adopted forecast — manage on /pm/forecast" : "driver-based — drafts & adoption on /pm/forecast"}
+          href="/pm/forecast"
+        />
       </section>
 
       <section className="rounded-xl border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
