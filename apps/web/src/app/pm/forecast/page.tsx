@@ -107,8 +107,8 @@ export default function ForecastPage() {
         <div>
           <h2 className="text-2xl font-semibold tracking-tight">Forecast</h2>
           <p className="mt-1 text-sm" style={{ color: "var(--muted)" }}>
-            Plan versions and the adoption gate. Drafting is deterministic (actuals to date, then budget × measured
-            run-rates); adopting is yours. Variance against the adopted forecast lives on{" "}
+            Draft a rolling forecast — actuals to date, then budget adjusted by recent run-rates — review it, and
+            adopt it when you're happy. Track against it on{" "}
             <Link href="/pm?vs=forecast" className="hover:underline" style={{ color: "var(--accent)" }}>
               Performance →
             </Link>
@@ -179,8 +179,8 @@ export default function ForecastPage() {
               ))}
           </div>
           <p className="mt-2 text-xs" style={{ color: "var(--muted)" }}>
-            Every budget line derives from these named assumptions — the Forecast Preparation Agent (M3) will propose
-            driver changes with a cited rationale, never bare numbers. Changing them is a new driver-set version.
+            Every budget line derives from these named assumptions. Changes create a new driver-set version, so every
+            plan can always say which assumptions built it.
           </p>
         </section>
       )}

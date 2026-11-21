@@ -359,6 +359,13 @@ if (!existingTol) {
 const existingBudget = await db.query.planVersion.findFirst({
   where: (t, { eq }) => eq(t.code, "BUD-2026"),
 });
+if (existingBudget?.notes?.includes("plans/PM.md")) {
+  // copy cleanup: internal doc references don't belong in product data
+  await db
+    .update(planVersion)
+    .set({ notes: "Built from the DRV-2026 v1 planning drivers." })
+    .where(eq(planVersion.id, existingBudget.id));
+}
 if (!existingBudget) {
   const driversDoc = JSON.parse(
     readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../seed/epm-drivers.json"), "utf8"),
@@ -382,7 +389,7 @@ if (!existingBudget) {
       label: "FY2026 budget (driver-based)",
       status: "active",
       driverSetId: ds!.id,
-      notes: "Built from DRV-2026 v1 by the deterministic budget builder — see plans/PM.md.",
+      notes: "Built from the DRV-2026 v1 planning drivers.",
       createdBy: "seed",
       activatedBy: "seed",
       activatedAt: new Date(),

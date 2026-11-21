@@ -92,7 +92,7 @@ export async function buildMechanicalForecast(
         status: "draft",
         driverSetId: budget.driverSetId,
         basedOnId: budget.id,
-        notes: `Mechanical baseline: actuals through ${lastPosted}, then ${budget.code} × per-account run-rate (clamped 0.6–1.4). plans/PM.md M2.`,
+        notes: `Actuals through ${lastPosted}, then ${budget.code} adjusted by each account's recent run-rate.`,
         createdBy,
       })
       .returning();

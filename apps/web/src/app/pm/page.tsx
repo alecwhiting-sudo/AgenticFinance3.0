@@ -52,7 +52,7 @@ export default async function PmPage({ searchParams }: { searchParams: Promise<{
                 <Link href="/pm" className="underline" style={{ color: "var(--accent)" }}>compare against the budget</Link>.
               </>
             ) : (
-              "No active budget yet — it seeds on deploy (plans/PM.md M1)."
+              "No active budget yet."
             )
           }
         />
@@ -124,7 +124,7 @@ export default async function PmPage({ searchParams }: { searchParams: Promise<{
         context={
           <>
             Actuals against <span className="font-medium">{v.budget.label}</span> ({v.budget.code})
-            {vsForecast ? " — the forecast you adopted." : " — a driver-based budget: every line derives from named assumptions, nothing is typed in."}{" "}
+            {vsForecast ? " — the forecast you adopted." : " — built from the planning drivers."}{" "}
             Window: {windowLabel}. Compare vs{" "}
             <Link href={`/pm${lens ? `?lens=${encodeURIComponent(lens)}` : ""}`} className={vsForecast ? "underline" : "font-semibold"} style={{ color: "var(--accent)" }}>
               budget
@@ -193,7 +193,7 @@ export default async function PmPage({ searchParams }: { searchParams: Promise<{
         </table>
         <p className="mt-3 text-xs" style={{ color: "var(--muted)" }}>
           Variance is favourable-positive: revenue above budget and costs below budget both read green. Every account
-          drills to its ledger. Signs follow the books (plans are never journals — this table is a query over both).
+          drills to its ledger.
         </p>
       </section>
     </main>
