@@ -222,6 +222,129 @@ export async function saveAgentForecast(
   return { code: base.version.code, versionId: base.version.id, lines: lines.length };
 }
 
+/** What-if scenario maths (plans/PM.md M4): FY landing = posted actuals to
+ * date + the remaining months priced from ADJUSTED drivers at each
+ * account's measured run-rate — the same machinery as the forecast, so a
+ * scenario is always comparable with the plan it challenges. Pure
+ * computation unless `save` carries a label. */
+export async function scenarioPreview(
+  db: Db,
+  overrides: Record<string, number>,
+  save?: { label: string; createdBy: string },
+): Promise<{
+  asOf: string;
+  changed: Record<string, { from: number; to: number }>;
+  budgetFY: { revenueMinor: number; resultMinor: number };
+  scenarioLanding: { revenueMinor: number; resultMinor: number };
+  forecastLanding: { code: string; revenueMinor: number; resultMinor: number } | null;
+  savedCode?: string;
+}> {
+  const [latest] = (
+    await db.execute(sql`select max(period_code) as p from erp.journal where book <> 'test'`)
+  ).rows as { p: string | null }[];
+  const asOf = latest?.p ?? new Date().toISOString().slice(0, 7);
+  const { budgetLines, actualAt, factors, lastPosted, year } = await measureRunRates(db, asOf);
+  const activeDrivers = await db.query.driverSet.findFirst({
+    where: (t, { eq }) => eq(t.status, "active"),
+    orderBy: (t, { desc }) => desc(t.version),
+  });
+  if (!activeDrivers) throw Object.assign(new Error("no active driver set"), { statusCode: 409 });
+
+  const assumptions = { ...(activeDrivers.assumptions as Record<string, unknown>) };
+  const changed: Record<string, { from: number; to: number }> = {};
+  for (const [k, to] of Object.entries(overrides)) {
+    const cur = assumptions[k];
+    if (typeof cur !== "number")
+      throw Object.assign(new Error(`unknown or non-numeric driver "${k}"`), { statusCode: 400 });
+    if (!Number.isFinite(to)) throw Object.assign(new Error(`driver "${k}" needs a number`), { statusCode: 400 });
+    if (to !== cur) {
+      changed[k] = { from: cur, to };
+      assumptions[k] = to;
+    }
+  }
+
+  const { buildBudgetLines } = await import("@af/db");
+  const adjusted = buildBudgetLines(assumptions as unknown as Parameters<typeof buildBudgetLines>[0], Number(year));
+  const adjustedAt = new Map(adjusted.map((l) => [`${l.accountCode}:${l.periodCode}`, l.amountMinor]));
+
+  const months = Array.from({ length: 12 }, (_, i) => `${year}-${String(i + 1).padStart(2, "0")}`);
+  const accounts = [...new Set(budgetLines.map((l) => l.accountCode))];
+  const landingLines: { accountCode: string; periodCode: string; amountMinor: number; note: string }[] = [];
+  for (const code of accounts) {
+    for (const m of months) {
+      if (m <= lastPosted) {
+        const amt = actualAt.get(`${code}:${m}`) ?? 0;
+        if (amt !== 0) landingLines.push({ accountCode: code, periodCode: m, amountMinor: amt, note: "actual (posted)" });
+      } else {
+        const amt = Math.round(((adjustedAt.get(`${code}:${m}`) ?? 0) * (factors[code] ?? 1)) / 100) * 100;
+        if (amt !== 0) landingLines.push({ accountCode: code, periodCode: m, amountMinor: amt, note: "scenario drivers × run-rate" });
+      }
+    }
+  }
+
+  const fy = (rows: { accountCode: string; amountMinor: number }[]) => {
+    let revenue = 0;
+    let total = 0;
+    for (const r of rows) {
+      if (r.accountCode.startsWith("4")) revenue += r.amountMinor;
+      total += r.amountMinor;
+    }
+    return { revenueMinor: -revenue, resultMinor: -total };
+  };
+
+  const budgetFY = fy(budgetLines);
+  const scenarioLanding = fy(landingLines);
+  const activeForecast = await db.query.planVersion.findFirst({
+    where: (t, { and, eq }) => and(eq(t.kind, "forecast"), eq(t.status, "active")),
+  });
+  let forecastLanding: { code: string; revenueMinor: number; resultMinor: number } | null = null;
+  if (activeForecast) {
+    const fl = await db.query.planLine.findMany({ where: (t, { eq }) => eq(t.planVersionId, activeForecast.id) });
+    forecastLanding = { code: activeForecast.code, ...fy(fl) };
+  }
+
+  let savedCode: string | undefined;
+  if (save) {
+    const deltaText = Object.entries(changed)
+      .map(([k, c]) => `${k} ${c.from} → ${c.to}`)
+      .join("; ");
+    const [maxRow] = (
+      await db.execute(sql`select coalesce(max(version), 0)::int as v from epm.driver_set where code = ${activeDrivers.code}`)
+    ).rows as { v: number }[];
+    const [ds] = await db
+      .insert(driverSet)
+      .values({
+        code: activeDrivers.code,
+        version: (maxRow?.v ?? 0) + 1,
+        label: `Scenario drivers: ${save.label}`,
+        assumptions,
+        status: "draft",
+        createdBy: save.createdBy,
+      })
+      .returning();
+    const [n] = (
+      await db.execute(sql`select count(*)::int as n from epm.plan_version where kind = 'scenario'`)
+    ).rows as { n: number }[];
+    savedCode = `SCN-${String((n?.n ?? 0) + 1).padStart(3, "0")}`;
+    const [pv] = await db
+      .insert(planVersion)
+      .values({
+        kind: "scenario",
+        code: savedCode,
+        label: save.label,
+        status: "draft",
+        driverSetId: ds!.id,
+        notes: deltaText ? `What-if: ${deltaText}. Landing = actuals through ${lastPosted} + adjusted drivers at measured run-rates.` : `What-if with no driver changes (baseline landing).`,
+        createdBy: save.createdBy,
+      })
+      .returning();
+    if (landingLines.length > 0)
+      await db.insert(planLine).values(landingLines.map((l) => ({ ...l, planVersionId: pv!.id })));
+  }
+
+  return { asOf, changed, budgetFY, scenarioLanding, forecastLanding, savedCode };
+}
+
 /** The human adoption gate (plans/PM.md §5): draft → active, superseding
  * any previously active forecast. Agents never call this — it has no
  * command type; it exists only behind the workbench endpoint. */
