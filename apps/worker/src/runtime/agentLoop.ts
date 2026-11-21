@@ -1290,16 +1290,19 @@ async function forecastPrepFallback(
     .slice(0, 3)
     .filter((r) => r.dev >= 0.05);
   const gbp = (m: number) => `£${(Math.abs(m) / 100).toLocaleString("en-GB", { minimumFractionDigits: 2 })}`;
-  const ytdLines = Object.entries(facts.ytd ?? {})
-    .filter(([code]) => notable.some((n) => n.code === code))
-    .map(([code, t]) => `${code} YTD actual ${gbp(t.actualMinor)} vs budget ${gbp(t.budgetMinor)}`);
 
-  const commentary =
-    `Rolling forecast as of ${asOf}: months through ${facts.lastPosted ?? asOf} are posted actuals; later months price the budget at each account's measured run-rate (window: ${(facts.runRateWindow ?? []).join(", ") || "last posted months"}). ` +
-    (notable.length > 0
-      ? `Notable run-rates: ${notable.map((n) => `${n.code} at ${n.f.toFixed(2)}× budget`).join("; ")}. ${ytdLines.join("; ")}${ytdLines.length ? ". " : ""}`
-      : "All accounts are running close to budget. ") +
-    `Planning drivers left unchanged: a sustained deviation, not one window, should move an assumption. The draft awaits your adoption.`;
+  // scannable, never a wall: headline line, then one bullet per point
+  const commentary = [
+    `Rolling forecast as of ${asOf}: actuals through ${facts.lastPosted ?? asOf}, later months at budget × measured run-rate (window ${(facts.runRateWindow ?? []).join(", ") || "last posted months"}).`,
+    ...(notable.length > 0
+      ? notable.map((n) => {
+          const t = (facts.ytd ?? {})[n.code];
+          return `• ${n.code} running ${n.f.toFixed(2)}× budget${t ? ` — YTD ${gbp(t.actualMinor)} vs ${gbp(t.budgetMinor)}` : ""}`;
+        })
+      : ["• All accounts are running close to budget."]),
+    "• Drivers unchanged — a sustained deviation, not one window, should move an assumption.",
+    "• Draft awaits your adoption.",
+  ].join("\n");
 
   const proposal = await proposeCommand(runId, 1, "epm.plan.save", { asOf, driverDeltas: [], commentary }, steps);
   if (!proposal.ok)

@@ -25,6 +25,44 @@ type Version = {
 type Driver = { id: string; code: string; version: number; label: string; status: string; assumptions: Record<string, unknown> };
 
 const when = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+
+/** A version's reasoning, readable: headline first, bullets as a list, and
+ * anything long folded behind "Full reasoning" — never a wall of text.
+ * Handles both bullet-formatted notes and older single-paragraph ones. */
+function VersionNotes({ notes }: { notes: string }) {
+  const [open, setOpen] = useState(false);
+  // split into headline + bullet lines; "•" mid-text (older notes) also breaks
+  const lines = notes
+    .split(/\n|(?=•\s)/g)
+    .map((l) => l.trim())
+    .filter(Boolean);
+  const headline = lines[0] ?? "";
+  const rest = lines.slice(1);
+  const long = headline.length > 220 || rest.length > 0;
+  return (
+    <div className="mt-0.5 max-w-3xl text-xs" style={{ color: "var(--muted)" }}>
+      <p className={open ? "" : "line-clamp-2"}>{headline}</p>
+      {open && rest.length > 0 && (
+        <ul className="mt-1.5 space-y-1">
+          {rest.map((l, i) => (
+            <li key={i} className="flex gap-1.5">
+              <span className="shrink-0" style={{ color: "var(--accent)" }}>
+                •
+              </span>
+              <span>{l.replace(/^•\s*/, "")}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {long && (
+        <button onClick={() => setOpen(!open)} className="mt-1 text-xs hover:underline" style={{ color: "var(--accent)" }}>
+          {open ? "Hide the reasoning" : `Full reasoning${rest.length > 0 ? ` (${rest.length} points)` : ""} →`}
+        </button>
+      )}
+    </div>
+  );
+}
+
 const gbp = (minor: number) =>
   `£${(Math.abs(minor) / 100).toLocaleString("en-GB", { maximumFractionDigits: 0 })}${minor < 0 ? " loss" : ""}`;
 
@@ -321,7 +359,7 @@ export default function ForecastPage() {
                   <span className="text-xs" style={{ color: "var(--muted)" }}>{v.kind}</span>
                 </div>
                 <div className="mt-0.5 text-sm">{v.label}</div>
-                {v.notes && <div className="mt-0.5 max-w-2xl text-xs" style={{ color: "var(--muted)" }}>{v.notes}</div>}
+                {v.notes && <VersionNotes notes={v.notes} />}
                 <div className="mt-0.5 text-[10px]" style={{ color: "var(--muted)" }}>
                   created {when(v.createdAt)} by {v.createdBy}
                   {v.activatedAt ? ` · adopted ${when(v.activatedAt)} by ${v.activatedBy}` : ""}
