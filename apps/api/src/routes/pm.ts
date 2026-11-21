@@ -15,12 +15,15 @@ export function pmRoutes(app: FastifyInstance): void {
   app.get<{ Querystring: { from?: string; to?: string } }>("/pm/variance", async (req, reply) => {
     const db = requireDb();
     const ok = (s?: string) => !!s && /^\d{4}-\d{2}$/.test(s);
-    // default window: the year to the latest month with postings — months
-    // with budget but no books yet would only read as fake adverse variance
+    // default window: the FULL year — the budget and forecast run to
+    // December, so the landing comparison is the point. Actual-vs-budget
+    // variance is computed to the latest posted month only (the page
+    // labels it so), never against budget for months that haven't happened.
     const [latest] = (
       await db.execute(sql`select max(period_code) as p from erp.journal where book <> 'test'`)
     ).rows as { p: string | null }[];
-    const to = ok(req.query.to) ? req.query.to! : (latest?.p ?? new Date().toISOString().slice(0, 7));
+    const lastPosted = latest?.p ?? new Date().toISOString().slice(0, 7);
+    const to = ok(req.query.to) ? req.query.to! : `${lastPosted.slice(0, 4)}-12`;
     const from = ok(req.query.from) ? req.query.from! : `${to.slice(0, 4)}-01`;
     if (from > to) return reply.code(400).send({ error: "from must not exceed to" });
 
@@ -81,6 +84,7 @@ export function pmRoutes(app: FastifyInstance): void {
       budget: { id: budget.id, code: budget.code, label: budget.label },
       forecast: forecast ? { id: forecast.id, code: forecast.code, label: forecast.label } : null,
       window: { from, to },
+      lastPosted,
       accounts,
       cells: rows.map((r) => ({
         accountCode: r.account_code,

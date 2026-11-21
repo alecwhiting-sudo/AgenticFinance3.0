@@ -18,6 +18,7 @@ type Variance = {
   forecast: { id: string; code: string; label: string } | null;
   window: { from: string; to: string };
   accounts: { code: string; name: string; type: string }[];
+  lastPosted: string;
   cells: { accountCode: string; periodCode: string; budgetMinor: number; forecastMinor: number; actualMinor: number }[];
 };
 
@@ -37,11 +38,7 @@ export default async function PmPage({ searchParams }: { searchParams: Promise<{
     params.set("to", L.to);
   }
   const q = params.size > 0 ? `?${params.toString()}` : "";
-  const [v, landingRes] = await Promise.all([
-    getJson<Variance>(`/pm/variance${q}`).catch(() => null),
-    getJson<{ landing: { code: string; revenueMinor: number; resultMinor: number } | null }>(`/pm/landing`).catch(() => null),
-  ]);
-  const landing = landingRes?.landing ?? null;
+  const v = await getJson<Variance>(`/pm/variance${q}`).catch(() => null);
   if (!v)
     return (
       <main>
@@ -51,36 +48,51 @@ export default async function PmPage({ searchParams }: { searchParams: Promise<{
 
   const periods = [...new Set(v.cells.filter((c) => c.actualMinor !== 0).map((c) => c.periodCode))].sort();
   const hasForecast = v.forecast !== null;
-  const byAccount = new Map<string, { budget: number; forecast: number; actual: number }>();
+  // two honest comparisons: the window's landing (forecast = actuals to
+  // date + forecast months) against the window's budget, and actuals so
+  // far against the budget FOR THOSE MONTHS ONLY — never against budget
+  // for months that haven't happened.
+  const byAccount = new Map<string, { budget: number; forecast: number; actualYtd: number; budgetYtd: number }>();
   for (const c of v.cells) {
-    const t = byAccount.get(c.accountCode) ?? { budget: 0, forecast: 0, actual: 0 };
+    const t = byAccount.get(c.accountCode) ?? { budget: 0, forecast: 0, actualYtd: 0, budgetYtd: 0 };
     t.budget += c.budgetMinor;
     t.forecast += c.forecastMinor;
-    t.actual += c.actualMinor;
+    if (c.periodCode <= v.lastPosted) {
+      t.actualYtd += c.actualMinor;
+      t.budgetYtd += c.budgetMinor;
+    }
     byAccount.set(c.accountCode, t);
   }
   const rows = v.accounts
     .map((a) => {
-      const t = byAccount.get(a.code) ?? { budget: 0, forecast: 0, actual: 0 };
+      const t = byAccount.get(a.code) ?? { budget: 0, forecast: 0, actualYtd: 0, budgetYtd: 0 };
       return {
         ...a,
         ...t,
-        varBudgMinor: contribution(t.actual) - contribution(t.budget),
-        varFcstMinor: contribution(t.actual) - contribution(t.forecast),
+        varFcstBudgMinor: contribution(t.forecast) - contribution(t.budget),
+        varActBudgMinor: contribution(t.actualYtd) - contribution(t.budgetYtd),
       };
     })
-    .filter((r) => r.budget !== 0 || r.actual !== 0 || r.forecast !== 0);
+    .filter((r) => r.budget !== 0 || r.actualYtd !== 0 || r.forecast !== 0);
   const income = rows.filter((r) => r.type === "income");
   const expense = rows.filter((r) => r.type === "expense");
-  const sum = (xs: { budget: number; forecast: number; actual: number }[]) =>
+  const sum = (xs: { budget: number; forecast: number; actualYtd: number; budgetYtd: number }[]) =>
     xs.reduce(
-      (t, x) => ({ budget: t.budget + x.budget, forecast: t.forecast + x.forecast, actual: t.actual + x.actual }),
-      { budget: 0, forecast: 0, actual: 0 },
+      (t, x) => ({
+        budget: t.budget + x.budget,
+        forecast: t.forecast + x.forecast,
+        actualYtd: t.actualYtd + x.actualYtd,
+        budgetYtd: t.budgetYtd + x.budgetYtd,
+      }),
+      { budget: 0, forecast: 0, actualYtd: 0, budgetYtd: 0 },
     );
   const rev = sum(income);
   const cost = sum(expense);
   const resultBudget = contribution(rev.budget + cost.budget);
-  const resultActual = contribution(rev.actual + cost.actual);
+  const resultForecast = contribution(rev.forecast + cost.forecast);
+  const resultActualYtd = contribution(rev.actualYtd + cost.actualYtd);
+  const resultBudgetYtd = contribution(rev.budgetYtd + cost.budgetYtd);
+  const postedLabel = monthName(v.lastPosted);
 
   const windowLabel =
     v.window.from === v.window.to ? monthName(v.window.from) : `${monthName(v.window.from)} – ${monthName(v.window.to)}`;
@@ -112,9 +124,9 @@ export default async function PmPage({ searchParams }: { searchParams: Promise<{
           </td>
           <td className="py-1.5 text-right tabular-nums">{money(contribution(r.budget))}</td>
           {hasForecast && <td className="py-1.5 text-right tabular-nums">{money(contribution(r.forecast))}</td>}
-          <td className="py-1.5 text-right tabular-nums">{money(contribution(r.actual))}</td>
-          <VarCell varMinor={r.varBudgMinor} budgetMinor={r.budget} />
-          {hasForecast && <VarCell varMinor={r.varFcstMinor} budgetMinor={r.forecast} />}
+          {hasForecast && <VarCell varMinor={r.varFcstBudgMinor} budgetMinor={r.budget} />}
+          <td className="py-1.5 text-right tabular-nums">{money(contribution(r.actualYtd))}</td>
+          <VarCell varMinor={r.varActBudgMinor} budgetMinor={r.budgetYtd} />
         </tr>
       ))}
     </>
@@ -137,29 +149,24 @@ export default async function PmPage({ searchParams }: { searchParams: Promise<{
         actions={<PeriodPicker periods={periods} lens={lens} />}
       />
 
-      <section className={`grid grid-cols-2 gap-3 ${landing ? "lg:grid-cols-5" : "lg:grid-cols-4"}`}>
-        {landing && (
+      <section className={`grid grid-cols-2 gap-3 ${hasForecast ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
+        {hasForecast && (
           <Kpi
-            label="FY landing"
-            value={moneyCompact(landing.resultMinor)}
-            hint={`full-year result per ${landing.code} — revenue ${moneyCompact(landing.revenueMinor)}`}
+            label="FY landing vs budget"
+            value={moneyCompact(resultForecast)}
+            hint={`budget ${moneyCompact(resultBudget)} · ${resultForecast >= resultBudget ? "+" : "−"}${moneyCompact(Math.abs(resultForecast - resultBudget))} — ${v.forecast!.code}`}
             href="/pm/forecast"
           />
         )}
         <Kpi
-          label="Revenue vs budget"
-          value={moneyCompact(contribution(rev.actual))}
-          hint={`budget ${moneyCompact(contribution(rev.budget))} · ${contribution(rev.actual) >= contribution(rev.budget) ? "+" : "−"}${moneyCompact(Math.abs(contribution(rev.actual) - contribution(rev.budget)))}`}
+          label={`Revenue to ${postedLabel}`}
+          value={moneyCompact(contribution(rev.actualYtd))}
+          hint={`budget ${moneyCompact(contribution(rev.budgetYtd))} · ${contribution(rev.actualYtd) >= contribution(rev.budgetYtd) ? "+" : "−"}${moneyCompact(Math.abs(contribution(rev.actualYtd) - contribution(rev.budgetYtd)))}`}
         />
         <Kpi
-          label="Costs vs budget"
-          value={moneyCompact(cost.actual)}
-          hint={`budget ${moneyCompact(cost.budget)} · ${cost.actual <= cost.budget ? "" : "+"}${moneyCompact(cost.actual - cost.budget)} vs plan`}
-        />
-        <Kpi
-          label="Result vs budget"
-          value={moneyCompact(resultActual)}
-          hint={`budget ${moneyCompact(resultBudget)} · ${resultActual >= resultBudget ? "+" : "−"}${moneyCompact(Math.abs(resultActual - resultBudget))}`}
+          label={`Result to ${postedLabel}`}
+          value={moneyCompact(resultActualYtd)}
+          hint={`budget ${moneyCompact(resultBudgetYtd)} · ${resultActualYtd >= resultBudgetYtd ? "+" : "−"}${moneyCompact(Math.abs(resultActualYtd - resultBudgetYtd))}`}
         />
         <Kpi
           label="Comparing against"
@@ -176,9 +183,9 @@ export default async function PmPage({ searchParams }: { searchParams: Promise<{
               <th className="py-1.5 text-left text-[10px] uppercase tracking-wide">Account</th>
               <th className="py-1.5 text-right text-[10px] uppercase tracking-wide">Budget</th>
               {hasForecast && <th className="py-1.5 text-right text-[10px] uppercase tracking-wide">Forecast</th>}
-              <th className="py-1.5 text-right text-[10px] uppercase tracking-wide">Actual</th>
-              <th className="py-1.5 text-right text-[10px] uppercase tracking-wide">Act vs budg (fav +)</th>
-              {hasForecast && <th className="py-1.5 text-right text-[10px] uppercase tracking-wide">Act vs fcast (fav +)</th>}
+              {hasForecast && <th className="py-1.5 text-right text-[10px] uppercase tracking-wide">Fcast vs budg (fav +)</th>}
+              <th className="py-1.5 text-right text-[10px] uppercase tracking-wide">Actual to {postedLabel}</th>
+              <th className="py-1.5 text-right text-[10px] uppercase tracking-wide">Act vs budg to {postedLabel} (fav +)</th>
             </tr>
           </thead>
           <tbody>
@@ -187,21 +194,16 @@ export default async function PmPage({ searchParams }: { searchParams: Promise<{
             <tr className="border-t-2 font-semibold" style={{ borderColor: "var(--border)" }}>
               <td className="py-2">Result</td>
               <td className="py-2 text-right tabular-nums">{money(resultBudget)}</td>
-              {hasForecast && <td className="py-2 text-right tabular-nums">{money(contribution(rev.forecast + cost.forecast))}</td>}
-              <td className="py-2 text-right tabular-nums">{money(resultActual)}</td>
-              <VarCell varMinor={resultActual - resultBudget} budgetMinor={rev.budget + cost.budget} />
-              {hasForecast && (
-                <VarCell
-                  varMinor={resultActual - contribution(rev.forecast + cost.forecast)}
-                  budgetMinor={rev.forecast + cost.forecast}
-                />
-              )}
+              {hasForecast && <td className="py-2 text-right tabular-nums">{money(resultForecast)}</td>}
+              {hasForecast && <VarCell varMinor={resultForecast - resultBudget} budgetMinor={rev.budget + cost.budget} />}
+              <td className="py-2 text-right tabular-nums">{money(resultActualYtd)}</td>
+              <VarCell varMinor={resultActualYtd - resultBudgetYtd} budgetMinor={rev.budgetYtd + cost.budgetYtd} />
             </tr>
           </tbody>
         </table>
         <p className="mt-3 text-xs" style={{ color: "var(--muted)" }}>
           Variance is favourable-positive: revenue above plan and costs below plan both read green. Every account
-          drills to its ledger.{hasForecast ? " Months the rolling forecast already carries as actuals show no actual-vs-forecast variance — the forecast columns earn their keep as new months post." : ""}
+          drills to its ledger.{hasForecast ? ` The forecast is the full-year landing — actuals through ${postedLabel}, then forecast months — so "Fcast vs budg" is the landing gap; "Act vs budg" compares only the months that have happened.` : ""}
         </p>
       </section>
     </main>
