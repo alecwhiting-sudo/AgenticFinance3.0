@@ -142,6 +142,6 @@ see the landing move." Tour step added at the end of Phase 5.
   versions panel on `/pm/forecast`; variance can compare against forecast.
 - **M3 — Forecast Preparation Agent — BUILT 2026-11-21**: skill, release, `epm.plan.save`,
   keyless fallback, eval suite, commentary; wired to the M2 draft flow.
-- **M4 — Scenarios + polish**: what-if panel (ephemeral recompute),
+- **M4 — Scenarios + polish — BUILT 2026-11-21**: what-if panel (ephemeral recompute),
   save-as-scenario, KPI landing tile from the active forecast, tour step,
   demo script in DEMO_SCRIPTS.md, STATUS/architecture updates.

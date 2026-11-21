@@ -19,7 +19,7 @@ _Last updated: 2026-10-19_
 | 3 — R2R | ✅ built minus deferral | bank rec + Reconciliation Agent, accruals/prepayments engine, recurring journals, P&L/BS, month-end dashboard, Close Agent commentary. **Deferred:** LRS lock → certify → supersede (D13 step 3) |
 | 4 — O2C | ✅ built | AR invoices through the pipe, cash application + agent, collections agent + dunning approval |
 | 4c — Analytics + Analyst | ✅ built | plan: `plans/ANALYTICS.md`. M1 `/analytics` (flux waterfall, P&L trend, AP/AR aging, counterparty, cash — all drill, all have table views). M2 Analyst Agent + right-hand chat panel (top-bar toggle): answers from the curated views only, cites sources, keyless fallback for set question shapes. Remaining 4c ideas: saved views/dashboard |
-| 5 — Performance Management | 🔶 building | plan: `plans/PM.md`. M1-M3 BUILT (budget+variance, rolling forecast + adoption gate, Forecast Prep Agent); next M4 scenarios |
+| 5 — Performance Management | ✅ built | plan: `plans/PM.md`. Driver-based budget + variance, rolling forecast + human adoption gate, Forecast Preparation Agent, what-if scenarios + FY landing (M1–M4, 2026-11-20/21) |
 | 6 — Demo polish | ✅ built | agent staff strip, release pipeline, permissions matrix, decision history, per-agent period cost (D14), admin reset/replay, guided tour (lib/tours.ts), cross-process dashboard `/processes` (2026-11-20) |
 | P — Production | ⬜ stub | deliberately undesigned |
 
@@ -369,7 +369,13 @@ _Last updated: 2026-10-19_
    (forecast_prep_window), 4/4 keyless; invoice-exception 13/13
    regression green. Standing-authority executions now attributed to
    the proposing agent ("forecast-prep (agent)"), not the machinery.
-   Next: M4 scenarios + KPI landing + tour step.
+   **M4 BUILT 2026-11-21 — Phase 5 complete**:
+   what-if panel on /pm/forecast (nudge any numeric driver, recompute
+   the FY landing = actuals to date + adjusted drivers at measured
+   run-rates — same maths as the forecast, honest comparison vs budget
+   and the adopted forecast; save as SCN-xxx draft versions for the
+   record); FY-landing KPI on /pm from the adopted forecast; guided
+   tour step "Plans that explain themselves".
 
 ## Day log — 2026-10-04 (for a fast, safe pickup)
 

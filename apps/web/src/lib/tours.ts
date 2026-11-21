@@ -97,6 +97,13 @@ const fullLoop: Tour = {
         "The Analyst chat (top right) answers from curated, governed views only — it cites its sources and cannot run raw SQL. Ask it to “build me a page showing supplier spend and cash” and it proposes a dashboard you confirm with one click.",
     },
     {
+      route: "/pm",
+      title: "Plans that explain themselves",
+      body:
+        "The budget derives from named drivers — consultants, utilisation, day rate, cost ratios — so every line can say why it is what it is. Actuals track against it (or against the forecast you adopted), favourable variance in green, every account drilling to the ledger.",
+      tryIt: "On the Forecast page, change a driver in the What-if panel and watch the full-year landing move — then ask the agent to prepare the next forecast.",
+    },
+    {
       route: "/agents",
       title: "Agents are staff, with staff records",
       anchor: "shadow-replay",

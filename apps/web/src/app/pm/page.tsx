@@ -38,7 +38,11 @@ export default async function PmPage({ searchParams }: { searchParams: Promise<{
   }
   if (vsForecast) params.set("vs", "forecast");
   const q = params.size > 0 ? `?${params.toString()}` : "";
-  const v = await getJson<Variance>(`/pm/variance${q}`).catch(() => null);
+  const [v, landingRes] = await Promise.all([
+    getJson<Variance>(`/pm/variance${q}`).catch(() => null),
+    getJson<{ landing: { code: string; revenueMinor: number; resultMinor: number } | null }>(`/pm/landing`).catch(() => null),
+  ]);
+  const landing = landingRes?.landing ?? null;
   if (!v)
     return (
       <main>
@@ -146,7 +150,15 @@ export default async function PmPage({ searchParams }: { searchParams: Promise<{
         actions={<PeriodPicker periods={periods} lens={lens} />}
       />
 
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <section className={`grid grid-cols-2 gap-3 ${landing ? "lg:grid-cols-5" : "lg:grid-cols-4"}`}>
+        {landing && (
+          <Kpi
+            label="FY landing"
+            value={moneyCompact(landing.resultMinor)}
+            hint={`full-year result per ${landing.code} — revenue ${moneyCompact(landing.revenueMinor)}`}
+            href="/pm/forecast"
+          />
+        )}
         <Kpi
           label="Revenue vs budget"
           value={moneyCompact(contribution(rev.actual))}

@@ -25,6 +25,154 @@ type Version = {
 type Driver = { id: string; code: string; version: number; label: string; status: string; assumptions: Record<string, unknown> };
 
 const when = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+const gbp = (minor: number) =>
+  `£${(Math.abs(minor) / 100).toLocaleString("en-GB", { maximumFractionDigits: 0 })}${minor < 0 ? " loss" : ""}`;
+
+type ScenarioResult = {
+  asOf: string;
+  changed: Record<string, { from: number; to: number }>;
+  budgetFY: { revenueMinor: number; resultMinor: number };
+  scenarioLanding: { revenueMinor: number; resultMinor: number };
+  forecastLanding: { code: string; revenueMinor: number; resultMinor: number } | null;
+  savedCode?: string;
+};
+
+/** What-if (plans/PM.md M4): nudge drivers, see the full-year landing move
+ * — same maths as the forecast, so the comparison is honest. Saving keeps
+ * the scenario in the version list for the record. */
+function WhatIf({ drivers, onSaved }: { drivers: Driver; onSaved: () => Promise<void> }) {
+  const base = Object.fromEntries(
+    Object.entries(drivers.assumptions).filter(([k, v]) => k !== "workingDays" && typeof v === "number"),
+  ) as Record<string, number>;
+  const [values, setValues] = useState<Record<string, string>>(
+    Object.fromEntries(Object.entries(base).map(([k, v]) => [k, String(k.endsWith("Minor") ? v / 100 : v)])),
+  );
+  const [result, setResult] = useState<ScenarioResult | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const dialog = useDialog();
+
+  const overrides = (): Record<string, number> => {
+    const out: Record<string, number> = {};
+    for (const [k, v] of Object.entries(values)) {
+      const n = Number(v);
+      if (!Number.isFinite(n)) continue;
+      const minor = k.endsWith("Minor") ? Math.round(n * 100) : n;
+      if (minor !== base[k]) out[k] = minor;
+    }
+    return out;
+  };
+
+  const run = async (saveLabel?: string) => {
+    setBusy(true);
+    setErr(null);
+    try {
+      const res = await fetch(`${apiUrl}/pm/scenario`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ overrides: overrides(), ...(saveLabel ? { saveLabel } : {}) }),
+      });
+      const d = (await res.json()) as ScenarioResult & { error?: string };
+      if (!res.ok) setErr(d.error ?? "failed");
+      else {
+        setResult(d);
+        if (d.savedCode) await onSaved();
+      }
+    } catch {
+      setErr(`Cannot reach the API at ${apiUrl}.`);
+    }
+    setBusy(false);
+  };
+
+  const save = async () => {
+    const label = await dialog.ask({
+      title: "Save this scenario",
+      body: "A short name for the version list — e.g. “Utilisation down 5 points”.",
+      placeholder: "e.g. Utilisation down 5 points",
+    });
+    if (!label) return;
+    await run(label);
+  };
+
+  const delta = (a: number, b: number) => {
+    const d = a - b;
+    return (
+      <span style={{ color: d === 0 ? "var(--muted)" : d > 0 ? "var(--good)" : "var(--bad)" }}>
+        {d >= 0 ? "+" : "−"}{gbp(Math.abs(d))}
+      </span>
+    );
+  };
+
+  return (
+    <section className="rounded-xl border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h4 className="text-sm font-semibold uppercase tracking-wide" style={{ color: "var(--muted)" }}>
+          What-if
+        </h4>
+        <span className="flex gap-2">
+          <button
+            disabled={busy}
+            onClick={() => run()}
+            className="rounded-lg border px-3 py-1 text-xs font-medium disabled:opacity-40"
+            style={{ borderColor: "var(--accent)", color: "var(--accent)" }}
+          >
+            Recompute landing
+          </button>
+          <button
+            disabled={busy || !result}
+            onClick={save}
+            className="rounded-lg border px-3 py-1 text-xs disabled:opacity-40"
+            style={{ borderColor: "var(--border)", color: "var(--muted)" }}
+          >
+            Save as scenario…
+          </button>
+        </span>
+      </div>
+      <p className="mt-1 text-xs" style={{ color: "var(--muted)" }}>
+        Change a driver, recompute: the full-year landing is actuals to date plus the rest of the year on your
+        adjusted assumptions at each account&apos;s recent run-rate.
+      </p>
+      <div className="mt-3 grid gap-x-6 gap-y-1.5 sm:grid-cols-2 lg:grid-cols-3">
+        {Object.keys(base).map((k) => (
+          <label key={k} className="flex items-center justify-between gap-2 text-xs">
+            <span style={{ color: "var(--muted)" }}>{k.replace(/Minor$/, " (£)")}</span>
+            <input
+              value={values[k] ?? ""}
+              onChange={(e) => setValues((s) => ({ ...s, [k]: e.target.value }))}
+              className="w-24 rounded border bg-transparent px-2 py-1 text-right font-mono tabular-nums"
+              style={{
+                borderColor:
+                  Number(values[k]) !== (k.endsWith("Minor") ? base[k]! / 100 : base[k]) ? "var(--accent)" : "var(--border)",
+              }}
+            />
+          </label>
+        ))}
+      </div>
+      {err && <p className="mt-2 text-xs" style={{ color: "var(--bad)" }}>{err}</p>}
+      {result && (
+        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          <div className="rounded-lg border p-3 text-center" style={{ borderColor: "var(--border)" }}>
+            <div className="text-lg font-semibold tracking-tight tabular-nums">{gbp(result.budgetFY.resultMinor)}</div>
+            <div className="text-xs" style={{ color: "var(--muted)" }}>FY result — budget</div>
+          </div>
+          {result.forecastLanding && (
+            <div className="rounded-lg border p-3 text-center" style={{ borderColor: "var(--border)" }}>
+              <div className="text-lg font-semibold tracking-tight tabular-nums">{gbp(result.forecastLanding.resultMinor)}</div>
+              <div className="text-xs" style={{ color: "var(--muted)" }}>FY landing — {result.forecastLanding.code}</div>
+            </div>
+          )}
+          <div className="rounded-lg border p-3 text-center" style={{ borderColor: "var(--accent)" }}>
+            <div className="text-lg font-semibold tracking-tight tabular-nums">{gbp(result.scenarioLanding.resultMinor)}</div>
+            <div className="text-xs" style={{ color: "var(--muted)" }}>
+              FY landing — this scenario · vs budget {delta(result.scenarioLanding.resultMinor, result.budgetFY.resultMinor)}
+              {result.forecastLanding && <> · vs forecast {delta(result.scenarioLanding.resultMinor, result.forecastLanding.resultMinor)}</>}
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
 
 export default function ForecastPage() {
   const [versions, setVersions] = useState<Version[]>([]);
@@ -179,7 +327,7 @@ export default function ForecastPage() {
                   {v.activatedAt ? ` · adopted ${when(v.activatedAt)} by ${v.activatedBy}` : ""}
                 </div>
               </div>
-              {v.status === "draft" && v.kind !== "budget" && (
+              {v.status === "draft" && v.kind === "forecast" && (
                 <button
                   disabled={busy}
                   onClick={() => adopt(v)}
@@ -194,6 +342,10 @@ export default function ForecastPage() {
           {versions.length === 0 && <li className="text-sm" style={{ color: "var(--muted)" }}>No plan versions yet — the budget seeds on deploy.</li>}
         </ul>
       </section>
+
+      {activeDrivers && (
+        <WhatIf drivers={activeDrivers} onSaved={load} />
+      )}
 
       {activeDrivers && (
         <section className="rounded-xl border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>

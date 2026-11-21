@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { sql } from "drizzle-orm";
 import { requireDb } from "../lib/db.js";
 import { emitActivity } from "../lib/activity.js";
-import { activatePlanVersion, assembleForecastFacts, buildMechanicalForecast } from "../services/pm.js";
+import { activatePlanVersion, assembleForecastFacts, buildMechanicalForecast, scenarioPreview } from "../services/pm.js";
 import { workItem } from "@af/db";
 
 /** Performance Management (plans/PM.md M1): actuals vs the ACTIVE budget.
@@ -154,6 +154,50 @@ export function pmRoutes(app: FastifyInstance): void {
       const err = e as Error & { statusCode?: number };
       return reply.code(err.statusCode ?? 500).send({ error: err.message });
     }
+  });
+
+  /** What-if (plans/PM.md M4): recompute the FY landing from adjusted
+   * drivers — pure computation, nothing stored. With save.label it also
+   * persists the scenario as a draft plan version for the record. */
+  app.post<{ Body: { overrides?: Record<string, number>; saveLabel?: string } }>("/pm/scenario", async (req, reply) => {
+    const db = requireDb();
+    try {
+      const r = await scenarioPreview(
+        db,
+        req.body?.overrides ?? {},
+        req.body?.saveLabel?.trim() ? { label: req.body.saveLabel.trim().slice(0, 120), createdBy: "workbench-user" } : undefined,
+      );
+      if (r.savedCode)
+        await emitActivity({
+          actorType: "human",
+          actorId: "workbench",
+          verb: "saved_scenario",
+          objectType: "plan_version",
+          objectId: r.savedCode,
+          summary: `Scenario ${r.savedCode} saved: ${Object.entries(r.changed).map(([k, c]) => `${k} ${c.from}→${c.to}`).join(", ") || "baseline"}`,
+        });
+      return r;
+    } catch (e) {
+      const err = e as Error & { statusCode?: number };
+      return reply.code(err.statusCode ?? 500).send({ error: err.message });
+    }
+  });
+
+  /** FY landing from the adopted forecast — the /pm KPI. */
+  app.get("/pm/landing", async () => {
+    const db = requireDb();
+    const fc = await db.query.planVersion.findFirst({
+      where: (t, { and, eq }) => and(eq(t.kind, "forecast"), eq(t.status, "active")),
+    });
+    if (!fc) return { landing: null };
+    const lines = await db.query.planLine.findMany({ where: (t, { eq }) => eq(t.planVersionId, fc.id) });
+    let revenue = 0;
+    let total = 0;
+    for (const l of lines) {
+      if (l.accountCode.startsWith("4")) revenue += l.amountMinor;
+      total += l.amountMinor;
+    }
+    return { landing: { code: fc.code, revenueMinor: -revenue, resultMinor: -total } };
   });
 
   /** The adoption gate: a HUMAN activates a draft; the previously active
