@@ -125,7 +125,9 @@ export default async function PmPage({ searchParams }: { searchParams: Promise<{
           <td className="py-1.5 text-right tabular-nums">{money(contribution(r.budget))}</td>
           {hasForecast && <td className="py-1.5 text-right tabular-nums">{money(contribution(r.forecast))}</td>}
           {hasForecast && <VarCell varMinor={r.varFcstBudgMinor} budgetMinor={r.budget} />}
-          <td className="py-1.5 text-right tabular-nums">{money(contribution(r.actualYtd))}</td>
+          <td className="border-l py-1.5 pl-3 text-right tabular-nums" style={{ borderColor: "var(--border)" }}>
+            {money(contribution(r.actualYtd))}
+          </td>
           <VarCell varMinor={r.varActBudgMinor} budgetMinor={r.budgetYtd} />
         </tr>
       ))}
@@ -179,13 +181,35 @@ export default async function PmPage({ searchParams }: { searchParams: Promise<{
       <section className="rounded-xl border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
         <table className="w-full text-sm">
           <thead>
+            {/* two header rows: the PERIOD each column group covers, then the
+                columns — full-year plan figures and to-date actuals never
+                share a label again */}
+            <tr style={{ color: "var(--muted)" }}>
+              <th />
+              <th
+                colSpan={hasForecast ? 3 : 1}
+                className="border-b pb-1 text-center text-[10px] font-semibold uppercase tracking-[0.15em]"
+                style={{ borderColor: "var(--border)", color: "var(--accent)" }}
+              >
+                {windowLabel}
+              </th>
+              <th
+                colSpan={2}
+                className="border-b border-l pb-1 text-center text-[10px] font-semibold uppercase tracking-[0.15em]"
+                style={{ borderColor: "var(--border)", color: "var(--accent)" }}
+              >
+                To {postedLabel} (posted)
+              </th>
+            </tr>
             <tr style={{ color: "var(--muted)" }}>
               <th className="py-1.5 text-left text-[10px] uppercase tracking-wide">Account</th>
               <th className="py-1.5 text-right text-[10px] uppercase tracking-wide">Budget</th>
-              {hasForecast && <th className="py-1.5 text-right text-[10px] uppercase tracking-wide">Forecast</th>}
-              {hasForecast && <th className="py-1.5 text-right text-[10px] uppercase tracking-wide">Fcast vs budg (fav +)</th>}
-              <th className="py-1.5 text-right text-[10px] uppercase tracking-wide">Actual to {postedLabel}</th>
-              <th className="py-1.5 text-right text-[10px] uppercase tracking-wide">Act vs budg to {postedLabel} (fav +)</th>
+              {hasForecast && <th className="py-1.5 text-right text-[10px] uppercase tracking-wide">Forecast landing</th>}
+              {hasForecast && <th className="py-1.5 text-right text-[10px] uppercase tracking-wide">Variance (fav +)</th>}
+              <th className="border-l py-1.5 pl-3 text-right text-[10px] uppercase tracking-wide" style={{ borderColor: "var(--border)" }}>
+                Actual
+              </th>
+              <th className="py-1.5 text-right text-[10px] uppercase tracking-wide">vs budget to {postedLabel} (fav +)</th>
             </tr>
           </thead>
           <tbody>
@@ -196,7 +220,9 @@ export default async function PmPage({ searchParams }: { searchParams: Promise<{
               <td className="py-2 text-right tabular-nums">{money(resultBudget)}</td>
               {hasForecast && <td className="py-2 text-right tabular-nums">{money(resultForecast)}</td>}
               {hasForecast && <VarCell varMinor={resultForecast - resultBudget} budgetMinor={rev.budget + cost.budget} />}
-              <td className="py-2 text-right tabular-nums">{money(resultActualYtd)}</td>
+              <td className="border-l py-2 pl-3 text-right tabular-nums" style={{ borderColor: "var(--border)" }}>
+                {money(resultActualYtd)}
+              </td>
               <VarCell varMinor={resultActualYtd - resultBudgetYtd} budgetMinor={rev.budgetYtd + cost.budgetYtd} />
             </tr>
           </tbody>
