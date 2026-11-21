@@ -59,7 +59,10 @@ const NAV: Parent[] = [
     href: "/pm",
     label: "Performance",
     short: "PM",
-    children: [{ href: "/pm", label: "Budget vs actual", exact: true }],
+    children: [
+      { href: "/pm", label: "Budget vs actual", exact: true },
+      { href: "/pm/forecast", label: "Forecast" },
+    ],
   },
   {
     href: "/agents",

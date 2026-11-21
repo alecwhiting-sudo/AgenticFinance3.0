@@ -19,7 +19,7 @@ _Last updated: 2026-10-19_
 | 3 — R2R | ✅ built minus deferral | bank rec + Reconciliation Agent, accruals/prepayments engine, recurring journals, P&L/BS, month-end dashboard, Close Agent commentary. **Deferred:** LRS lock → certify → supersede (D13 step 3) |
 | 4 — O2C | ✅ built | AR invoices through the pipe, cash application + agent, collections agent + dunning approval |
 | 4c — Analytics + Analyst | ✅ built | plan: `plans/ANALYTICS.md`. M1 `/analytics` (flux waterfall, P&L trend, AP/AR aging, counterparty, cash — all drill, all have table views). M2 Analyst Agent + right-hand chat panel (top-bar toggle): answers from the curated views only, cites sources, keyless fallback for set question shapes. Remaining 4c ideas: saved views/dashboard |
-| 5 — Performance Management | 🔶 building | plan: `plans/PM.md` (2026-11-20). M1 BUILT: epm schema (migration 0022), driver-based BUD-2026 seeded + `/pm` budget-vs-actual page; M2 forecast, M3 Forecast Prep Agent, M4 scenarios next |
+| 5 — Performance Management | 🔶 building | plan: `plans/PM.md`. M1 budget+variance BUILT, M2 rolling forecast + adoption gate BUILT; next M3 Forecast Prep Agent, M4 scenarios |
 | 6 — Demo polish | ✅ built | agent staff strip, release pipeline, permissions matrix, decision history, per-agent period cost (D14), admin reset/replay, guided tour (lib/tours.ts), cross-process dashboard `/processes` (2026-11-20) |
 | P — Production | ⬜ stub | deliberately undesigned |
 
@@ -346,8 +346,16 @@ _Last updated: 2026-10-19_
    activated by seedCore — calibrated to land believable variances
    against the committed actuals); `GET /pm/variance` + `/pm` page
    ("Performance" nav): KPI row + favourable-positive variance table on
-   the period lens, drilling to the ledger. Next: M2 mechanical
-   forecast + activate gate, M3 Forecast Preparation Agent
+   the period lens, drilling to the ledger. **M2 BUILT 2026-11-21**:
+   mechanical rolling forecast (`buildMechanicalForecast`: actuals
+   through the latest posted month, then budget × per-account run-rate
+   from the last 3 posted months, clamped 0.6–1.4; idempotent per
+   as-of, adopted versions never rebuilt) + the human adoption gate
+   (`POST /pm/versions/:id/activate` — no agent command reaches it,
+   supersedes the prior active forecast, recorded with name + activity
+   event); /pm/forecast page (draft button, version list with adopt,
+   active driver panel); /pm compares vs budget OR adopted forecast
+   (?vs=forecast toggle). Next: M3 Forecast Preparation Agent
    (epm.plan.save, evals, keyless fallback), M4 scenarios + KPI landing
    + tour step.
 

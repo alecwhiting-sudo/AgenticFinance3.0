@@ -133,12 +133,12 @@ see the landing move." Tour step added at the end of Phase 5.
 
 ## 8. Milestones
 
-- **M1 — Budget + variance (BUILD FIRST)**: epm tables (migration 0022),
+- **M1 — Budget + variance — BUILT 2026-11-20**: epm tables (migration 0022),
   driver set + BUD-2026 built and activated by seedCore (deterministic,
   committed assumptions), `GET /pm/variance` + versions API, `/pm` page
   (KPI row + variance table on the period lens, ledger drill), nav
   "Performance". Demo-ready alone.
-- **M2 — Mechanical forecast**: service + draft/activate endpoints + the
+- **M2 — Mechanical forecast — BUILT 2026-11-21**: service + draft/activate endpoints + the
   versions panel on `/pm/forecast`; variance can compare against forecast.
 - **M3 — Forecast Preparation Agent**: skill, release, `epm.plan.save`,
   keyless fallback, eval suite, commentary; wired to the M2 draft flow.
