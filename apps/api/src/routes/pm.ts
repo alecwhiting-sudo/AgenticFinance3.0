@@ -12,7 +12,7 @@ import { workItem } from "@af/db";
 export function pmRoutes(app: FastifyInstance): void {
   /** Budget vs actuals per account × period in [from, to]; defaults to the
    * year to the latest complete month. */
-  app.get<{ Querystring: { from?: string; to?: string; vs?: string } }>("/pm/variance", async (req, reply) => {
+  app.get<{ Querystring: { from?: string; to?: string } }>("/pm/variance", async (req, reply) => {
     const db = requireDb();
     const ok = (s?: string) => !!s && /^\d{4}-\d{2}$/.test(s);
     // default window: the year to the latest month with postings — months
@@ -24,15 +24,15 @@ export function pmRoutes(app: FastifyInstance): void {
     const from = ok(req.query.from) ? req.query.from! : `${to.slice(0, 4)}-01`;
     if (from > to) return reply.code(400).send({ error: "from must not exceed to" });
 
-    // compare against the active budget (default) or the active forecast
-    const vsKind = req.query.vs === "forecast" ? "forecast" : "budget";
+    // both comparators, clearly separated: the budget always, the adopted
+    // forecast when one exists — never one column silently meaning the other
     const budget = await db.query.planVersion.findFirst({
-      where: (t, { and, eq }) => and(eq(t.kind, vsKind), eq(t.status, "active")),
+      where: (t, { and, eq }) => and(eq(t.kind, "budget"), eq(t.status, "active")),
     });
-    if (!budget)
-      return reply.code(409).send({
-        error: vsKind === "budget" ? "no active budget — seed/deploy first" : "no active forecast — draft and activate one first",
-      });
+    if (!budget) return reply.code(409).send({ error: "no active budget — seed/deploy first" });
+    const forecast = await db.query.planVersion.findFirst({
+      where: (t, { and, eq }) => and(eq(t.kind, "forecast"), eq(t.status, "active")),
+    });
 
     const rows = (
       await db.execute(sql`
@@ -49,29 +49,44 @@ export function pmRoutes(app: FastifyInstance): void {
           from epm.plan_line
           where plan_version_id = ${budget.id} and period_code between ${from} and ${to}
           group by 1, 2
+        ),
+        fcast as (
+          select account_code, period_code, sum(amount_minor)::bigint as amt
+          from epm.plan_line
+          where ${forecast ? sql`plan_version_id = ${forecast.id}` : sql`false`} and period_code between ${from} and ${to}
+          group by 1, 2
+        ),
+        keys as (
+          select account_code, period_code from plan
+          union select account_code, period_code from actual
+          union select account_code, period_code from fcast
         )
-        select coalesce(p.account_code, a.account_code) as account_code,
-               coalesce(p.period_code, a.period_code) as period_code,
+        select k.account_code, k.period_code,
                coalesce(p.amt, 0)::bigint as budget_minor,
+               coalesce(f.amt, 0)::bigint as forecast_minor,
                coalesce(a.amt, 0)::bigint as actual_minor
-        from plan p full outer join actual a
-          on a.account_code = p.account_code and a.period_code = p.period_code
+        from keys k
+        left join plan p on p.account_code = k.account_code and p.period_code = k.period_code
+        left join fcast f on f.account_code = k.account_code and f.period_code = k.period_code
+        left join actual a on a.account_code = k.account_code and a.period_code = k.period_code
         order by 1, 2
       `)
-    ).rows as { account_code: string; period_code: string; budget_minor: string; actual_minor: string }[];
+    ).rows as { account_code: string; period_code: string; budget_minor: string; forecast_minor: string; actual_minor: string }[];
 
     const accounts = (
       await db.execute(sql`select code, name, type from erp.account where type in ('income', 'expense') order by code`)
     ).rows as { code: string; name: string; type: string }[];
 
     return {
-      budget: { id: budget.id, code: budget.code, label: budget.label, kind: vsKind },
+      budget: { id: budget.id, code: budget.code, label: budget.label },
+      forecast: forecast ? { id: forecast.id, code: forecast.code, label: forecast.label } : null,
       window: { from, to },
       accounts,
       cells: rows.map((r) => ({
         accountCode: r.account_code,
         periodCode: r.period_code,
         budgetMinor: Number(r.budget_minor),
+        forecastMinor: Number(r.forecast_minor),
         actualMinor: Number(r.actual_minor),
       })),
     };

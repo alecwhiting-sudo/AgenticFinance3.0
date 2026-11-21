@@ -14,10 +14,11 @@ export const metadata: Metadata = { title: "Performance" };
  * other number in the workbench. */
 
 type Variance = {
-  budget: { id: string; code: string; label: string; kind: string };
+  budget: { id: string; code: string; label: string };
+  forecast: { id: string; code: string; label: string } | null;
   window: { from: string; to: string };
   accounts: { code: string; name: string; type: string }[];
-  cells: { accountCode: string; periodCode: string; budgetMinor: number; actualMinor: number }[];
+  cells: { accountCode: string; periodCode: string; budgetMinor: number; forecastMinor: number; actualMinor: number }[];
 };
 
 /** Ledger sign is debit-positive; profit contribution flips it. Favourable
@@ -27,16 +28,14 @@ const contribution = (ledgerMinor: number) => -ledgerMinor;
 const monthName = (p: string) =>
   new Date(`${p}-01T00:00:00Z`).toLocaleDateString("en-GB", { month: "short", year: "numeric" });
 
-export default async function PmPage({ searchParams }: { searchParams: Promise<{ lens?: string; vs?: string }> }) {
-  const { lens, vs } = await searchParams;
+export default async function PmPage({ searchParams }: { searchParams: Promise<{ lens?: string }> }) {
+  const { lens } = await searchParams;
   const L = parsePeriodLens(lens);
-  const vsForecast = vs === "forecast";
   const params = new URLSearchParams();
   if (L) {
     params.set("from", L.from);
     params.set("to", L.to);
   }
-  if (vsForecast) params.set("vs", "forecast");
   const q = params.size > 0 ? `?${params.toString()}` : "";
   const [v, landingRes] = await Promise.all([
     getJson<Variance>(`/pm/variance${q}`).catch(() => null),
@@ -46,41 +45,38 @@ export default async function PmPage({ searchParams }: { searchParams: Promise<{
   if (!v)
     return (
       <main>
-        <PageHeader
-          title="Performance"
-          context={
-            vsForecast ? (
-              <>
-                No adopted forecast yet — draft and adopt one on the{" "}
-                <Link href="/pm/forecast" className="underline" style={{ color: "var(--accent)" }}>Forecast page</Link>, or{" "}
-                <Link href="/pm" className="underline" style={{ color: "var(--accent)" }}>compare against the budget</Link>.
-              </>
-            ) : (
-              "No active budget yet."
-            )
-          }
-        />
+        <PageHeader title="Performance" context="No active budget yet." />
       </main>
     );
 
   const periods = [...new Set(v.cells.filter((c) => c.actualMinor !== 0).map((c) => c.periodCode))].sort();
-  const byAccount = new Map<string, { budget: number; actual: number }>();
+  const hasForecast = v.forecast !== null;
+  const byAccount = new Map<string, { budget: number; forecast: number; actual: number }>();
   for (const c of v.cells) {
-    const t = byAccount.get(c.accountCode) ?? { budget: 0, actual: 0 };
+    const t = byAccount.get(c.accountCode) ?? { budget: 0, forecast: 0, actual: 0 };
     t.budget += c.budgetMinor;
+    t.forecast += c.forecastMinor;
     t.actual += c.actualMinor;
     byAccount.set(c.accountCode, t);
   }
   const rows = v.accounts
     .map((a) => {
-      const t = byAccount.get(a.code) ?? { budget: 0, actual: 0 };
-      return { ...a, ...t, varMinor: contribution(t.actual) - contribution(t.budget) };
+      const t = byAccount.get(a.code) ?? { budget: 0, forecast: 0, actual: 0 };
+      return {
+        ...a,
+        ...t,
+        varBudgMinor: contribution(t.actual) - contribution(t.budget),
+        varFcstMinor: contribution(t.actual) - contribution(t.forecast),
+      };
     })
-    .filter((r) => r.budget !== 0 || r.actual !== 0);
+    .filter((r) => r.budget !== 0 || r.actual !== 0 || r.forecast !== 0);
   const income = rows.filter((r) => r.type === "income");
   const expense = rows.filter((r) => r.type === "expense");
-  const sum = (xs: { budget: number; actual: number }[]) =>
-    xs.reduce((t, x) => ({ budget: t.budget + x.budget, actual: t.actual + x.actual }), { budget: 0, actual: 0 });
+  const sum = (xs: { budget: number; forecast: number; actual: number }[]) =>
+    xs.reduce(
+      (t, x) => ({ budget: t.budget + x.budget, forecast: t.forecast + x.forecast, actual: t.actual + x.actual }),
+      { budget: 0, forecast: 0, actual: 0 },
+    );
   const rev = sum(income);
   const cost = sum(expense);
   const resultBudget = contribution(rev.budget + cost.budget);
@@ -99,10 +95,11 @@ export default async function PmPage({ searchParams }: { searchParams: Promise<{
     </td>
   );
 
+  const cols = hasForecast ? 6 : 4;
   const section = (label: string, xs: typeof rows) => (
     <>
       <tr>
-        <td colSpan={4} className="pt-3 text-[10px] font-semibold uppercase tracking-wide" style={{ color: "var(--muted)" }}>
+        <td colSpan={cols} className="pt-3 text-[10px] font-semibold uppercase tracking-wide" style={{ color: "var(--muted)" }}>
           {label}
         </td>
       </tr>
@@ -114,8 +111,10 @@ export default async function PmPage({ searchParams }: { searchParams: Promise<{
             </Link>
           </td>
           <td className="py-1.5 text-right tabular-nums">{money(contribution(r.budget))}</td>
+          {hasForecast && <td className="py-1.5 text-right tabular-nums">{money(contribution(r.forecast))}</td>}
           <td className="py-1.5 text-right tabular-nums">{money(contribution(r.actual))}</td>
-          <VarCell varMinor={r.varMinor} budgetMinor={r.budget} />
+          <VarCell varMinor={r.varBudgMinor} budgetMinor={r.budget} />
+          {hasForecast && <VarCell varMinor={r.varFcstMinor} budgetMinor={r.forecast} />}
         </tr>
       ))}
     </>
@@ -127,23 +126,11 @@ export default async function PmPage({ searchParams }: { searchParams: Promise<{
         title="Performance"
         context={
           <>
-            Actuals against <span className="font-medium">{v.budget.label}</span> ({v.budget.code})
-            {vsForecast ? " — the forecast you adopted." : " — built from the planning drivers."}{" "}
-            Window: {windowLabel}. Compare vs{" "}
-            <Link href={`/pm${lens ? `?lens=${encodeURIComponent(lens)}` : ""}`} className={vsForecast ? "underline" : "font-semibold"} style={{ color: "var(--accent)" }}>
-              budget
-            </Link>{" "}
-            ·{" "}
-            <Link
-              href={`/pm?vs=forecast${lens ? `&lens=${encodeURIComponent(lens)}` : ""}`}
-              className={vsForecast ? "font-semibold" : "underline"}
-              style={{ color: "var(--accent)" }}
-            >
-              forecast
-            </Link>{" "}
-            ·{" "}
+            Actuals against the budget ({v.budget.code})
+            {v.forecast ? ` and the adopted forecast (${v.forecast.code})` : ""} — each variance says which it
+            measures. Window: {windowLabel}.{" "}
             <Link href="/pm/forecast" className="underline" style={{ color: "var(--accent)" }}>
-              manage versions →
+              Manage budget &amp; forecasts →
             </Link>
           </>
         }
@@ -175,9 +162,9 @@ export default async function PmPage({ searchParams }: { searchParams: Promise<{
           hint={`budget ${moneyCompact(resultBudget)} · ${resultActual >= resultBudget ? "+" : "−"}${moneyCompact(Math.abs(resultActual - resultBudget))}`}
         />
         <Kpi
-          label={vsForecast ? "Comparing against" : "Budget"}
-          value={v.budget.code}
-          hint={vsForecast ? "the adopted forecast — manage on /pm/forecast" : "driver-based — drafts & adoption on /pm/forecast"}
+          label="Comparing against"
+          value={v.forecast ? `${v.budget.code} + ${v.forecast.code}` : v.budget.code}
+          hint={v.forecast ? "budget and adopted forecast, side by side" : "the budget — adopt a forecast to compare both"}
           href="/pm/forecast"
         />
       </section>
@@ -188,8 +175,10 @@ export default async function PmPage({ searchParams }: { searchParams: Promise<{
             <tr style={{ color: "var(--muted)" }}>
               <th className="py-1.5 text-left text-[10px] uppercase tracking-wide">Account</th>
               <th className="py-1.5 text-right text-[10px] uppercase tracking-wide">Budget</th>
+              {hasForecast && <th className="py-1.5 text-right text-[10px] uppercase tracking-wide">Forecast</th>}
               <th className="py-1.5 text-right text-[10px] uppercase tracking-wide">Actual</th>
-              <th className="py-1.5 text-right text-[10px] uppercase tracking-wide">Variance (fav +)</th>
+              <th className="py-1.5 text-right text-[10px] uppercase tracking-wide">Act vs budg (fav +)</th>
+              {hasForecast && <th className="py-1.5 text-right text-[10px] uppercase tracking-wide">Act vs fcast (fav +)</th>}
             </tr>
           </thead>
           <tbody>
@@ -198,14 +187,21 @@ export default async function PmPage({ searchParams }: { searchParams: Promise<{
             <tr className="border-t-2 font-semibold" style={{ borderColor: "var(--border)" }}>
               <td className="py-2">Result</td>
               <td className="py-2 text-right tabular-nums">{money(resultBudget)}</td>
+              {hasForecast && <td className="py-2 text-right tabular-nums">{money(contribution(rev.forecast + cost.forecast))}</td>}
               <td className="py-2 text-right tabular-nums">{money(resultActual)}</td>
               <VarCell varMinor={resultActual - resultBudget} budgetMinor={rev.budget + cost.budget} />
+              {hasForecast && (
+                <VarCell
+                  varMinor={resultActual - contribution(rev.forecast + cost.forecast)}
+                  budgetMinor={rev.forecast + cost.forecast}
+                />
+              )}
             </tr>
           </tbody>
         </table>
         <p className="mt-3 text-xs" style={{ color: "var(--muted)" }}>
-          Variance is favourable-positive: revenue above budget and costs below budget both read green. Every account
-          drills to its ledger.
+          Variance is favourable-positive: revenue above plan and costs below plan both read green. Every account
+          drills to its ledger.{hasForecast ? " Months the rolling forecast already carries as actuals show no actual-vs-forecast variance — the forecast columns earn their keep as new months post." : ""}
         </p>
       </section>
     </main>
