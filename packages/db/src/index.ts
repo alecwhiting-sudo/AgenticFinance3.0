@@ -2,3 +2,4 @@ export * from "./schema.js";
 export { createDb, schema, type Db } from "./client.js";
 export { seedCore } from "./seed.js";
 export { runMigrations } from "./runMigrations.js";
+export { buildBudgetLines, type DriverAssumptions, type PlanLineInput } from "./epm.js";

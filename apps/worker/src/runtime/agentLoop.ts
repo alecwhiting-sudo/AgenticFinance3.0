@@ -1262,6 +1262,54 @@ function addDays(iso: string, days: number): string {
  * measurements alone — a failed suite, a dropped never-do line or any change
  * on a fraud-risk code means hold; a clean measured run means promote; a
  * clean but unmeasured draft is labelled "predicted, not measured". */
+/** Keyless forecast preparation (plans/PM.md M3): propose the mechanical
+ * rolling forecast via epm.plan.save with commentary grounded in the facts
+ * pack's measured run-rates. Drivers stay unchanged — moving an assumption
+ * is judgement, and judgement without a model is exactly what we refuse to
+ * fake. The draft is still real: the service builds it deterministically. */
+async function forecastPrepFallback(
+  resolved: ResolvedRelease,
+  runId: string,
+  payload: Record<string, unknown>,
+  steps: TranscriptStep[],
+): Promise<LoopResult> {
+  const asOf = String(payload.asOf ?? "");
+  const facts = (payload.facts ?? {}) as {
+    lastPosted?: string;
+    runRateWindow?: string[];
+    runRates?: Record<string, number>;
+    ytd?: Record<string, { budgetMinor: number; actualMinor: number }>;
+  };
+  if (!/^\d{4}-\d{2}$/.test(asOf))
+    return { outcome: "escalated", summary: "Forecast task carries no as-of month — nothing to prepare." };
+
+  const rates = Object.entries(facts.runRates ?? {});
+  const notable = rates
+    .map(([code, f]) => ({ code, f, dev: Math.abs(f - 1) }))
+    .sort((a, b) => b.dev - a.dev)
+    .slice(0, 3)
+    .filter((r) => r.dev >= 0.05);
+  const gbp = (m: number) => `£${(Math.abs(m) / 100).toLocaleString("en-GB", { minimumFractionDigits: 2 })}`;
+  const ytdLines = Object.entries(facts.ytd ?? {})
+    .filter(([code]) => notable.some((n) => n.code === code))
+    .map(([code, t]) => `${code} YTD actual ${gbp(t.actualMinor)} vs budget ${gbp(t.budgetMinor)}`);
+
+  const commentary =
+    `Rolling forecast as of ${asOf}: months through ${facts.lastPosted ?? asOf} are posted actuals; later months price the budget at each account's measured run-rate (window: ${(facts.runRateWindow ?? []).join(", ") || "last posted months"}). ` +
+    (notable.length > 0
+      ? `Notable run-rates: ${notable.map((n) => `${n.code} at ${n.f.toFixed(2)}× budget`).join("; ")}. ${ytdLines.join("; ")}${ytdLines.length ? ". " : ""}`
+      : "All accounts are running close to budget. ") +
+    `Planning drivers left unchanged: a sustained deviation, not one window, should move an assumption. The draft awaits your adoption.`;
+
+  const proposal = await proposeCommand(runId, 1, "epm.plan.save", { asOf, driverDeltas: [], commentary }, steps);
+  if (!proposal.ok)
+    return { outcome: "failed", summary: `epm.plan.save was rejected: ${JSON.stringify(proposal.data).slice(0, 300)}` };
+  return {
+    outcome: "completed",
+    summary: `Rolling forecast FC-${asOf} drafted: actuals to date, then budget at measured run-rates${notable.length ? ` (${notable.map((n) => `${n.code} ${n.f.toFixed(2)}×`).join(", ")})` : ""}. Drivers unchanged; adoption is yours on the Forecast page.`,
+  };
+}
+
 async function releaseReviewFallback(
   resolved: ResolvedRelease,
   runId: string,
@@ -1444,6 +1492,9 @@ async function deterministicHandler(
   }
   if (taskType === "release.review" || (taskType === "eval.case" && typeof payload.reviewId === "string")) {
     return releaseReviewFallback(resolved, runId, payload, steps);
+  }
+  if (taskType === "pm.forecast" || (taskType === "eval.case" && typeof payload.asOf === "string")) {
+    return forecastPrepFallback(resolved, runId, payload, steps);
   }
   if (taskType === "hello.greet" || taskType === "eval.case") {
     const topic = String(payload.topic ?? "the business");

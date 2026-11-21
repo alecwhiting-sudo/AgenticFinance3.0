@@ -92,6 +92,26 @@ const LIVE_SELECTORS: Record<string, (db: Db) => Promise<LiveResolution>> = {
       note: `live record: ${inv.supplierInvoiceNumber} (${inv.exceptionCode})`,
     };
   },
+  /** The rolling-forecast window (plans/PM.md M3): latest posted month +
+   * the measured facts pack, exactly as /pm/forecast/prepare queues it. */
+  forecast_prep_window: async (db) => {
+    const [latest] = (
+      await db.execute(sql`select max(period_code) as p from erp.journal where book <> 'test'`)
+    ).rows as { p: string | null }[];
+    if (!latest?.p) return null;
+    const { assembleForecastFacts } = await import("./pm.js");
+    const facts = await assembleForecastFacts(db, latest.p).catch(() => null);
+    if (!facts) return null; // no active budget yet — skip, don't fail
+    return {
+      input: {
+        asOf: latest.p,
+        facts,
+        objective:
+          "Prepare the rolling forecast as of this month from the facts pack: adjust DRIVERS only where the measured run-rates justify it (one written rationale per change, citing figures), propose exactly one epm.plan.save with commentary. The result is a draft — never attempt to activate it.",
+      },
+      note: `live window: ${latest.p}`,
+    };
+  },
   /** A board pack for the latest COMPLETE month with P&L activity — the
    * packId is synthetic; the gateway's test-book path (D16) creates the row
    * on save, so live books stay untouched. */

@@ -89,6 +89,16 @@ async function executeCommand(
       });
       return { sent: true, invoiceNumber: inv.number };
     }
+    case "epm.plan.save": {
+      const p = params as { asOf: string; driverDeltas: { driver: string; to: number; rationale: string }[]; commentary: string };
+      const bookCtx = await import("../lib/bookContext.js");
+      // eval runs grade the command row; the plan register stays real
+      if (bookCtx.currentBook() === bookCtx.TEST_BOOK)
+        return { saved: true, skipped: "test book — plan versions untouched", asOf: p.asOf };
+      const { saveAgentForecast } = await import("../services/pm.js");
+      const r = await saveAgentForecast(db, p, actor);
+      return { saved: true, code: r.code, versionId: r.versionId, draft: true };
+    }
     case "report.commentary.save": {
       const p = params as { periodCode: string; text: string };
       const { reportCommentary } = await import("@af/db");
@@ -279,10 +289,15 @@ export function commandRoutes(app: FastifyInstance): void {
         // Test-book display-only case commands stay OFF the real case
         // timeline: an eval or shadow run's options/notes are graded from
         // the command row itself, and a replay must never spam live cases.
+        // attribute the execution to the proposing agent, not the machinery
+        const agentRow = run.agentId
+          ? await db.query.agent.findFirst({ where: (t) => eq(t.id, run.agentId!) })
+          : null;
+        const actor = agentRow ? `${agentRow.slug} (agent)` : "standing-authority";
         const result =
           book === TEST_BOOK && displayOnly
             ? { skipped: "test book — real case timeline untouched" }
-            : await runInBook(book, () => executeCommand(body.type, params));
+            : await runInBook(book, () => executeCommand(body.type, params, actor));
         await db
           .update(command)
           .set({ status: "executed", result })
