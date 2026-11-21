@@ -2,7 +2,8 @@ import type { FastifyInstance } from "fastify";
 import { sql } from "drizzle-orm";
 import { requireDb } from "../lib/db.js";
 import { emitActivity } from "../lib/activity.js";
-import { activatePlanVersion, buildMechanicalForecast } from "../services/pm.js";
+import { activatePlanVersion, assembleForecastFacts, buildMechanicalForecast } from "../services/pm.js";
+import { workItem } from "@af/db";
 
 /** Performance Management (plans/PM.md M1): actuals vs the ACTIVE budget.
  * Plans live in epm and are never journals; variance is a query joining
@@ -105,6 +106,50 @@ export function pmRoutes(app: FastifyInstance): void {
         summary: `${r.version.code} drafted (mechanical): actuals to date + budget × run-rate, ${r.lines} lines`,
       });
       return { version: r.version, lines: r.lines, factors: r.factors };
+    } catch (e) {
+      const err = e as Error & { statusCode?: number };
+      return reply.code(err.statusCode ?? 500).send({ error: err.message });
+    }
+  });
+
+  /** Ask the Forecast Preparation Agent for a draft (plans/PM.md M3): the
+   * API assembles the measured facts pack (run-rates, YTD vs budget, the
+   * active drivers) and queues the agent, which proposes epm.plan.save —
+   * a DRAFT with driver changes reasoned one by one. Adoption stays human. */
+  app.post<{ Body: { asOf?: string } }>("/pm/forecast/prepare", async (req, reply) => {
+    const db = requireDb();
+    const agentRow = await db.query.agent.findFirst({ where: (t, { eq }) => eq(t.slug, "forecast-prep") });
+    if (!agentRow) return reply.code(409).send({ error: "forecast-prep agent not seeded yet — redeploy first" });
+    const [latest] = (
+      await db.execute(sql`select max(period_code) as p from erp.journal where book <> 'test'`)
+    ).rows as { p: string | null }[];
+    const asOf =
+      req.body?.asOf && /^\d{4}-\d{2}$/.test(req.body.asOf) ? req.body.asOf : (latest?.p ?? new Date().toISOString().slice(0, 7));
+    try {
+      const facts = await assembleForecastFacts(db, asOf);
+      const [wi] = await db
+        .insert(workItem)
+        .values({
+          type: "pm.forecast",
+          agentId: agentRow.id,
+          payload: {
+            asOf,
+            facts,
+            objective:
+              "Prepare the rolling forecast as of this month from the facts pack: start from the mechanical baseline, adjust DRIVERS only where the measured run-rates and YTD variances justify it (one written rationale per change, citing the figures), and propose exactly one epm.plan.save with your commentary. The result is a draft — a human adopts it; never attempt to activate.",
+          },
+          priority: 4,
+        })
+        .returning();
+      await emitActivity({
+        actorType: "human",
+        actorId: "workbench",
+        verb: "requested_forecast",
+        objectType: "work_item",
+        objectId: wi!.id,
+        summary: `Forecast Preparation Agent asked to prepare the rolling forecast as of ${asOf}`,
+      });
+      return { workItemId: wi!.id, asOf };
     } catch (e) {
       const err = e as Error & { statusCode?: number };
       return reply.code(err.statusCode ?? 500).send({ error: err.message });

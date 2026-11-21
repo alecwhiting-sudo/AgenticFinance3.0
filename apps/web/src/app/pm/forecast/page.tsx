@@ -63,6 +63,30 @@ export default function ForecastPage() {
     await load();
   };
 
+  // Ask the Forecast Preparation Agent: it reads the measured facts pack,
+  // adjusts drivers only with a written reason, and its draft lands in the
+  // version list below (poll briefly while it works).
+  const prepare = async () => {
+    setBusy(true);
+    setMsg(null);
+    try {
+      const res = await fetch(`${apiUrl}/pm/forecast/prepare`, { method: "POST", headers: { "content-type": "application/json" }, body: "{}" });
+      const d = (await res.json()) as { asOf?: string; error?: string };
+      setMsg(res.ok ? `The Forecast Preparation Agent is on it (as of ${d.asOf}) — its draft lands below in a few seconds, with its reasoning in the notes.` : (d.error ?? "failed"));
+      if (res.ok) {
+        let tries = 0;
+        const t = setInterval(() => {
+          void load();
+          if (++tries >= 10) clearInterval(t);
+        }, 3000);
+      }
+    } catch {
+      setMsg(`Cannot reach the API at ${apiUrl}.`);
+    }
+    setBusy(false);
+    await load();
+  };
+
   const adopt = async (v: Version) => {
     const ok = await dialog.confirm({
       title: `Adopt ${v.code} as the active forecast?`,
@@ -114,14 +138,24 @@ export default function ForecastPage() {
             </Link>
           </p>
         </div>
-        <button
-          disabled={busy}
-          onClick={draft}
-          className="rounded-lg px-3 py-1.5 text-sm font-medium text-white disabled:opacity-40"
-          style={{ background: "var(--accent)" }}
-        >
-          {busy ? "…" : "Draft rolling forecast"}
-        </button>
+        <span className="flex items-center gap-2">
+          <button
+            disabled={busy}
+            onClick={prepare}
+            className="rounded-lg px-3 py-1.5 text-sm font-medium text-white disabled:opacity-40"
+            style={{ background: "var(--accent)" }}
+          >
+            {busy ? "…" : "Ask the agent to prepare it"}
+          </button>
+          <button
+            disabled={busy}
+            onClick={draft}
+            className="rounded-lg border px-3 py-1.5 text-sm font-medium disabled:opacity-40"
+            style={{ borderColor: "var(--accent)", color: "var(--accent)" }}
+          >
+            Mechanical draft only
+          </button>
+        </span>
       </section>
       {msg && <p className="text-sm" style={{ color: "var(--muted)" }}>{msg}</p>}
 

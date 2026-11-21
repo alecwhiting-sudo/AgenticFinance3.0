@@ -245,6 +245,28 @@ export const commandDefs = {
       caveats: z.array(z.string().min(3).max(300)).max(8).default([]),
     }),
   },
+  /** Save a DRAFT forecast version (plans/PM.md M3). The agent moves named
+   * DRIVERS with a written reason each — never bare line amounts — and the
+   * service recomputes the plan deterministically. Drafts change nothing
+   * downstream; adoption is a human-only endpoint with no command type, so
+   * no approval gate here. */
+  "epm.plan.save": {
+    requiresApproval: false,
+    params: z.object({
+      asOf: z.string().regex(/^\d{4}-\d{2}$/),
+      driverDeltas: z
+        .array(
+          z.object({
+            driver: z.string().min(2).max(60),
+            to: z.number(),
+            rationale: z.string().min(10).max(500),
+          }),
+        )
+        .max(6)
+        .default([]),
+      commentary: z.string().min(20).max(3000),
+    }),
+  },
   /** Resolve an invoice exception — ALWAYS a human approval (plans/P2P.md §6). */
   "ap.invoice.resolve": {
     requiresApproval: true,
