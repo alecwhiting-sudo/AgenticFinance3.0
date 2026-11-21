@@ -19,7 +19,7 @@ _Last updated: 2026-10-19_
 | 3 — R2R | ✅ built minus deferral | bank rec + Reconciliation Agent, accruals/prepayments engine, recurring journals, P&L/BS, month-end dashboard, Close Agent commentary. **Deferred:** LRS lock → certify → supersede (D13 step 3) |
 | 4 — O2C | ✅ built | AR invoices through the pipe, cash application + agent, collections agent + dunning approval |
 | 4c — Analytics + Analyst | ✅ built | plan: `plans/ANALYTICS.md`. M1 `/analytics` (flux waterfall, P&L trend, AP/AR aging, counterparty, cash — all drill, all have table views). M2 Analyst Agent + right-hand chat panel (top-bar toggle): answers from the curated views only, cites sources, keyless fallback for set question shapes. Remaining 4c ideas: saved views/dashboard |
-| 5 — Performance Management | 🔶 building | plan: `plans/PM.md`. M1 budget+variance BUILT, M2 rolling forecast + adoption gate BUILT; next M3 Forecast Prep Agent, M4 scenarios |
+| 5 — Performance Management | 🔶 building | plan: `plans/PM.md`. M1-M3 BUILT (budget+variance, rolling forecast + adoption gate, Forecast Prep Agent); next M4 scenarios |
 | 6 — Demo polish | ✅ built | agent staff strip, release pipeline, permissions matrix, decision history, per-agent period cost (D14), admin reset/replay, guided tour (lib/tours.ts), cross-process dashboard `/processes` (2026-11-20) |
 | P — Production | ⬜ stub | deliberately undesigned |
 
@@ -355,9 +355,21 @@ _Last updated: 2026-10-19_
    supersedes the prior active forecast, recorded with name + activity
    event); /pm/forecast page (draft button, version list with adopt,
    active driver panel); /pm compares vs budget OR adopted forecast
-   (?vs=forecast toggle). Next: M3 Forecast Preparation Agent
-   (epm.plan.save, evals, keyless fallback), M4 scenarios + KPI landing
-   + tour step.
+   (?vs=forecast toggle). **M3 BUILT 2026-11-21**: Forecast
+   Preparation Agent (slug forecast-prep, process pm, default tier) —
+   the API assembles a measured facts pack (run-rates, YTD vs budget,
+   active drivers; reviewer pattern) and the agent proposes ONE
+   epm.plan.save: driver deltas with a written rationale each +
+   commentary; the service recomputes the plan deterministically from
+   the adjusted drivers (agents never write line amounts; >50% driver
+   moves rejected as outside forecast authority; adopted versions are
+   immutable — a re-forecast becomes FC-<asOf>.2). Keyless fallback
+   proposes the mechanical baseline with run-rate commentary and
+   leaves drivers alone. 4 eval cases incl. a live selector
+   (forecast_prep_window), 4/4 keyless; invoice-exception 13/13
+   regression green. Standing-authority executions now attributed to
+   the proposing agent ("forecast-prep (agent)"), not the machinery.
+   Next: M4 scenarios + KPI landing + tour step.
 
 ## Day log — 2026-10-04 (for a fast, safe pickup)
 

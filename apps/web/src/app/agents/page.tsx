@@ -24,7 +24,7 @@ const FAMILIES: { key: string; label: string; blurb: string }[] = [
   { key: "p2p", label: "Procure to Pay", blurb: "intake, extraction, exceptions — spend approved once, straight through unless something fires" },
   { key: "o2c", label: "Order to Cash", blurb: "cash application and collections — receipts applied, overdue invoices chased" },
   { key: "r2r", label: "Record to Report", blurb: "reconciliation and the month's story — books complete and explained" },
-  { key: "pm", label: "Performance Management", blurb: "budgets, forecasts and variance — coming with Phase 5" },
+  { key: "pm", label: "Performance Management", blurb: "budgets, forecasts and variance — the rolling forecast prepared from measured run-rates, adopted by a human" },
   { key: "platform", label: "Platform", blurb: "demo and utility agents behind the scenes" },
 ];
 
