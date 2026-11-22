@@ -18,7 +18,7 @@ export const companyOverviewSchema = z.object({
     currency: z.string(),
   }),
   currentPeriod: z
-    .object({ code: z.string(), status: z.enum(["open", "closed"]) })
+    .object({ code: z.string(), status: z.enum(["open", "closed", "locked", "certified"]) })
     .nullable(),
   counts: z.object({
     accounts: z.number(),

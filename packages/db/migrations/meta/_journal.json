@@ -162,6 +162,13 @@
       "when": 1795212959774,
       "tag": "0022_nebulous_sentinel",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1795341835415,
+      "tag": "0023_ambitious_kabuki",
+      "breakpoints": true
     }
   ]
 }

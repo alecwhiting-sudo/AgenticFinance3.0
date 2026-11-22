@@ -128,6 +128,70 @@ export function r2rRoutes(app: FastifyInstance): void {
     return { period, periods, bank, monthEnd, openExceptions, failedEvents };
   });
 
+  /** ---- LRS close: lock / certify / restate (D13 step 3) ---------------
+   * The close card's one payload: period state, the reconciliation gates,
+   * the snapshot chain, and — for a certified period — proof that the live
+   * ledger still reconciles to the certified snapshot. */
+  app.get<{ Params: { code: string } }>("/r2r/periods/:code/close", async (req, reply) => {
+    const db = requireDb();
+    if (!/^\d{4}-\d{2}$/.test(req.params.code)) return reply.code(400).send({ error: "period code must be YYYY-MM" });
+    const period = await db.query.fiscalPeriod.findFirst({ where: (t) => eq(t.code, req.params.code) });
+    if (!period) return reply.code(404).send({ error: `no fiscal period ${req.params.code}` });
+    const { closeGates, reconcileToSnapshot } = await import("../services/lrs.js");
+    const gates = await closeGates(db, req.params.code);
+    const snapshots = await db.query.lrsSnapshot.findMany({
+      where: (t) => eq(t.periodCode, req.params.code),
+      orderBy: (t) => desc(t.version),
+    });
+    const certified = snapshots.find((s) => s.status === "certified" || s.status === "locked");
+    const check = certified ? await reconcileToSnapshot(db, certified.id) : null;
+    return { period: { code: period.code, status: period.status }, gates, snapshots, certifiedCheck: check };
+  });
+
+  app.post<{ Params: { code: string }; Body: { lockedBy?: string; acceptWarnings?: boolean } }>(
+    "/r2r/periods/:code/lock",
+    async (req, reply) => {
+      const db = requireDb();
+      const { lockPeriod } = await import("../services/lrs.js");
+      try {
+        return await lockPeriod(db, req.params.code, req.body?.lockedBy || "workbench-user", !!req.body?.acceptWarnings);
+      } catch (e) {
+        const err = e as Error & { statusCode?: number; gates?: unknown };
+        return reply.code(err.statusCode ?? 500).send({ error: err.message, gates: err.gates });
+      }
+    },
+  );
+
+  app.post<{ Params: { code: string }; Body: { certifiedBy?: string } }>(
+    "/r2r/periods/:code/certify",
+    async (req, reply) => {
+      const db = requireDb();
+      const { certifyPeriod } = await import("../services/lrs.js");
+      try {
+        return await certifyPeriod(db, req.params.code, req.body?.certifiedBy || "workbench-user");
+      } catch (e) {
+        const err = e as Error & { statusCode?: number };
+        return reply.code(err.statusCode ?? 500).send({ error: err.message });
+      }
+    },
+  );
+
+  app.post<{ Params: { code: string }; Body: { reason?: string; requestedBy?: string } }>(
+    "/r2r/periods/:code/restate",
+    async (req, reply) => {
+      const db = requireDb();
+      if (!req.body?.reason?.trim() || req.body.reason.trim().length < 10)
+        return reply.code(400).send({ error: "a substantive reason is required — restatements carry their why on the record" });
+      const { restatePeriod } = await import("../services/lrs.js");
+      try {
+        return await restatePeriod(db, req.params.code, req.body.reason.trim(), req.body?.requestedBy || "workbench-user");
+      } catch (e) {
+        const err = e as Error & { statusCode?: number };
+        return reply.code(err.statusCode ?? 500).send({ error: err.message });
+      }
+    },
+  );
+
   /** ---- Board packs (plans/DATASET_V2.md PR-G) ---------------------------
    * The decision-ready finance pack for a chosen period-lens window. A
    * draft request creates a row (status 'drafting') and queues the Board

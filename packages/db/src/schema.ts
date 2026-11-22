@@ -2,6 +2,7 @@ import {
   bigserial,
   boolean,
   date,
+  bigint,
   integer,
   jsonb,
   pgSchema,
@@ -23,7 +24,7 @@ export const company = core.table("company", {
     .defaultNow(),
 });
 
-export const periodStatus = core.enum("period_status", ["open", "closed"]);
+export const periodStatus = core.enum("period_status", ["open", "closed", "locked", "certified"]);
 
 export const fiscalPeriod = core.table(
   "fiscal_period",
@@ -841,3 +842,33 @@ export const planLine = epm.table("plan_line", {
   amountMinor: integer("amount_minor").notNull(),
   note: text("note"),
 }, (t) => [unique("plan_line_unique").on(t.planVersionId, t.accountCode, t.periodCode)]);
+
+/* ================= LRS — lock / certify / supersede (D13 step 3) =========
+ * Close is a physical snapshot, never a recalculation: locking a period
+ * copies its per-account movements and closing balances into an immutable
+ * snapshot; certifying freezes it; a restatement opens the period again
+ * and the next lock supersedes the old snapshot — the chain is kept. */
+
+export const lrsSnapshot = fdp.table("lrs_snapshot", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  periodCode: text("period_code").notNull(), // YYYY-MM
+  version: integer("version").notNull().default(1),
+  status: text("status").notNull().default("locked"), // locked | certified | superseded
+  /** {journals, events, resultMinor} at lock time — the headline controls */
+  summary: jsonb("summary").$type<Record<string, unknown>>().notNull().default({}),
+  lockedBy: text("locked_by").notNull(),
+  lockedAt: timestamp("locked_at", { withTimezone: true }).notNull().defaultNow(),
+  certifiedBy: text("certified_by"),
+  certifiedAt: timestamp("certified_at", { withTimezone: true }),
+  supersededAt: timestamp("superseded_at", { withTimezone: true }),
+  supersededReason: text("superseded_reason"),
+}, (t) => [unique("lrs_snapshot_period_version").on(t.periodCode, t.version)]);
+
+export const lrsSnapshotLine = fdp.table("lrs_snapshot_line", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  snapshotId: uuid("snapshot_id").notNull().references(() => lrsSnapshot.id),
+  accountCode: text("account_code").notNull(),
+  /** this period's movement and the cumulative balance through period end */
+  movementMinor: bigint("movement_minor", { mode: "number" }).notNull(),
+  closingMinor: bigint("closing_minor", { mode: "number" }).notNull(),
+}, (t) => [unique("lrs_snapshot_line_unique").on(t.snapshotId, t.accountCode)]);

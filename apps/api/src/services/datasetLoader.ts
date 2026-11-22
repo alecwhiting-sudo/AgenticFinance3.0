@@ -342,6 +342,11 @@ export async function truncateTransactions(db: Db): Promise<void> {
   // mail room messages hang off cases and invoices — both wiped here
   await db.execute(sql`delete from evidence.mail_message`);
   await db.execute(sql`delete from evidence."case"`);
+  // a demo reset starts the world over: certified history goes with it and
+  // locked periods reopen so the loader can post into them again
+  await db.execute(sql`delete from fdp.lrs_snapshot_line`);
+  await db.execute(sql`delete from fdp.lrs_snapshot`);
+  await db.execute(sql`update core.fiscal_period set status = 'open' where status in ('locked', 'certified')`);
 }
 
 export async function loadDemoDataset(db: Db, opts: LoadOptions = {}): Promise<LoadResult> {

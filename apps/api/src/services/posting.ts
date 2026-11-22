@@ -33,7 +33,10 @@ async function assertPeriodOpen(db: Db, journalDate: string): Promise<string> {
     where: (t, { eq: e }) => e(t.code, periodCode),
   });
   if (!period) throw new Error(`no fiscal period for ${periodCode}`);
-  if (period.status !== "open") throw new Error(`period ${periodCode} is closed`);
+  // the LRS lock is physical (D13): a locked or certified period refuses
+  // postings outright — corrections to it are restatements, never edits
+  if (period.status !== "open")
+    throw new Error(`period ${periodCode} is ${period.status} — restate it from the month-end dashboard before posting`);
   return periodCode;
 }
 

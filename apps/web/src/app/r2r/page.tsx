@@ -5,6 +5,7 @@ import { money } from "@/lib/format";
 import { ApiDownBanner } from "@/components/Chrome";
 import { Badge, Card, SectionTitle } from "@/components/ui";
 import { RunMonthEndButton, ReconcileButton } from "@/components/R2RActions";
+import CloseControls from "@/components/CloseControls";
 
 export const metadata: Metadata = { title: "R2R" };
 
@@ -131,6 +132,11 @@ export default async function R2RPage({
           )}
         </Card>
       </section>
+
+      <Card>
+        <SectionTitle>Close &amp; certify — {s.period}</SectionTitle>
+        <CloseControls period={s.period} />
+      </Card>
 
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Link href="/p2p/invoices?status=exception">
