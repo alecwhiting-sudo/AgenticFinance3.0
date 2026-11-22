@@ -8,6 +8,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { PUBLIC_API_URL as apiUrl } from "@/lib/api";
+import { money } from "@/lib/format";
 import { useDialog } from "@/components/Dialog";
 
 type Version = {
@@ -72,6 +73,7 @@ type ScenarioResult = {
   budgetFY: { revenueMinor: number; resultMinor: number };
   scenarioLanding: { revenueMinor: number; resultMinor: number };
   forecastLanding: { code: string; revenueMinor: number; resultMinor: number } | null;
+  accounts: { code: string; name: string; type: string; budgetMinor: number; forecastMinor: number | null; scenarioMinor: number }[];
   savedCode?: string;
 };
 
@@ -208,6 +210,44 @@ function WhatIf({ drivers, onSaved }: { drivers: Driver; onSaved: () => Promise<
           </div>
         </div>
       )}
+      {result && result.accounts.length > 0 && (
+        <table className="mt-3 w-full text-xs">
+          <thead>
+            <tr style={{ color: "var(--muted)" }}>
+              <th className="py-1 text-left text-[10px] uppercase tracking-wide">Account (full year)</th>
+              <th className="py-1 text-right text-[10px] uppercase tracking-wide">Budget</th>
+              {result.forecastLanding && <th className="py-1 text-right text-[10px] uppercase tracking-wide">{result.forecastLanding.code}</th>}
+              <th className="py-1 text-right text-[10px] uppercase tracking-wide">This scenario</th>
+              <th className="py-1 text-right text-[10px] uppercase tracking-wide">Scen vs budg (fav +)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(["income", "expense"] as const).map((kind) =>
+              result.accounts
+                .filter((a) => a.type === kind)
+                .map((a) => {
+                  const flip = (m: number) => -m;
+                  const varMinor = flip(a.scenarioMinor) - flip(a.budgetMinor);
+                  return (
+                    <tr key={a.code} className="border-t" style={{ borderColor: "var(--border)" }}>
+                      <td className="py-1">
+                        <span className="font-mono" style={{ color: "var(--muted)" }}>{a.code}</span> {a.name}
+                      </td>
+                      <td className="py-1 text-right tabular-nums">{money(flip(a.budgetMinor))}</td>
+                      {result.forecastLanding && (
+                        <td className="py-1 text-right tabular-nums">{a.forecastMinor != null ? money(flip(a.forecastMinor)) : "—"}</td>
+                      )}
+                      <td className="py-1 text-right tabular-nums">{money(flip(a.scenarioMinor))}</td>
+                      <td className="py-1 text-right tabular-nums" style={{ color: varMinor === 0 ? "var(--muted)" : varMinor > 0 ? "var(--good)" : "var(--bad)" }}>
+                        {varMinor >= 0 ? "+" : "−"}{money(Math.abs(varMinor))}
+                      </td>
+                    </tr>
+                  );
+                }),
+            )}
+          </tbody>
+        </table>
+      )}
     </section>
   );
 }
@@ -275,9 +315,12 @@ export default function ForecastPage() {
 
   const adopt = async (v: Version) => {
     const ok = await dialog.confirm({
-      title: `Adopt ${v.code} as the active forecast?`,
-      body: "The workbench tracks actuals against the active forecast; any previously active forecast is superseded. Adoption is recorded with your name — agents can only ever draft.",
-      confirmLabel: "Adopt forecast",
+      title: `Adopt ${v.code} as the working ${v.kind === "scenario" ? "projection" : "forecast"}?`,
+      body:
+        v.kind === "scenario"
+          ? "The scenario becomes the projection the workbench tracks actuals against — the previously adopted forecast or scenario is superseded. Adoption is recorded with your name."
+          : "The workbench tracks actuals against the adopted forecast; the previously adopted forecast or scenario is superseded. Adoption is recorded with your name — agents can only ever draft.",
+      confirmLabel: v.kind === "scenario" ? "Adopt scenario" : "Adopt forecast",
     });
     if (!ok) return;
     setBusy(true);
@@ -365,7 +408,7 @@ export default function ForecastPage() {
                   {v.activatedAt ? ` · adopted ${when(v.activatedAt)} by ${v.activatedBy}` : ""}
                 </div>
               </div>
-              {v.status === "draft" && v.kind === "forecast" && (
+              {v.status === "draft" && v.kind !== "budget" && (
                 <button
                   disabled={busy}
                   onClick={() => adopt(v)}

@@ -5,6 +5,15 @@
 import { eq, sql } from "drizzle-orm";
 import { driverSet, planLine, planVersion, type Db } from "@af/db";
 
+/** The working projection: the adopted forecast OR adopted scenario —
+ * whichever a human last activated. Variance, the landing KPI and the
+ * what-if comparison all read this one. */
+export async function activeProjection(db: Db) {
+  return db.query.planVersion.findFirst({
+    where: (t, { and, eq, inArray }) => and(inArray(t.kind, ["forecast", "scenario"]), eq(t.status, "active")),
+  });
+}
+
 /** Mechanical rolling forecast as of a period: months up to and including
  * the latest POSTED month carry actuals; later months carry budget × a
  * per-account run-rate factor (average actual/budget over the last three
@@ -237,6 +246,7 @@ export async function scenarioPreview(
   budgetFY: { revenueMinor: number; resultMinor: number };
   scenarioLanding: { revenueMinor: number; resultMinor: number };
   forecastLanding: { code: string; revenueMinor: number; resultMinor: number } | null;
+  accounts: { code: string; name: string; type: string; budgetMinor: number; forecastMinor: number | null; scenarioMinor: number }[];
   savedCode?: string;
 }> {
   const [latest] = (
@@ -268,9 +278,9 @@ export async function scenarioPreview(
   const adjustedAt = new Map(adjusted.map((l) => [`${l.accountCode}:${l.periodCode}`, l.amountMinor]));
 
   const months = Array.from({ length: 12 }, (_, i) => `${year}-${String(i + 1).padStart(2, "0")}`);
-  const accounts = [...new Set(budgetLines.map((l) => l.accountCode))];
+  const accountCodes = [...new Set(budgetLines.map((l) => l.accountCode))];
   const landingLines: { accountCode: string; periodCode: string; amountMinor: number; note: string }[] = [];
-  for (const code of accounts) {
+  for (const code of accountCodes) {
     for (const m of months) {
       if (m <= lastPosted) {
         const amt = actualAt.get(`${code}:${m}`) ?? 0;
@@ -294,14 +304,32 @@ export async function scenarioPreview(
 
   const budgetFY = fy(budgetLines);
   const scenarioLanding = fy(landingLines);
-  const activeForecast = await db.query.planVersion.findFirst({
-    where: (t, { and, eq }) => and(eq(t.kind, "forecast"), eq(t.status, "active")),
-  });
+  const activeFc = await activeProjection(db);
   let forecastLanding: { code: string; revenueMinor: number; resultMinor: number } | null = null;
-  if (activeForecast) {
-    const fl = await db.query.planLine.findMany({ where: (t, { eq }) => eq(t.planVersionId, activeForecast.id) });
-    forecastLanding = { code: activeForecast.code, ...fy(fl) };
+  let fcAt = new Map<string, number>();
+  if (activeFc) {
+    const fl = await db.query.planLine.findMany({ where: (t, { eq }) => eq(t.planVersionId, activeFc.id) });
+    forecastLanding = { code: activeFc.code, ...fy(fl) };
+    fcAt = fl.reduce((m, l) => m.set(l.accountCode, (m.get(l.accountCode) ?? 0) + l.amountMinor), new Map<string, number>());
   }
+
+  // the FULL picture, per account: budget FY vs the working projection vs
+  // this scenario — the what-if table shows every line, not three tiles
+  const names = (
+    await db.execute(sql`select code, name, type from erp.account where type in ('income', 'expense') order by code`)
+  ).rows as { code: string; name: string; type: string }[];
+  const budAt = budgetLines.reduce((m, l) => m.set(l.accountCode, (m.get(l.accountCode) ?? 0) + l.amountMinor), new Map<string, number>());
+  const scnAt = landingLines.reduce((m, l) => m.set(l.accountCode, (m.get(l.accountCode) ?? 0) + l.amountMinor), new Map<string, number>());
+  const accounts = names
+    .map((a) => ({
+      code: a.code,
+      name: a.name,
+      type: a.type,
+      budgetMinor: budAt.get(a.code) ?? 0,
+      forecastMinor: activeFc ? (fcAt.get(a.code) ?? 0) : null,
+      scenarioMinor: scnAt.get(a.code) ?? 0,
+    }))
+    .filter((a) => a.budgetMinor !== 0 || a.scenarioMinor !== 0 || (a.forecastMinor ?? 0) !== 0);
 
   let savedCode: string | undefined;
   if (save) {
@@ -342,7 +370,7 @@ export async function scenarioPreview(
       await db.insert(planLine).values(landingLines.map((l) => ({ ...l, planVersionId: pv!.id })));
   }
 
-  return { asOf, changed, budgetFY, scenarioLanding, forecastLanding, savedCode };
+  return { asOf, changed, budgetFY, scenarioLanding, forecastLanding, accounts, savedCode };
 }
 
 /** The human adoption gate (plans/PM.md §5): draft → active, superseding
@@ -357,9 +385,11 @@ export async function activatePlanVersion(
   if (!v) throw Object.assign(new Error("plan version not found"), { statusCode: 404 });
   if (v.kind === "budget") throw Object.assign(new Error("the budget is already governance-seeded — activate forecasts and scenarios"), { statusCode: 409 });
   if (v.status !== "draft") throw Object.assign(new Error(`version is ${v.status}, not draft`), { statusCode: 409 });
+  // one WORKING PROJECTION at a time: adopting a forecast or a scenario
+  // supersedes whichever projection (either kind) was active before
   await db.execute(sql`
     update epm.plan_version set status = 'superseded'
-    where kind = ${v.kind} and status = 'active'
+    where kind in ('forecast', 'scenario') and status = 'active'
   `);
   await db.execute(sql`
     update epm.plan_version set status = 'active', activated_by = ${activatedBy}, activated_at = now()

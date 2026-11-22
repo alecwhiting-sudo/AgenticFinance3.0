@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { sql } from "drizzle-orm";
 import { requireDb } from "../lib/db.js";
 import { emitActivity } from "../lib/activity.js";
-import { activatePlanVersion, assembleForecastFacts, buildMechanicalForecast, scenarioPreview } from "../services/pm.js";
+import { activatePlanVersion, activeProjection, assembleForecastFacts, buildMechanicalForecast, scenarioPreview } from "../services/pm.js";
 import { workItem } from "@af/db";
 
 /** Performance Management (plans/PM.md M1): actuals vs the ACTIVE budget.
@@ -33,9 +33,7 @@ export function pmRoutes(app: FastifyInstance): void {
       where: (t, { and, eq }) => and(eq(t.kind, "budget"), eq(t.status, "active")),
     });
     if (!budget) return reply.code(409).send({ error: "no active budget — seed/deploy first" });
-    const forecast = await db.query.planVersion.findFirst({
-      where: (t, { and, eq }) => and(eq(t.kind, "forecast"), eq(t.status, "active")),
-    });
+    const forecast = await activeProjection(db);
 
     const rows = (
       await db.execute(sql`
@@ -205,9 +203,7 @@ export function pmRoutes(app: FastifyInstance): void {
   /** FY landing from the adopted forecast — the /pm KPI. */
   app.get("/pm/landing", async () => {
     const db = requireDb();
-    const fc = await db.query.planVersion.findFirst({
-      where: (t, { and, eq }) => and(eq(t.kind, "forecast"), eq(t.status, "active")),
-    });
+    const fc = await activeProjection(db);
     if (!fc) return { landing: null };
     const lines = await db.query.planLine.findMany({ where: (t, { eq }) => eq(t.planVersionId, fc.id) });
     let revenue = 0;
