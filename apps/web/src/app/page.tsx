@@ -11,7 +11,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { PUBLIC_API_URL as apiUrl } from "@/lib/api";
 import { moneyCompact } from "@/lib/format";
-import { Card, SectionTitle } from "@/components/ui";
+import { Card, Kpi, SectionTitle } from "@/components/ui";
 import LiveFeed from "@/components/LiveFeed";
 import { mmss, type Pipeline } from "@/components/MissionBoard";
 
@@ -180,20 +180,12 @@ export default function Dashboard() {
         />
       </section>
 
-      {/* motion row — what is happening */}
+      {/* motion row — what is happening (Kpi keeps tiles equal, §4.6) */}
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {[
-          { v: String(k?.motion.invoicesToday ?? 0), l: "invoices processed today", hint: "captured through intake", href: "/p2p/invoices" },
-          { v: straight != null ? `${straight}%` : "—", l: "straight-through rate", hint: "posted with zero touches since approval", href: "/p2p" },
-          { v: String(k?.motion.exceptionsOpen ?? 0), l: "exceptions open", hint: `${k?.motion.casesRaisedToday ?? 0} cases raised today`, href: "/p2p/exceptions" },
-          { v: p ? `$${(p.modelSpend.costCents / 100).toFixed(2)}` : "—", l: "model spend today", hint: p ? `${p.modelSpend.runs} runs · ${(p.modelSpend.tokens / 1000).toFixed(0)}k tokens` : undefined, href: "/test" },
-        ].map((s) => (
-          <Link key={s.l} href={s.href} className="block rounded-xl border p-3 text-center transition-colors hover:border-[var(--accent)]" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
-            <div className="text-xl font-semibold tracking-tight">{s.v}</div>
-            <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>{s.l}</div>
-            {s.hint && <div className="text-[10px]" style={{ color: "var(--muted)" }}>{s.hint}</div>}
-          </Link>
-        ))}
+        <Kpi compact label="invoices processed today" value={k?.motion.invoicesToday ?? 0} hint="captured through intake" href="/p2p/invoices" />
+        <Kpi compact label="straight-through rate" value={straight != null ? `${straight}%` : "—"} hint="posted with zero touches since approval" href="/p2p" />
+        <Kpi compact label="exceptions open" value={k?.motion.exceptionsOpen ?? 0} hint={`${k?.motion.casesRaisedToday ?? 0} cases raised today`} href="/p2p/exceptions" />
+        <Kpi compact label="model spend today" value={p ? `$${(p.modelSpend.costCents / 100).toFixed(2)}` : "—"} hint={p ? `${p.modelSpend.runs} runs · ${(p.modelSpend.tokens / 1000).toFixed(0)}k tokens` : undefined} href="/test" />
       </section>
 
       <section className="grid gap-4 md:grid-cols-5">

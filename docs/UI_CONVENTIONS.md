@@ -567,9 +567,16 @@ Nothing else. A new size is a design decision, not a page decision.
 `Kpi` is the only stat tile: **label** (sentence case, muted, no colon) ·
 **value** (Inter semibold, auto-compact, proportional figures) · optional
 **delta** (signed, vs a named period, coloured by meaning per §4.3) ·
-optional **hint** (one muted line). A Kpi that aggregates something is a
-link to the list that produced it (§1.2). Hand-rolled `div` tiles are a
-defect; pages compose `Kpi` or nothing.
+optional **hint** (one muted line) · optional **tone** (colours the value
+by meaning only — e.g. open fraud holds read bad; never decorative). A Kpi
+that aggregates something is a link to the list that produced it (§1.2).
+Hand-rolled `div` tiles are a defect; pages compose `Kpi` or nothing.
+**Equal heights are the component's job (2026-11-22, Alec):** `Kpi` fills
+its grid cell (`h-full`, centred column), so every tile in a row renders
+the same height however its content wraps — call sites never compensate
+with padding or min-heights, and a page with uneven tiles means a
+hand-rolled tile crept in. (Root cause of the /pm unevenness: the link
+wrapper didn't stretch, fixed in the component once for every page.)
 
 ### 4.5 Buttons (one component)
 

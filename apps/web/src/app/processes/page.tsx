@@ -9,7 +9,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { PUBLIC_API_URL as apiUrl } from "@/lib/api";
 import { moneyCompact } from "@/lib/format";
-import { Card } from "@/components/ui";
+import { Card, Kpi } from "@/components/ui";
 
 type Flow = { n: number; totalMinor: number };
 type Processes = {
@@ -131,6 +131,9 @@ function Funnel({ inv }: { inv: Processes["p2p"]["invoices"] }) {
               />
             </span>
             <span className="w-10 shrink-0 text-right font-mono text-xs tabular-nums">{f.n}</span>
+            <span className="w-16 shrink-0 text-right font-mono text-[10px] tabular-nums" style={{ color: "var(--muted)" }}>
+              {f.n > 0 ? moneyCompact(f.totalMinor) : ""}
+            </span>
           </Link>
         );
       })}
@@ -227,64 +230,45 @@ export default function ProcessesPage() {
 
       {/* controls strip: everything a human owes the machine, plus assurance */}
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-        {[
-          {
-            v: String(c?.approvalsPending ?? 0),
-            l: "approvals pending",
-            hint: "commands agents proposed",
-            href: "/approvals",
-            warn: (c?.approvalsPending ?? 0) > 0,
-          },
-          {
-            v: String(c?.mailDrafts ?? 0),
-            l: "mail drafts to release",
-            hint: "external comms wait for you",
-            href: "/p2p/mail",
-            warn: (c?.mailDrafts ?? 0) > 0,
-          },
-          {
-            v: String(d?.p2p.fraudHolds.n ?? 0),
-            l: "fraud-risk holds",
-            hint: d ? `${moneyCompact(d.p2p.fraudHolds.totalMinor)} held — verbal verification only` : undefined,
-            href: "/p2p/exceptions",
-            bad: (d?.p2p.fraudHolds.n ?? 0) > 0,
-          },
-          {
-            v: c?.straightThroughPct != null ? `${c.straightThroughPct}%` : "—",
-            l: "straight-through rate",
-            hint: "invoices needing zero touches",
-            href: "/p2p",
-          },
-          {
-            v: c ? `${c.agentsGreen}/${c.agentsGraded}` : "—",
-            l: "agent suites green",
-            hint: c && c.agentsActive > c.agentsGraded ? `${c.agentsActive - c.agentsGraded} never graded` : "latest eval per agent",
-            href: "/agents",
-            warn: c != null && c.agentsGreen < c.agentsGraded,
-          },
-        ].map((s) => (
-          <Link
-            key={s.l}
-            href={s.href}
-            className="block rounded-xl border p-3 text-center transition-colors hover:border-[var(--accent)]"
-            style={{ borderColor: "var(--border)", background: "var(--card)" }}
-          >
-            <div
-              className="text-xl font-semibold tracking-tight"
-              style={s.bad ? { color: "var(--bad)" } : s.warn ? { color: "var(--warn)" } : undefined}
-            >
-              {s.v}
-            </div>
-            <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>
-              {s.l}
-            </div>
-            {s.hint && (
-              <div className="text-[10px]" style={{ color: "var(--muted)" }}>
-                {s.hint}
-              </div>
-            )}
-          </Link>
-        ))}
+        <Kpi
+          compact
+          label="approvals pending"
+          value={c?.approvalsPending ?? 0}
+          hint="commands agents proposed"
+          href="/approvals"
+          tone={(c?.approvalsPending ?? 0) > 0 ? "warn" : undefined}
+        />
+        <Kpi
+          compact
+          label="mail drafts to release"
+          value={c?.mailDrafts ?? 0}
+          hint="external comms wait for you"
+          href="/p2p/mail"
+          tone={(c?.mailDrafts ?? 0) > 0 ? "warn" : undefined}
+        />
+        <Kpi
+          compact
+          label="fraud-risk holds"
+          value={d?.p2p.fraudHolds.n ?? 0}
+          hint={d ? `${moneyCompact(d.p2p.fraudHolds.totalMinor)} held — verbal verification only` : undefined}
+          href="/p2p/exceptions"
+          tone={(d?.p2p.fraudHolds.n ?? 0) > 0 ? "bad" : undefined}
+        />
+        <Kpi
+          compact
+          label="straight-through rate"
+          value={c?.straightThroughPct != null ? `${c.straightThroughPct}%` : "—"}
+          hint="invoices needing zero touches"
+          href="/p2p"
+        />
+        <Kpi
+          compact
+          label="agent suites green"
+          value={c ? `${c.agentsGreen}/${c.agentsGraded}` : "—"}
+          hint={c && c.agentsActive > c.agentsGraded ? `${c.agentsActive - c.agentsGraded} never graded` : "latest eval per agent"}
+          href="/agents"
+          tone={c != null && c.agentsGreen < c.agentsGraded ? "warn" : undefined}
+        />
       </section>
 
       {/* the three lanes */}

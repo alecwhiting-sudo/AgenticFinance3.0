@@ -53,6 +53,7 @@ export function Kpi({
   hint,
   href,
   compact = false,
+  tone,
 }: {
   label: string;
   value: string | number;
@@ -61,6 +62,9 @@ export function Kpi({
   hint?: string;
   href?: string;
   compact?: boolean;
+  /** colours the VALUE by meaning (UI_CONVENTIONS §4.1) — e.g. open fraud
+   * holds read bad; never decorative colour */
+  tone?: "good" | "warn" | "bad";
 }) {
   const deltaColor =
     delta == null || delta === 0
@@ -68,12 +72,18 @@ export function Kpi({
       : (delta > 0) === (goodWhen === "up")
         ? "var(--good)"
         : "var(--bad)";
+  const toneColor = tone === "good" ? "var(--good)" : tone === "warn" ? "var(--warn)" : tone === "bad" ? "var(--bad)" : undefined;
+  // h-full + centred column: every tile in a grid row renders the same
+  // height whatever its content wraps to — equal tiles are the component's
+  // job, never the call site's (UI_CONVENTIONS §4.6)
   const body = (
     <div
-      className={`rounded-xl border ${compact ? "p-3" : "p-4"} text-center transition-colors ${href ? "hover:border-[var(--accent)]" : ""}`}
+      className={`flex h-full flex-col items-center justify-center rounded-xl border ${compact ? "p-3" : "p-4"} text-center transition-colors ${href ? "hover:border-[var(--accent)]" : ""}`}
       style={{ borderColor: "var(--border)", background: "var(--card)" }}
     >
-      <div className={`${compact ? "text-lg" : "text-2xl"} font-semibold tracking-tight`}>{value}</div>
+      <div className={`${compact ? "text-lg" : "text-2xl"} font-semibold tracking-tight`} style={toneColor ? { color: toneColor } : undefined}>
+        {value}
+      </div>
       <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>{label}</div>
       {delta != null && (
         <div className="mt-0.5 text-xs font-medium" style={{ color: deltaColor }}>
@@ -83,7 +93,7 @@ export function Kpi({
       {hint && <div className="mt-0.5 text-[10px]" style={{ color: "var(--muted)" }}>{hint}</div>}
     </div>
   );
-  return href ? <a href={href}>{body}</a> : body;
+  return href ? <a href={href} className="block h-full">{body}</a> : body;
 }
 
 /** The only button (UI_CONVENTIONS §4.5). Variants: primary (at most one per
